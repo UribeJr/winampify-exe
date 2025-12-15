@@ -19,10 +19,31 @@ app.use(cookieParser());
 
 // Serve static files from the Vite build directory in production
 if (process.env.NODE_ENV === 'production') {
-  // Render runs from src/ directory, so we need to go up one level to find dist/
-  const distPath = path.resolve(__dirname, '..', 'dist');
-  console.log('Serving static files from:', distPath);
-  app.use(express.static(distPath));
+  // Try multiple possible locations for dist folder
+  const possibleDistPaths = [
+    path.resolve(__dirname, '..', 'dist'),  // If running from src/
+    path.resolve(process.cwd(), 'dist'),     // From current working directory
+    path.resolve(__dirname, 'dist'),         // If running from root
+    path.join(process.cwd(), 'dist')          // Alternative
+  ];
+  
+  let distPath = null;
+  for (const possiblePath of possibleDistPaths) {
+    if (fs.existsSync(possiblePath)) {
+      distPath = possiblePath;
+      console.log('Found dist folder at:', distPath);
+      break;
+    }
+  }
+  
+  if (!distPath) {
+    console.error('ERROR: Could not find dist folder. Tried:', possibleDistPaths);
+    console.error('Current working directory:', process.cwd());
+    console.error('__dirname:', __dirname);
+  } else {
+    console.log('Serving static files from:', distPath);
+    app.use(express.static(distPath));
+  }
 }
 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
@@ -414,8 +435,30 @@ if (process.env.NODE_ENV === 'production') {
     if (req.path.startsWith('/api/') || req.path.startsWith('/login') || req.path.startsWith('/callback') || req.path.startsWith('/refresh_token')) {
       return res.status(404).json({ error: 'Not found' });
     }
-    // Render runs from src/ directory, so we need to go up one level to find dist/
-    const indexPath = path.resolve(__dirname, '..', 'dist', 'index.html');
+    // Try multiple possible locations for index.html
+    const possibleIndexPaths = [
+      path.resolve(__dirname, '..', 'dist', 'index.html'),  // If running from src/
+      path.resolve(process.cwd(), 'dist', 'index.html'),     // From current working directory
+      path.resolve(__dirname, 'dist', 'index.html'),         // If running from root
+      path.join(process.cwd(), 'dist', 'index.html')         // Alternative
+    ];
+    
+    let indexPath = null;
+    for (const possiblePath of possibleIndexPaths) {
+      if (fs.existsSync(possiblePath)) {
+        indexPath = possiblePath;
+        break;
+      }
+    }
+    
+    if (!indexPath) {
+      console.error('ERROR: Could not find index.html. Tried:', possibleIndexPaths);
+      return res.status(500).json({ 
+        error: 'Build files not found. Please ensure the build completed successfully.',
+        tried: possibleIndexPaths
+      });
+    }
+    
     console.log('Serving index.html from:', indexPath);
     res.sendFile(indexPath, (err) => {
       if (err) {

@@ -45,18 +45,52 @@ if (process.env.NODE_ENV === 'production') {
     console.error('ERROR: Could not find dist folder. Tried:', possibleDistPaths);
     console.error('Current working directory:', process.cwd());
     console.error('__dirname:', __dirname);
-    // List what actually exists
+    // List what actually exists - check multiple levels
     try {
+      console.error('=== Directory Contents Debug ===');
       const cwdContents = fs.readdirSync(process.cwd());
-      console.error('Contents of cwd:', cwdContents);
-      const parentContents = fs.readdirSync(path.resolve(process.cwd(), '..'));
-      console.error('Contents of parent:', parentContents);
+      console.error('Contents of cwd (' + process.cwd() + '):', cwdContents);
+      
+      const parentPath = path.resolve(process.cwd(), '..');
+      if (fs.existsSync(parentPath)) {
+        const parentContents = fs.readdirSync(parentPath);
+        console.error('Contents of parent (' + parentPath + '):', parentContents);
+      }
+      
+      // Check project root directly
+      const projectRoot = '/opt/render/project';
+      if (fs.existsSync(projectRoot)) {
+        const rootContents = fs.readdirSync(projectRoot);
+        console.error('Contents of project root (' + projectRoot + '):', rootContents);
+        // Check if dist exists in root
+        const distInRoot = path.join(projectRoot, 'dist');
+        if (fs.existsSync(distInRoot)) {
+          console.error('✓ Found dist in project root!');
+          distPath = distInRoot;
+        }
+      }
+      
+      // Also check if there's a build folder or other output
+      const buildPaths = [
+        path.join(process.cwd(), 'build'),
+        path.join(process.cwd(), '..', 'build'),
+        '/opt/render/project/build'
+      ];
+      for (const buildPath of buildPaths) {
+        if (fs.existsSync(buildPath)) {
+          console.error('Found build folder at:', buildPath);
+        }
+      }
     } catch (e) {
       console.error('Could not read directories:', e.message);
     }
-  } else {
+  }
+  
+  if (distPath) {
     console.log('Serving static files from:', distPath);
     app.use(express.static(distPath));
+  } else {
+    console.error('WARNING: dist folder not found. Static files will not be served.');
   }
 }
 

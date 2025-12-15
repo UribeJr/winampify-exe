@@ -19,7 +19,8 @@ app.use(cookieParser());
 
 // Serve static files from the Vite build directory in production
 if (process.env.NODE_ENV === 'production') {
-  const distPath = path.resolve(__dirname, 'dist');
+  // Render runs from src/ directory, so we need to go up one level to find dist/
+  const distPath = path.resolve(__dirname, '..', 'dist');
   console.log('Serving static files from:', distPath);
   app.use(express.static(distPath));
 }
@@ -413,7 +414,8 @@ if (process.env.NODE_ENV === 'production') {
     if (req.path.startsWith('/api/') || req.path.startsWith('/login') || req.path.startsWith('/callback') || req.path.startsWith('/refresh_token')) {
       return res.status(404).json({ error: 'Not found' });
     }
-    const indexPath = path.resolve(__dirname, 'dist', 'index.html');
+    // Render runs from src/ directory, so we need to go up one level to find dist/
+    const indexPath = path.resolve(__dirname, '..', 'dist', 'index.html');
     console.log('Serving index.html from:', indexPath);
     res.sendFile(indexPath, (err) => {
       if (err) {
@@ -430,26 +432,15 @@ app.listen(PORT, () => {
   console.log('__dirname:', __dirname);
   
   if (process.env.NODE_ENV === 'production') {
-    const distPath = path.resolve(__dirname, 'dist');
-    const indexPath = path.resolve(__dirname, 'dist', 'index.html');
+    // Render runs from src/ directory, so we need to go up one level to find dist/
+    const distPath = path.resolve(__dirname, '..', 'dist');
+    const indexPath = path.resolve(__dirname, '..', 'dist', 'index.html');
     console.log('Serving static files from:', distPath);
     console.log('Index.html path:', indexPath);
     
     // Check if dist folder exists
     if (!fs.existsSync(distPath)) {
       console.error('ERROR: dist folder does not exist at:', distPath);
-      // Try alternative paths
-      const altPaths = [
-        path.resolve(process.cwd(), 'dist'),
-        path.resolve(process.cwd(), 'src', 'dist'),
-        path.join(process.cwd(), 'dist')
-      ];
-      console.log('Trying alternative paths:');
-      altPaths.forEach(altPath => {
-        if (fs.existsSync(altPath)) {
-          console.log('Found dist at:', altPath);
-        }
-      });
     } else {
       console.log('✓ dist folder exists');
       if (!fs.existsSync(indexPath)) {

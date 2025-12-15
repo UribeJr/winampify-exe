@@ -128,7 +128,8 @@ app.get('/login', (req, res) => {
     'playlist-read-private',
     'playlist-read-collaborative',
     'user-library-read',
-    'user-read-recently-played'
+    'user-read-recently-played',
+    'user-library-modify'
   ].join(' ');
 
   const authQueryParameters = new URLSearchParams({

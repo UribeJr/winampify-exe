@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -18,7 +19,9 @@ app.use(cookieParser());
 
 // Serve static files from the Vite build directory in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'dist')));
+  const distPath = path.resolve(__dirname, 'dist');
+  console.log('Serving static files from:', distPath);
+  app.use(express.static(distPath));
 }
 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
@@ -410,14 +413,51 @@ if (process.env.NODE_ENV === 'production') {
     if (req.path.startsWith('/api/') || req.path.startsWith('/login') || req.path.startsWith('/callback') || req.path.startsWith('/refresh_token')) {
       return res.status(404).json({ error: 'Not found' });
     }
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    const indexPath = path.resolve(__dirname, 'dist', 'index.html');
+    console.log('Serving index.html from:', indexPath);
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error('Error serving index.html:', err);
+        res.status(500).json({ error: 'Failed to serve index.html', path: indexPath });
+      }
+    });
   });
 }
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('Current working directory:', process.cwd());
+  console.log('__dirname:', __dirname);
+  
   if (process.env.NODE_ENV === 'production') {
-    console.log('Serving static files from dist/');
+    const distPath = path.resolve(__dirname, 'dist');
+    const indexPath = path.resolve(__dirname, 'dist', 'index.html');
+    console.log('Serving static files from:', distPath);
+    console.log('Index.html path:', indexPath);
+    
+    // Check if dist folder exists
+    if (!fs.existsSync(distPath)) {
+      console.error('ERROR: dist folder does not exist at:', distPath);
+      // Try alternative paths
+      const altPaths = [
+        path.resolve(process.cwd(), 'dist'),
+        path.resolve(process.cwd(), 'src', 'dist'),
+        path.join(process.cwd(), 'dist')
+      ];
+      console.log('Trying alternative paths:');
+      altPaths.forEach(altPath => {
+        if (fs.existsSync(altPath)) {
+          console.log('Found dist at:', altPath);
+        }
+      });
+    } else {
+      console.log('✓ dist folder exists');
+      if (!fs.existsSync(indexPath)) {
+        console.error('ERROR: index.html does not exist at:', indexPath);
+      } else {
+        console.log('✓ index.html exists');
+      }
+    }
   }
 });
 

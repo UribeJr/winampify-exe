@@ -19,19 +19,21 @@ app.use(cookieParser());
 
 // Serve static files from the Vite build directory in production
 if (process.env.NODE_ENV === 'production') {
-  // Try multiple possible locations for dist folder
+  // Render builds dist/ in project root, but may run server from different directory
+  // Try paths relative to both __dirname and process.cwd(), going up to project root
   const possibleDistPaths = [
-    path.resolve(__dirname, '..', 'dist'),  // If running from src/
-    path.resolve(process.cwd(), 'dist'),     // From current working directory
-    path.resolve(__dirname, 'dist'),         // If running from root
-    path.join(process.cwd(), 'dist')          // Alternative
+    path.resolve(process.cwd(), '..', 'dist'),  // Go up from cwd to project root
+    path.resolve(__dirname, '..', 'dist'),        // Go up from __dirname
+    path.resolve(process.cwd(), 'dist'),         // Direct from cwd
+    path.resolve(__dirname, 'dist'),              // Direct from __dirname
+    '/opt/render/project/dist',                   // Absolute path (Render standard)
+    path.join(process.cwd(), '..', 'dist')        // Alternative join
   ];
   
-  let distPath = null;
   for (const possiblePath of possibleDistPaths) {
     if (fs.existsSync(possiblePath)) {
       distPath = possiblePath;
-      console.log('Found dist folder at:', distPath);
+      console.log('✓ Found dist folder at:', distPath);
       break;
     }
   }
@@ -40,6 +42,15 @@ if (process.env.NODE_ENV === 'production') {
     console.error('ERROR: Could not find dist folder. Tried:', possibleDistPaths);
     console.error('Current working directory:', process.cwd());
     console.error('__dirname:', __dirname);
+    // List what actually exists
+    try {
+      const cwdContents = fs.readdirSync(process.cwd());
+      console.error('Contents of cwd:', cwdContents);
+      const parentContents = fs.readdirSync(path.resolve(process.cwd(), '..'));
+      console.error('Contents of parent:', parentContents);
+    } catch (e) {
+      console.error('Could not read directories:', e.message);
+    }
   } else {
     console.log('Serving static files from:', distPath);
     app.use(express.static(distPath));
@@ -50,6 +61,9 @@ const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3000/callback';
 const SPOTIFY_API = 'https://api.spotify.com/v1';
+
+// Store distPath globally for use in routes
+let distPath = null;
 
 // Generate a random string for state parameter
 const generateRandomString = (length) => {
@@ -436,17 +450,21 @@ if (process.env.NODE_ENV === 'production') {
       return res.status(404).json({ error: 'Not found' });
     }
     // Try multiple possible locations for index.html
+    // Use the same distPath logic as above
     const possibleIndexPaths = [
-      path.resolve(__dirname, '..', 'dist', 'index.html'),  // If running from src/
-      path.resolve(process.cwd(), 'dist', 'index.html'),     // From current working directory
-      path.resolve(__dirname, 'dist', 'index.html'),         // If running from root
-      path.join(process.cwd(), 'dist', 'index.html')         // Alternative
+      path.resolve(process.cwd(), '..', 'dist', 'index.html'),  // Go up from cwd
+      path.resolve(__dirname, '..', 'dist', 'index.html'),       // Go up from __dirname
+      path.resolve(process.cwd(), 'dist', 'index.html'),        // Direct from cwd
+      path.resolve(__dirname, 'dist', 'index.html'),             // Direct from __dirname
+      '/opt/render/project/dist/index.html',                     // Absolute path
+      path.join(process.cwd(), '..', 'dist', 'index.html')       // Alternative
     ];
     
     let indexPath = null;
     for (const possiblePath of possibleIndexPaths) {
       if (fs.existsSync(possiblePath)) {
         indexPath = possiblePath;
+        console.log('✓ Found index.html at:', indexPath);
         break;
       }
     }
@@ -455,7 +473,9 @@ if (process.env.NODE_ENV === 'production') {
       console.error('ERROR: Could not find index.html. Tried:', possibleIndexPaths);
       return res.status(500).json({ 
         error: 'Build files not found. Please ensure the build completed successfully.',
-        tried: possibleIndexPaths
+        tried: possibleIndexPaths,
+        cwd: process.cwd(),
+        dirname: __dirname
       });
     }
     

@@ -458,7 +458,7 @@ function App() {
     const loadLibraryAlbums = async () => {
       setIsLoadingLibraryAlbums(true);
       try {
-        const data = await fetchWithToken('http://127.0.0.1:3001/api/library/albums?limit=20');
+        const data = await fetchWithToken(`${API_BASE_URL}/api/library/albums?limit=20`);
         setLibraryAlbums(data.items || []);
       } catch (err) {
         console.error('Failed to load saved albums', err);
@@ -494,7 +494,7 @@ function App() {
     const loadLiked = async () => {
       setIsLoadingLiked(true);
       try {
-        const data = await fetchWithToken('http://127.0.0.1:3001/api/library/tracks?limit=100');
+        const data = await fetchWithToken(`${API_BASE_URL}/api/library/tracks?limit=100`);
         setLikedTracks(data.items || []);
       } catch (err) {
         console.error('Failed to load liked tracks', err);

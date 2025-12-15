@@ -17,6 +17,9 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// Store distPath globally for use in routes (must be declared before use)
+let distPath = null;
+
 // Serve static files from the Vite build directory in production
 if (process.env.NODE_ENV === 'production') {
   // Render builds dist/ in project root, but may run server from different directory
@@ -61,9 +64,6 @@ const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3000/callback';
 const SPOTIFY_API = 'https://api.spotify.com/v1';
-
-// Store distPath globally for use in routes
-let distPath = null;
 
 // Generate a random string for state parameter
 const generateRandomString = (length) => {

@@ -483,68 +483,33 @@ if (process.env.NODE_ENV === 'production') {
     if (req.path.startsWith('/api/') || req.path.startsWith('/login') || req.path.startsWith('/callback') || req.path.startsWith('/refresh_token')) {
       return res.status(404).json({ error: 'Not found' });
     }
-    // Try multiple possible locations for index.html
-    // Use the same distPath logic as above
-    const possibleIndexPaths = [
-      path.resolve(process.cwd(), '..', 'dist', 'index.html'),  // Go up from cwd
-      path.resolve(__dirname, '..', 'dist', 'index.html'),       // Go up from __dirname
-      path.resolve(process.cwd(), 'dist', 'index.html'),        // Direct from cwd
-      path.resolve(__dirname, 'dist', 'index.html'),             // Direct from __dirname
-      '/opt/render/project/dist/index.html',                     // Absolute path
-      path.join(process.cwd(), '..', 'dist', 'index.html')       // Alternative
-    ];
     
-    let indexPath = null;
-    for (const possiblePath of possibleIndexPaths) {
-      if (fs.existsSync(possiblePath)) {
-        indexPath = possiblePath;
-        console.log('✓ Found index.html at:', indexPath);
-        break;
-      }
+    // Use the global distPath found at startup
+    if (!distPath) {
+      console.error('ERROR: Static file request but dist folder not found');
+      return res.status(500).json({ error: 'Server initialization error: dist folder not found' });
     }
     
-    if (!indexPath) {
-      console.error('ERROR: Could not find index.html. Tried:', possibleIndexPaths);
-      return res.status(500).json({ 
-        error: 'Build files not found. Please ensure the build completed successfully.',
-        tried: possibleIndexPaths,
-        cwd: process.cwd(),
-        dirname: __dirname
-      });
+    const indexPath = path.join(distPath, 'index.html');
+    
+    if (!fs.existsSync(indexPath)) {
+      console.error('ERROR: index.html not found at:', indexPath);
+      return res.status(500).json({ error: 'Build artifact missing: index.html' });
     }
     
-    console.log('Serving index.html from:', indexPath);
-    res.sendFile(indexPath, (err) => {
-      if (err) {
-        console.error('Error serving index.html:', err);
-        res.status(500).json({ error: 'Failed to serve index.html', path: indexPath });
-      }
-    });
+    res.sendFile(indexPath);
   });
 }
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log('Current working directory:', process.cwd());
-  console.log('__dirname:', __dirname);
+  console.log('Environment:', process.env.NODE_ENV);
   
   if (process.env.NODE_ENV === 'production') {
-    // Render runs from src/ directory, so we need to go up one level to find dist/
-    const distPath = path.resolve(__dirname, '..', 'dist');
-    const indexPath = path.resolve(__dirname, '..', 'dist', 'index.html');
-    console.log('Serving static files from:', distPath);
-    console.log('Index.html path:', indexPath);
-    
-    // Check if dist folder exists
-    if (!fs.existsSync(distPath)) {
-      console.error('ERROR: dist folder does not exist at:', distPath);
+    if (distPath) {
+      console.log('Production static files being served from:', distPath);
     } else {
-      console.log('✓ dist folder exists');
-      if (!fs.existsSync(indexPath)) {
-        console.error('ERROR: index.html does not exist at:', indexPath);
-      } else {
-        console.log('✓ index.html exists');
-      }
+      console.error('CRITICAL ERROR: dist folder was not found during startup!');
     }
   }
 });

@@ -204,7 +204,7 @@ function App() {
       }
 
       const player = new window.Spotify.Player({
-        name: 'Web Playback SDK',
+        name: 'Winampify',
         getOAuthToken: cb => { 
           cb(token); 
         },

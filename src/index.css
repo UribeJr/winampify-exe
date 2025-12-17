@@ -1259,7 +1259,7 @@ body {
   background: #d4d0c8;
 }
 
-.toolbar-nav-btn:active:not(:disabled) {
+.toolbar-nav-btn:active:not(:disabled), .toolbar-nav-btn.active {
   border-style: inset;
   box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #ffffff;
 }
@@ -1309,6 +1309,11 @@ body {
 /* Home icon - house */
 .toolbar-icon-home {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M 8,2 L 2,7 L 2,13 L 6,13 L 6,9 L 10,9 L 10,13 L 14,13 L 14,7 Z' fill='%23000000'/%3E%3C/svg%3E");
+}
+
+/* Visualizer icon - bars */
+.toolbar-icon-visualizer {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect x='2' y='8' width='3' height='6' fill='%23000000'/%3E%3Crect x='6' y='4' width='3' height='10' fill='%23000000'/%3E%3Crect x='10' y='6' width='3' height='8' fill='%23000000'/%3E%3C/svg%3E");
 }
 
 /* Previous icon - double left arrows */
@@ -1438,6 +1443,11 @@ body {
   max-height: 100%;
   gap: 30px;
   overflow-y: auto;
+}
+
+.wmp-now-playing-view.visualizer-mode {
+  padding: 0;
+  overflow: hidden;
 }
 
 .wmp-visualization-area {
@@ -2106,6 +2116,7 @@ body {
 .control-progress-fill {
   height: 100%;
   background: #0080ff;
+  width: 0%;
   transition: width 0.1s linear;
   position: relative;
 }
@@ -2246,4 +2257,3 @@ body {
   background: #808080;
   margin: 2px 0;
 }
-

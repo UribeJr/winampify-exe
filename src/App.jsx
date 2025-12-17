@@ -42,6 +42,7 @@ function App() {
   const [isLoadingShows, setIsLoadingShows] = useState(false);
   const [likedTracks, setLikedTracks] = useState([]);
   const [isLoadingLiked, setIsLoadingLiked] = useState(false);
+  const [visualizerFullscreen, setVisualizerFullscreen] = useState(false);
 
 
   // Live progress updates for real Spotify player
@@ -819,6 +820,18 @@ function App() {
               <span className="toolbar-icon toolbar-icon-home"></span>
             </button>
             <div className="toolbar-separator"></div>
+            {viewMode === 'nowPlaying' && (
+              <>
+                <button 
+                  className={`toolbar-nav-btn ${visualizerFullscreen ? 'active' : ''}`}
+                  onClick={() => setVisualizerFullscreen(!visualizerFullscreen)}
+                  title="Toggle Visualizer Mode"
+                >
+                  <span className="toolbar-icon toolbar-icon-visualizer"></span>
+                </button>
+                <div className="toolbar-separator"></div>
+              </>
+            )}
           </div>
           )}
 
@@ -838,32 +851,45 @@ function App() {
             <div className="wmp-content-wrapper">
               <div className="wmp-main-content">
                 {viewMode === 'nowPlaying' && (
-                  <div className="wmp-now-playing-view">
-                    <div className="wmp-visualization-area">
-                      <Visualizer 
-                        currentTrack={currentTrack}
-                        token={token}
-                        player={player}
-                        isActive={isActive && !isPaused}
-                      />
-                    </div>
-                    <div className="wmp-track-info-large">
-                      <h2 className="wmp-track-title">{currentTrack?.name || 'No track playing'}</h2>
-                      <p className="wmp-track-artist">{currentTrack?.artists?.map(a => a.name).join(', ') || 'Select a track to play'}</p>
-                      <p className="wmp-track-album">{currentTrack?.album?.name || ''}</p>
-                    </div>
-                    <div className="wmp-progress-area">
-                      <div className="wmp-progress-track-large">
-                        <div 
-                          className="wmp-progress-fill-large" 
-                          style={{ width: `${progressPercent}%` }}
+                  <div className={`wmp-now-playing-view ${visualizerFullscreen ? 'visualizer-mode' : ''}`}>
+                    {visualizerFullscreen ? (
+                      <div className="wmp-visualization-area-fullscreen" style={{ width: '100%', height: '100%', flex: 1 }}>
+                        <Visualizer 
+                          currentTrack={currentTrack}
+                          token={token}
+                          player={player}
+                          isActive={isActive && !isPaused}
                         />
                       </div>
-                      <div className="wmp-progress-times-large">
-                        <span>{formatTime(position)}</span>
-                        <span>{formatTime(duration)}</span>
-                      </div>
-                    </div>
+                    ) : (
+                      <>
+                        <div className="wmp-visualization-area">
+                          <Visualizer 
+                            currentTrack={currentTrack}
+                            token={token}
+                            player={player}
+                            isActive={isActive && !isPaused}
+                          />
+                        </div>
+                        <div className="wmp-track-info-large">
+                          <h2 className="wmp-track-title">{currentTrack?.name || 'No track playing'}</h2>
+                          <p className="wmp-track-artist">{currentTrack?.artists?.map(a => a.name).join(', ') || 'Select a track to play'}</p>
+                          <p className="wmp-track-album">{currentTrack?.album?.name || ''}</p>
+                        </div>
+                        <div className="wmp-progress-area">
+                          <div className="wmp-progress-track-large">
+                            <div 
+                              className="wmp-progress-fill-large" 
+                              style={{ width: `${progressPercent}%` }}
+                            />
+                          </div>
+                          <div className="wmp-progress-times-large">
+                            <span>{formatTime(position)}</span>
+                            <span>{formatTime(duration)}</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 

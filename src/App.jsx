@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Visualizer from './components/Visualizer';
 
 const SPOTIFY_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID || 'YOUR_CLIENT_ID';
 const SPOTIFY_REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3000/callback';
@@ -839,25 +840,12 @@ function App() {
                 {viewMode === 'nowPlaying' && (
                   <div className="wmp-now-playing-view">
                     <div className="wmp-visualization-area">
-                      {currentTrack?.album?.images?.[0]?.url ? (
-                        <img 
-                          src={currentTrack.album.images[0].url} 
-                          alt={currentTrack.name}
-                          className="wmp-album-art-large"
-                        />
-                      ) : (
-                        <div className="wmp-album-art-placeholder">🎵</div>
-                      )}
-                      <div className="wmp-visualization-bars">
-                        <div className="viz-bar"></div>
-                        <div className="viz-bar"></div>
-                        <div className="viz-bar"></div>
-                        <div className="viz-bar"></div>
-                        <div className="viz-bar"></div>
-                        <div className="viz-bar"></div>
-                        <div className="viz-bar"></div>
-                        <div className="viz-bar"></div>
-                      </div>
+                      <Visualizer 
+                        currentTrack={currentTrack}
+                        token={token}
+                        player={player}
+                        isActive={isActive && !isPaused}
+                      />
                     </div>
                     <div className="wmp-track-info-large">
                       <h2 className="wmp-track-title">{currentTrack?.name || 'No track playing'}</h2>

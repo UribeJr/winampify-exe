@@ -395,6 +395,22 @@ app.get('/api/albums/:id', async (req, res) => {
 });
 
 /**
+ * Audio Analysis endpoint
+ */
+app.get('/api/audio-analysis/:id', async (req, res) => {
+  const token = getBearer(req);
+  if (!token) return res.status(401).json({ error: 'missing_token' });
+  const { id } = req.params;
+  try {
+    const data = await spotifyFetch(token, `${SPOTIFY_API}/audio-analysis/${id}`);
+    res.json(data);
+  } catch (err) {
+    console.error('Audio Analysis error', err);
+    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+  }
+});
+
+/**
  * Recently played tracks
  */
 app.get('/api/player/recently-played', async (req, res) => {

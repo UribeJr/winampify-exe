@@ -158,7 +158,7 @@ const Visualizer = forwardRef(({ currentTrack, token, player, isActive }, ref) =
     setTimeout(handleResize, 100);
 
     return () => window.removeEventListener('resize', handleResize);
-  }, [visualizerFullscreen]); // Re-run when fullscreen changes
+  }, []); // Remove dependency on visualizerFullscreen which is not passed as prop
 
   // Animation Loop
   useEffect(() => {

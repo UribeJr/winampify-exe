@@ -1,10 +1,21 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useImperativeHandle, forwardRef } from 'react';
 import butterchurn from 'butterchurn';
 import butterchurnPresets from 'butterchurn-presets';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3001';
 
-const Visualizer = ({ currentTrack, token, player, isActive }) => {
+// Manually selected presets that resemble Windows Media Player visuals
+// Since we can't easily see them, we'll pick ones with suggestive names or known styles
+// and map them to friendly names for the UI.
+const WMP_PRESETS = [
+  { name: 'Alchemy', key: 'Flexi, martin + geiss - dedicated to the sherwin maxawow' }, // Approximating Alchemy
+  { name: 'Battery', key: 'Rovastar + Geiss - Dynamic Swirls 2 (Abstract mix)' },
+  { name: 'Particle', key: 'flexi - abstract 03' },
+  { name: 'Ambience', key: 'Geiss - Oldskool 02' },
+  { name: 'Solid', key: 'Unchained - God of the Game (Remix)' },
+];
+
+const Visualizer = forwardRef(({ currentTrack, token, player, isActive }, ref) => {
   const canvasRef = useRef(null);
   const visualizerRef = useRef(null);
   const audioContextRef = useRef(null);
@@ -13,11 +24,37 @@ const Visualizer = ({ currentTrack, token, player, isActive }) => {
   const analyserNodeRef = useRef(null);
   const animationFrameRef = useRef(null);
   const analysisDataRef = useRef(null);
-  const lastPresetSwitchRef = useRef(0);
   
-  const [presets, setPresets] = useState({});
-  const [presetKeys, setPresetKeys] = useState([]);
+  const [allPresets, setAllPresets] = useState({});
   const [currentPresetIndex, setCurrentPresetIndex] = useState(0);
+
+  // Expose method to switch presets from parent
+  useImperativeHandle(ref, () => ({
+    loadPreset: (index) => {
+      if (visualizerRef.current && allPresets) {
+        const presetKey = WMP_PRESETS[index].key;
+        // Fallback to random if key doesn't exist (names in library might differ slightly)
+        // butterchurn-presets usually exports a giant object.
+        // We'll try to find an exact match or a fuzzy match.
+        let preset = allPresets[presetKey];
+        
+        if (!preset) {
+           // Fuzzy search
+           const fuzzyKey = Object.keys(allPresets).find(k => k.includes(WMP_PRESETS[index].name) || k.includes(presetKey.split(' - ')[0]));
+           preset = allPresets[fuzzyKey];
+        }
+
+        // If still not found, just pick one
+        if (!preset) {
+           const keys = Object.keys(allPresets);
+           preset = allPresets[keys[index % keys.length]];
+        }
+
+        visualizerRef.current.loadPreset(preset, 1.0);
+        setCurrentPresetIndex(index);
+      }
+    }
+  }));
 
   // Initialize Audio Context and Visualizer
   useEffect(() => {
@@ -28,20 +65,16 @@ const Visualizer = ({ currentTrack, token, player, isActive }) => {
     const audioContext = new AudioContext();
     audioContextRef.current = audioContext;
 
-    // Create phantom oscillator
     const oscillator = audioContext.createOscillator();
     oscillator.type = 'sine';
-    oscillator.frequency.value = 60; // Base bass frequency
+    oscillator.frequency.value = 60; 
     
-    // Create gain node to modulate volume
     const gainNode = audioContext.createGain();
     gainNode.gain.value = 0.5;
 
-    // Create analyser node for the visualizer
     const analyserNode = audioContext.createAnalyser();
     analyserNode.fftSize = 2048;
 
-    // Connect: Oscillator -> Gain -> Analyser -> (NOT Destination/Speakers)
     oscillator.connect(gainNode);
     gainNode.connect(analyserNode);
     oscillator.start();
@@ -51,10 +84,8 @@ const Visualizer = ({ currentTrack, token, player, isActive }) => {
     analyserNodeRef.current = analyserNode;
 
     // 2. Setup Butterchurn
-    const allPresets = butterchurnPresets.getPresets();
-    setPresets(allPresets);
-    const keys = Object.keys(allPresets);
-    setPresetKeys(keys);
+    const presets = butterchurnPresets.getPresets();
+    setAllPresets(presets);
 
     const visualizer = butterchurn.createVisualizer(audioContext, canvasRef.current, {
       width: 800,
@@ -63,16 +94,22 @@ const Visualizer = ({ currentTrack, token, player, isActive }) => {
       textureRatio: 1,
     });
     
-    // Load initial preset
-    if (keys.length > 0) {
-      const randomIndex = Math.floor(Math.random() * keys.length);
-      setCurrentPresetIndex(randomIndex);
-      visualizer.loadPreset(allPresets[keys[randomIndex]], 2.0); // 2.0s transition
-    }
+    // Load initial default preset (0)
+    // We do a "safe load" helper
+    const loadSafe = (idx) => {
+        const key = WMP_PRESETS[idx].key;
+        let p = presets[key];
+        if (!p) {
+             const keys = Object.keys(presets);
+             p = presets[keys[Math.floor(Math.random() * keys.length)]];
+        }
+        visualizer.loadPreset(p, 0); 
+    };
+    
+    loadSafe(0);
 
     visualizerRef.current = visualizer;
 
-    // Cleanup
     return () => {
       cancelAnimationFrame(animationFrameRef.current);
       oscillator.stop();
@@ -80,7 +117,7 @@ const Visualizer = ({ currentTrack, token, player, isActive }) => {
     };
   }, []);
 
-  // Fetch Audio Analysis when track changes
+  // Fetch Audio Analysis
   useEffect(() => {
     if (!currentTrack || !token) return;
 
@@ -117,10 +154,11 @@ const Visualizer = ({ currentTrack, token, player, isActive }) => {
     };
 
     window.addEventListener('resize', handleResize);
-    handleResize(); // Initial size
+    // Delay slightly to allow layout to settle
+    setTimeout(handleResize, 100);
 
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [visualizerFullscreen]); // Re-run when fullscreen changes
 
   // Animation Loop
   useEffect(() => {
@@ -130,42 +168,33 @@ const Visualizer = ({ currentTrack, token, player, isActive }) => {
         return;
       }
 
-      // Sync simulated audio with analysis data
       if (player && analysisDataRef.current && sourceNodeRef.current && gainNodeRef.current) {
         const state = await player.getCurrentState();
         if (state && !state.paused) {
-          const position = state.position / 1000; // ms to seconds
+          const position = state.position / 1000; 
           const analysis = analysisDataRef.current;
 
-          // Find current segment (for fine-grained detail)
           const currentSegment = analysis.segments.find(
             s => position >= s.start && position < s.start + s.duration
           );
 
-          // Find current beat (for thumping)
           const currentBeat = analysis.beats.find(
             b => position >= b.start && position < b.start + b.duration
           );
 
           if (currentSegment) {
-            // Modulate simulating the "loudness" and "pitch" of the track
-            // Map loudness (-60db to 0db) to gain (0 to 1)
             const loudness = Math.max(-60, currentSegment.loudness_max);
             const normalizedLoudness = (loudness + 60) / 60;
-            
-            // Add a "kick" if we are on a beat
             const beatBoost = currentBeat ? 1.5 : 1.0;
             
             gainNodeRef.current.gain.setTargetAtTime(
               normalizedLoudness * beatBoost, 
               audioContextRef.current.currentTime, 
-              0.05 // Quick ramp
+              0.05 
             );
 
-            // Modulate frequency based on timbre or pitch (simplified mapping)
-            // Use the dominant pitch from the segment
             const dominantPitchIndex = currentSegment.pitches.indexOf(Math.max(...currentSegment.pitches));
-            const baseFreq = 60 + (dominantPitchIndex * 20); // Map to bass frequencies
+            const baseFreq = 60 + (dominantPitchIndex * 20); 
             
             sourceNodeRef.current.frequency.setTargetAtTime(
               baseFreq,
@@ -176,18 +205,6 @@ const Visualizer = ({ currentTrack, token, player, isActive }) => {
         }
       }
 
-      // Cycle presets
-      const now = Date.now();
-      if (now - lastPresetSwitchRef.current > 15000) { // Every 15 seconds
-        lastPresetSwitchRef.current = now;
-        if (presetKeys.length > 0) {
-          const nextIndex = Math.floor(Math.random() * presetKeys.length);
-          setCurrentPresetIndex(nextIndex);
-          visualizerRef.current.loadPreset(presets[presetKeys[nextIndex]], 2.7);
-        }
-      }
-
-      // Render
       visualizerRef.current.render();
       animationFrameRef.current = requestAnimationFrame(renderLoop);
     };
@@ -195,29 +212,20 @@ const Visualizer = ({ currentTrack, token, player, isActive }) => {
     renderLoop();
 
     return () => cancelAnimationFrame(animationFrameRef.current);
-  }, [isActive, player, presets, presetKeys]);
+  }, [isActive, player]);
 
-  const handleCanvasClick = () => {
-    // Manually switch preset on click
-    if (presetKeys.length > 0 && visualizerRef.current) {
-      const nextIndex = (currentPresetIndex + 1) % presetKeys.length;
-      setCurrentPresetIndex(nextIndex);
-      visualizerRef.current.loadPreset(presets[presetKeys[nextIndex]], 1.0);
-      lastPresetSwitchRef.current = Date.now(); // Reset timer
-    }
-  };
+  // We remove the internal click handler for cycling since we now have external buttons
+  // But we can keep it as an easter egg or remove it. Let's remove it to strictly follow "5 presets".
 
   return (
     <div className="wmp-visualizer-container" style={{ width: '100%', height: '100%', backgroundColor: '#000' }}>
       <canvas
         ref={canvasRef}
-        onClick={handleCanvasClick}
-        style={{ width: '100%', height: '100%', display: 'block', cursor: 'pointer' }}
-        title="Click to change visualizer preset"
+        style={{ width: '100%', height: '100%', display: 'block' }}
       />
     </div>
   );
-};
+});
 
+export { WMP_PRESETS };
 export default Visualizer;
-

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import Visualizer from './components/Visualizer';
+import React, { useState, useEffect, useRef } from 'react';
+import Visualizer, { WMP_PRESETS } from './components/Visualizer';
 
 const SPOTIFY_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID || 'YOUR_CLIENT_ID';
 const SPOTIFY_REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3000/callback';
@@ -43,6 +43,8 @@ function App() {
   const [likedTracks, setLikedTracks] = useState([]);
   const [isLoadingLiked, setIsLoadingLiked] = useState(false);
   const [visualizerFullscreen, setVisualizerFullscreen] = useState(false);
+  const [activePreset, setActivePreset] = useState(0);
+  const visualizerRef = useRef(null);
 
 
   // Live progress updates for real Spotify player
@@ -829,6 +831,27 @@ function App() {
                 >
                   <span className="toolbar-icon toolbar-icon-visualizer"></span>
                 </button>
+                
+                {visualizerFullscreen && (
+                  <div className="toolbar-presets" style={{ display: 'flex', gap: '2px', marginLeft: '4px' }}>
+                    {WMP_PRESETS.map((preset, index) => (
+                      <button
+                        key={preset.name}
+                        className={`toolbar-nav-btn ${activePreset === index ? 'active' : ''}`}
+                        style={{ width: 'auto', padding: '0 6px', fontSize: '10px', fontFamily: 'MS Sans Serif' }}
+                        onClick={() => {
+                          setActivePreset(index);
+                          if (visualizerRef.current) {
+                            visualizerRef.current.loadPreset(index);
+                          }
+                        }}
+                      >
+                        {preset.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
                 <div className="toolbar-separator"></div>
               </>
             )}
@@ -855,6 +878,7 @@ function App() {
                     {visualizerFullscreen ? (
                       <div className="wmp-visualization-area-fullscreen" style={{ width: '100%', height: '100%', flex: 1 }}>
                         <Visualizer 
+                          ref={visualizerRef}
                           currentTrack={currentTrack}
                           token={token}
                           player={player}
@@ -864,12 +888,25 @@ function App() {
                     ) : (
                       <>
                         <div className="wmp-visualization-area">
-                          <Visualizer 
-                            currentTrack={currentTrack}
-                            token={token}
-                            player={player}
-                            isActive={isActive && !isPaused}
-                          />
+                          {currentTrack?.album?.images?.[0]?.url ? (
+                            <img 
+                              src={currentTrack.album.images[0].url} 
+                              alt={currentTrack.name}
+                              className="wmp-album-art-large"
+                            />
+                          ) : (
+                            <div className="wmp-album-art-placeholder">🎵</div>
+                          )}
+                          <div className="wmp-visualization-bars">
+                            <div className="viz-bar"></div>
+                            <div className="viz-bar"></div>
+                            <div className="viz-bar"></div>
+                            <div className="viz-bar"></div>
+                            <div className="viz-bar"></div>
+                            <div className="viz-bar"></div>
+                            <div className="viz-bar"></div>
+                            <div className="viz-bar"></div>
+                          </div>
                         </div>
                         <div className="wmp-track-info-large">
                           <h2 className="wmp-track-title">{currentTrack?.name || 'No track playing'}</h2>

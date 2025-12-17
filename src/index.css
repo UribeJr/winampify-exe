@@ -2257,3 +2257,164 @@ body {
   background: #808080;
   margin: 2px 0;
 }
+
+/* Start Menu */
+.wmp-start-menu {
+  position: fixed;
+  bottom: 30px;
+  left: 0;
+  width: 200px;
+  background: #c6c6c6;
+  border: 2px outset #c6c6c6;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  display: flex;
+  z-index: 2000;
+  font-family: 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+}
+
+.start-menu-side {
+  width: 24px;
+  background: #000080;
+  background: linear-gradient(180deg, #000080 0%, #0000ff 5%, #000080 100%);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 8px;
+  color: #ffffff;
+}
+
+.start-menu-brand {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.start-menu-brand-version {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-weight: normal;
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.start-menu-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2px;
+}
+
+.start-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: #000000;
+}
+
+.start-menu-item:hover {
+  background: #000080;
+  color: #ffffff;
+}
+
+.start-menu-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Use standard icons or placeholders */
+.icon-update::before { content: '🌐'; }
+.icon-programs::before { content: '📁'; }
+.icon-favorites::before { content: '⭐'; }
+.icon-documents::before { content: '📄'; }
+.icon-settings::before { content: '⚙️'; }
+.icon-find::before { content: '🔍'; }
+.icon-help::before { content: '❓'; }
+.icon-run::before { content: '🏁'; }
+.icon-logoff::before { content: '🔑'; }
+.icon-shutdown::before { content: '🛑'; }
+
+.start-menu-text {
+  flex: 1;
+}
+
+.start-menu-arrow {
+  margin-left: 8px;
+  font-size: 8px;
+}
+
+.start-menu-separator {
+  height: 1px;
+  background: #808080;
+  border-bottom: 1px solid #ffffff;
+  margin: 4px 2px;
+}
+
+/* Desktop Icons */
+.wmp-desktop-icons {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 30px; /* Above taskbar */
+  width: 100%;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 20px;
+  pointer-events: none; /* Let clicks pass through to window if not on icon */
+  z-index: 0;
+}
+
+.desktop-icon {
+  width: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  pointer-events: auto; /* Re-enable clicks */
+  text-align: center;
+}
+
+.desktop-icon-img {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 4px;
+  /* Basic placeholders for now */
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-computer::before { content: '💻'; }
+.icon-documents::before { content: '📁'; }
+.icon-ie::before { content: '🌐'; }
+.icon-network::before { content: '🔌'; }
+.icon-recycle-bin::before { content: '🗑️'; }
+
+.desktop-icon-text {
+  color: #ffffff;
+  font-size: 11px;
+  font-family: 'MS Sans Serif', sans-serif;
+  text-shadow: 1px 1px 1px #000000;
+  padding: 2px;
+}
+
+.desktop-icon:active .desktop-icon-img {
+  opacity: 0.7;
+}
+
+.desktop-icon:active .desktop-icon-text {
+  background: #000080;
+  outline: 1px dotted #ffffff;
+}

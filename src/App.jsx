@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Visualizer, { WMP_PRESETS } from './components/Visualizer';
+import StartMenu from './components/StartMenu';
+import DesktopIcons from './components/DesktopIcons';
 
 const SPOTIFY_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID || 'YOUR_CLIENT_ID';
 const SPOTIFY_REDIRECT_URI = import.meta.env.VITE_SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3000/callback';
@@ -44,6 +46,7 @@ function App() {
   const [isLoadingLiked, setIsLoadingLiked] = useState(false);
   const [visualizerFullscreen, setVisualizerFullscreen] = useState(false);
   const [activePreset, setActivePreset] = useState(0);
+  const [startMenuOpen, setStartMenuOpen] = useState(false);
   const visualizerRef = useRef(null);
 
 
@@ -652,6 +655,7 @@ function App() {
   if (!token) {
     return (
       <React.Fragment>
+        <DesktopIcons />
         <div className="wmp-shell">
           <div className="window">
             <div className="title-bar">
@@ -709,7 +713,10 @@ function App() {
           </div>
         </div>
         <div className="win98-taskbar">
-          <button className="taskbar-start">
+          <button 
+            className={`taskbar-start ${startMenuOpen ? 'active' : ''}`}
+            onClick={() => setStartMenuOpen(!startMenuOpen)}
+          >
             <span className="start-logo" aria-hidden="true"></span>
             <span className="start-text">Start</span>
           </button>
@@ -725,12 +732,14 @@ function App() {
             <div className="tray-time">2:50 PM</div>
           </div>
         </div>
+        <StartMenu isOpen={startMenuOpen} onClose={() => setStartMenuOpen(false)} />
       </React.Fragment>
     );
   }
 
   return (
     <React.Fragment>
+      <DesktopIcons />
       <div className="wmp-shell">
         <div className={`window ${isMinimized ? 'minimized' : ''}`}>
           <div className="title-bar">
@@ -1182,7 +1191,10 @@ function App() {
         </div>
       </div>
       <div className="win98-taskbar">
-        <button className="taskbar-start">
+        <button 
+          className={`taskbar-start ${startMenuOpen ? 'active' : ''}`}
+          onClick={() => setStartMenuOpen(!startMenuOpen)}
+        >
           <span className="start-logo" aria-hidden="true"></span>
           <span className="start-text">Start</span>
         </button>
@@ -1201,6 +1213,7 @@ function App() {
           <div className="tray-time">2:50 PM</div>
         </div>
       </div>
+      <StartMenu isOpen={startMenuOpen} onClose={() => setStartMenuOpen(false)} />
     </React.Fragment>
   );
 }

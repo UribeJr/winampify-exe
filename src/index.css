@@ -60,6 +60,8 @@ body {
   display: flex;
   justify-content: center;
   flex: 1;
+  position: relative;
+  z-index: 1; /* Above desktop icons */
 }
 
 /* Window sizing - 98.css handles styling */
@@ -2360,15 +2362,14 @@ body {
 
 /* Desktop Icons */
 .wmp-desktop-icons {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   bottom: 30px; /* Above taskbar */
-  width: 100%;
-  padding: 10px;
+  width: 100px; /* Constrain to left side only */
+  padding: 10px 10px 10px 10px;
   display: flex;
   flex-direction: column;
-  flex-wrap: wrap;
   align-content: flex-start;
   gap: 20px;
   pointer-events: none; /* Let clicks pass through to window if not on icon */

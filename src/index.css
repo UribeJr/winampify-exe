@@ -38,7 +38,7 @@
 }
 
 body {
-  --wmp-bg-image: url('/wmp-bg.jpg');
+  --wmp-bg-image: url('/dist/assets/wmp-98.png');
   font-family: 'MS Sans Serif', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: none;

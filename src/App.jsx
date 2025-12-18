@@ -1201,7 +1201,7 @@ function App() {
         <div className="taskbar-apps">
           <button 
             className={`taskbar-app ${isMinimized ? '' : 'active'}`}
-            onClick={() => setIsMinimized(false)}
+            onClick={() => setIsMinimized(!isMinimized)}
           >
             <span className="app-icon" aria-hidden="true"></span>
             <span className="app-text">Windows Media Player</span>

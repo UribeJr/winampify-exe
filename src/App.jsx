@@ -783,7 +783,7 @@ function App() {
                     {toolbarVisible ? 'Hide' : 'Show'} Toolbar
                   </button>
                   <button className={`menu-dropdown-item ${playlistPaneVisible ? 'active' : ''}`} onClick={() => { setPlaylistPaneVisible(!playlistPaneVisible); setViewMenuOpen(false); }}>
-                    {playlistPaneVisible ? 'Hide' : 'Show'} Playlist Pane
+                    {playlistPaneVisible ? 'Hide' : 'Show'} Now Playing Pane
                   </button>
                 </div>
               )}
@@ -1110,25 +1110,42 @@ function App() {
                 )}
               </div>
 
-              {/* Playlist Pane */}
+              {/* Now Playing Pane */}
               {playlistPaneVisible && (
-                <div className="wmp-playlist-pane">
-                  <div className="wmp-playlist-pane-header">
-                    <span>Playlist</span>
+                <div className="wmp-now-playing-pane">
+                  <div className="wmp-now-playing-pane-header">
+                    <span>Now Playing</span>
                     <button className="btn" onClick={() => setPlaylistPaneVisible(false)}>×</button>
                   </div>
-                  <div className="wmp-playlist-pane-content">
-                    {tracks.map((item, index) => {
-                      const track = item.track;
-                      if (!track) return null;
-                      return (
-                        <div key={track.id} className="wmp-playlist-pane-item">
-                          <span className="track-num">{index + 1}</span>
-                          <span className="track-name">{track.name}</span>
-                          <span className="track-time">{formatTime(track.duration_ms)}</span>
-                        </div>
-                      );
-                    })}
+                  <div className="wmp-now-playing-pane-content">
+                    <div className="wmp-now-playing-pane-artwork">
+                      {currentTrack?.album?.images?.[0]?.url ? (
+                        <img 
+                          src={currentTrack.album.images[0].url} 
+                          alt={currentTrack.name}
+                          className="wmp-now-playing-pane-image"
+                        />
+                      ) : (
+                        <div className="wmp-now-playing-pane-placeholder">🎵</div>
+                      )}
+                    </div>
+                    <div className="wmp-now-playing-pane-info">
+                      <h3 className="wmp-now-playing-pane-title">{currentTrack?.name || 'No track playing'}</h3>
+                      <p className="wmp-now-playing-pane-artist">{currentTrack?.artists?.map(a => a.name).join(', ') || 'Select a track to play'}</p>
+                      <p className="wmp-now-playing-pane-album">{currentTrack?.album?.name || ''}</p>
+                    </div>
+                    <div className="wmp-now-playing-pane-progress">
+                      <div className="wmp-now-playing-pane-progress-track">
+                        <div 
+                          className="wmp-now-playing-pane-progress-fill" 
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+                      <div className="wmp-now-playing-pane-times">
+                        <span>{formatTime(position)}</span>
+                        <span>{formatTime(duration)}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1167,7 +1184,7 @@ function App() {
                 </button>
               </div>
               <div className="control-buttons-right">
-                <button className="control-btn" title="Playlist" onClick={() => setPlaylistPaneVisible(!playlistPaneVisible)}>
+                <button className="control-btn" title="Now Playing" onClick={() => setPlaylistPaneVisible(!playlistPaneVisible)}>
                   <span className="toolbar-icon toolbar-icon-playlist"></span>
                 </button>
                 <div className="control-volume">

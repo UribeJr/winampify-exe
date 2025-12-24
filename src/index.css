@@ -2028,8 +2028,8 @@ body {
   color: #ffffff;
 }
 
-/* Playlist Pane */
-.wmp-playlist-pane {
+/* Now Playing Pane */
+.wmp-now-playing-pane {
   width: 250px;
   flex-shrink: 0;
   background: #c6c6c6;
@@ -2041,7 +2041,7 @@ body {
   overflow: hidden;
 }
 
-.wmp-playlist-pane-header {
+.wmp-now-playing-pane-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2052,41 +2052,100 @@ body {
   font-size: 11px;
 }
 
-.wmp-playlist-pane-content {
+.wmp-now-playing-pane-content {
   flex: 1;
   overflow-y: auto;
-  padding: 4px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
 }
 
-.wmp-playlist-pane-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 8px;
-  padding: 2px 4px;
-  font-size: 11px;
-  cursor: pointer;
+.wmp-now-playing-pane-artwork {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
-.wmp-playlist-pane-item:hover {
-  background: #316ac5;
-  color: #ffffff;
+.wmp-now-playing-pane-image {
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 2px outset #c6c6c6;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.track-num {
-  color: #808080;
-  font-size: 10px;
+.wmp-now-playing-pane-placeholder {
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 1;
+  background: #d4d0c8;
+  border: 2px outset #c6c6c6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
 }
 
-.track-name {
+.wmp-now-playing-pane-info {
+  width: 100%;
+  text-align: center;
+}
+
+.wmp-now-playing-pane-title {
+  font-size: 14px;
+  font-weight: bold;
   color: #000000;
+  margin-bottom: 6px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.track-time {
+.wmp-now-playing-pane-artist {
+  font-size: 12px;
+  color: #000000;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wmp-now-playing-pane-album {
+  font-size: 11px;
   color: #808080;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wmp-now-playing-pane-progress {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.wmp-now-playing-pane-progress-track {
+  width: 100%;
+  height: 6px;
+  background: #c6c6c6;
+  border: 1px inset #c6c6c6;
+  margin-bottom: 6px;
+}
+
+.wmp-now-playing-pane-progress-fill {
+  height: 100%;
+  background: #0080ff;
+  transition: width 0.1s linear;
+}
+
+.wmp-now-playing-pane-times {
+  display: flex;
+  justify-content: space-between;
   font-size: 10px;
+  color: #000000;
 }
 
 /* Playback Control Bar */

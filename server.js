@@ -17,80 +17,13 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// Store distPath globally for use in routes (must be declared before use)
-let distPath = null;
-
-// Serve static files from the Vite build directory in production
+// In production, serve the Vite build that `npm run build` writes to ./dist
+const distPath = path.join(__dirname, 'dist');
 if (process.env.NODE_ENV === 'production') {
-  // Render builds dist/ in project root, but may run server from different directory
-  // Try paths relative to both __dirname and process.cwd(), going up to project root
-  const possibleDistPaths = [
-    path.resolve(process.cwd(), '..', 'dist'),  // Go up from cwd to project root
-    path.resolve(__dirname, '..', 'dist'),        // Go up from __dirname
-    path.resolve(process.cwd(), 'dist'),         // Direct from cwd
-    path.resolve(__dirname, 'dist'),              // Direct from __dirname
-    '/opt/render/project/dist',                   // Absolute path (Render standard)
-    path.join(process.cwd(), '..', 'dist')        // Alternative join
-  ];
-  
-  for (const possiblePath of possibleDistPaths) {
-    if (fs.existsSync(possiblePath)) {
-      distPath = possiblePath;
-      console.log('✓ Found dist folder at:', distPath);
-      break;
-    }
-  }
-  
-  if (!distPath) {
-    console.error('ERROR: Could not find dist folder. Tried:', possibleDistPaths);
-    console.error('Current working directory:', process.cwd());
-    console.error('__dirname:', __dirname);
-    // List what actually exists - check multiple levels
-    try {
-      console.error('=== Directory Contents Debug ===');
-      const cwdContents = fs.readdirSync(process.cwd());
-      console.error('Contents of cwd (' + process.cwd() + '):', cwdContents);
-      
-      const parentPath = path.resolve(process.cwd(), '..');
-      if (fs.existsSync(parentPath)) {
-        const parentContents = fs.readdirSync(parentPath);
-        console.error('Contents of parent (' + parentPath + '):', parentContents);
-      }
-      
-      // Check project root directly
-      const projectRoot = '/opt/render/project';
-      if (fs.existsSync(projectRoot)) {
-        const rootContents = fs.readdirSync(projectRoot);
-        console.error('Contents of project root (' + projectRoot + '):', rootContents);
-        // Check if dist exists in root
-        const distInRoot = path.join(projectRoot, 'dist');
-        if (fs.existsSync(distInRoot)) {
-          console.error('✓ Found dist in project root!');
-          distPath = distInRoot;
-        }
-      }
-      
-      // Also check if there's a build folder or other output
-      const buildPaths = [
-        path.join(process.cwd(), 'build'),
-        path.join(process.cwd(), '..', 'build'),
-        '/opt/render/project/build'
-      ];
-      for (const buildPath of buildPaths) {
-        if (fs.existsSync(buildPath)) {
-          console.error('Found build folder at:', buildPath);
-        }
-      }
-    } catch (e) {
-      console.error('Could not read directories:', e.message);
-    }
-  }
-  
-  if (distPath) {
-    console.log('Serving static files from:', distPath);
+  if (fs.existsSync(distPath)) {
     app.use(express.static(distPath));
   } else {
-    console.error('WARNING: dist folder not found. Static files will not be served.');
+    console.error('dist/ not found at', distPath, '- run `npm run build` first.');
   }
 }
 
@@ -115,7 +48,7 @@ const stateKey = 'spotify_auth_state';
 // Login endpoint - redirects to Spotify authorization
 app.get('/login', (req, res) => {
   const state = generateRandomString(16);
-  res.cookie(stateKey, state);
+  res.cookie(stateKey, state, { httpOnly: true, sameSite: 'lax' });
 
   // Add playlist scopes so we can read private/collaborative playlists
   const scope = [
@@ -190,7 +123,8 @@ app.get('/callback', async (req, res) => {
         res.redirect(FRONTEND_URL + '/#' +
           new URLSearchParams({
             access_token: access_token,
-            refresh_token: refresh_token
+            refresh_token: refresh_token,
+            expires_in: String(data.expires_in || 3600)
           }).toString()
         );
       } else {
@@ -238,7 +172,10 @@ app.post('/refresh_token', async (req, res) => {
 
     if (response.ok) {
       res.json({
-        access_token: data.access_token
+        access_token: data.access_token,
+        expires_in: data.expires_in || 3600,
+        // Spotify may rotate the refresh token
+        refresh_token: data.refresh_token || undefined
       });
     } else {
       res.status(400).json({ error: 'invalid_grant' });
@@ -473,16 +410,16 @@ app.put('/api/playback/transfer', async (req, res) => {
 app.put('/api/playback/play', async (req, res) => {
   const token = getBearer(req);
   if (!token) return res.status(401).json({ error: 'missing_token' });
-  const { device_id, context_uri, uris, offset } = req.body || {};
-  if (!device_id) return res.status(400).json({ error: 'device_id_required' });
+  const { device_id, context_uri, uris, offset, position_ms } = req.body || {};
 
   const body = {};
   if (context_uri) body.context_uri = context_uri;
   if (Array.isArray(uris)) body.uris = uris;
   if (offset !== undefined) body.offset = offset;
+  if (position_ms !== undefined) body.position_ms = position_ms;
 
   try {
-    await spotifyFetch(token, `${SPOTIFY_API}/me/player/play?device_id=${encodeURIComponent(device_id)}`, {
+    await spotifyFetch(token, `${SPOTIFY_API}/me/player/play${deviceQuery(device_id)}`, {
       method: 'PUT',
       body: JSON.stringify(body)
     });
@@ -493,6 +430,73 @@ app.put('/api/playback/play', async (req, res) => {
   }
 });
 
+/**
+ * Spotify Connect remote control (used on mobile, where the Web Playback SDK can't play audio)
+ */
+const deviceQuery = (deviceId, prefix = '?') =>
+  deviceId ? `${prefix}device_id=${encodeURIComponent(deviceId)}` : '';
+
+// Proxies a player command. `buildQuery` returns the Spotify query string (without device_id).
+const playerCommand = (method, spotifyPath, buildQuery = () => '') => async (req, res) => {
+  const token = getBearer(req);
+  if (!token) return res.status(401).json({ error: 'missing_token' });
+  try {
+    const query = buildQuery(req);
+    const device = deviceQuery(req.query.device_id, query ? '&' : '?');
+    await spotifyFetch(token, `${SPOTIFY_API}/me/player${spotifyPath}${query}${device}`, { method });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(`Player ${spotifyPath || '/'} error`, err);
+    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+  }
+};
+
+app.get('/api/me', async (req, res) => {
+  const token = getBearer(req);
+  if (!token) return res.status(401).json({ error: 'missing_token' });
+  try {
+    const data = await spotifyFetch(token, `${SPOTIFY_API}/me`);
+    res.json({ id: data.id, display_name: data.display_name, product: data.product });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+  }
+});
+
+app.get('/api/player', async (req, res) => {
+  const token = getBearer(req);
+  if (!token) return res.status(401).json({ error: 'missing_token' });
+  try {
+    // Spotify answers 204 (empty) when nothing is active; spotifyFetch turns that into {}
+    const data = await spotifyFetch(token, `${SPOTIFY_API}/me/player?additional_types=episode`);
+    res.json(data);
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+  }
+});
+
+app.get('/api/player/devices', async (req, res) => {
+  const token = getBearer(req);
+  if (!token) return res.status(401).json({ error: 'missing_token' });
+  try {
+    const data = await spotifyFetch(token, `${SPOTIFY_API}/me/player/devices`);
+    res.json(data);
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+  }
+});
+
+app.put('/api/player/pause', playerCommand('PUT', '/pause'));
+app.post('/api/player/next', playerCommand('POST', '/next'));
+app.post('/api/player/previous', playerCommand('POST', '/previous'));
+app.put('/api/player/seek', playerCommand('PUT', '/seek',
+  (req) => `?position_ms=${Math.max(0, Math.round(Number(req.query.position_ms) || 0))}`));
+app.put('/api/player/volume', playerCommand('PUT', '/volume',
+  (req) => `?volume_percent=${Math.min(100, Math.max(0, Math.round(Number(req.query.volume_percent) || 0)))}`));
+app.put('/api/player/shuffle', playerCommand('PUT', '/shuffle',
+  (req) => `?state=${req.query.state === 'true'}`));
+app.put('/api/player/repeat', playerCommand('PUT', '/repeat',
+  (req) => `?state=${['track', 'context'].includes(req.query.state) ? req.query.state : 'off'}`));
+
 // Serve React app for all non-API routes in production
 if (process.env.NODE_ENV === 'production') {
   app.get('*', (req, res) => {
@@ -501,33 +505,11 @@ if (process.env.NODE_ENV === 'production') {
       return res.status(404).json({ error: 'Not found' });
     }
     
-    // Use the global distPath found at startup
-    if (!distPath) {
-      console.error('ERROR: Static file request but dist folder not found');
-      return res.status(500).json({ error: 'Server initialization error: dist folder not found' });
-    }
-    
     const indexPath = path.join(distPath, 'index.html');
-    
-    if (!fs.existsSync(indexPath)) {
-      console.error('ERROR: index.html not found at:', indexPath);
-      return res.status(500).json({ error: 'Build artifact missing: index.html' });
-    }
-    
     res.sendFile(indexPath);
   });
 }
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log('Environment:', process.env.NODE_ENV);
-  
-  if (process.env.NODE_ENV === 'production') {
-    if (distPath) {
-      console.log('Production static files being served from:', distPath);
-    } else {
-      console.error('CRITICAL ERROR: dist folder was not found during startup!');
-    }
-  }
+  console.log(`Server running on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
 });
-

@@ -23,9 +23,6 @@
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
-    "@radix-ui/react-popover": "^1.1.15",
-    "@radix-ui/react-slot": "^1.2.4",
-    "@radix-ui/react-tooltip": "^1.2.8",
     "@vitejs/plugin-react": "^4.2.1",
     "98.css": "^0.1.21",
     "butterchurn": "^2.6.7",
@@ -36,6 +33,7 @@
     "express": "^4.18.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-draggable": "^4.7.2",
     "vite": "^5.0.8"
   },
   "devDependencies": {

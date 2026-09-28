@@ -30,3 +30,7 @@ yarn-error.log*
 *~
 
 
+
+# Build output & caches
+dist/
+.cache/

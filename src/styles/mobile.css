@@ -1,0 +1,682 @@
+/* Phones (≤767px). Shell rules are ported from 98-portfolio; the player layout is new. */
+
+@media (max-width: 767px), (max-height: 500px) and (pointer: coarse) {
+  /* ---------- Title bars: 44px touch targets, redrawn glyphs ---------- */
+  .title-bar {
+    min-height: 44px;
+    padding: 2px 2px 2px 8px;
+  }
+
+  .title-bar-text {
+    flex: 1;
+    font-size: 13px;
+  }
+
+  .title-bar-text .wmp-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .title-bar-controls {
+    gap: 6px;
+  }
+
+  .title-bar-controls button {
+    width: 44px;
+    height: 38px;
+    min-width: 44px;
+    position: relative;
+    background-image: none !important;
+    margin: 0;
+  }
+
+  .title-bar-controls button[aria-label='Minimize']::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 16px;
+    height: 3px;
+    margin: 4px 0 0 -8px;
+    background: #000000;
+  }
+
+  .title-bar-controls button[aria-label='Close']::before,
+  .title-bar-controls button[aria-label='Close']::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 3px;
+    height: 18px;
+    margin: -9px 0 0 -1.5px;
+    background: #000000;
+    transform: rotate(45deg);
+  }
+
+  .title-bar-controls button[aria-label='Close']::after {
+    transform: rotate(-45deg);
+  }
+
+  /* ---------- Taskbar ---------- */
+  .taskbar-start,
+  .taskbar-app {
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .taskbar-start {
+    margin: 4px;
+    padding: 0 12px 0 8px;
+  }
+
+  .start-logo,
+  .app-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .taskbar-app {
+    min-width: 44px;
+    padding: 0 10px;
+    flex-shrink: 0;
+  }
+
+  .app-text {
+    display: none;
+  }
+
+  .taskbar-tray {
+    height: 36px;
+    margin: 4px 4px 4px 0;
+    padding: 0 8px;
+    gap: 10px;
+  }
+
+  .tray-icon {
+    /* 16px pixel art at an exact 2x stays crisp */
+    width: 32px;
+    height: 32px;
+  }
+
+  .tray-time {
+    font-size: 13px;
+  }
+
+  .tray-volume-popup {
+    width: min(260px, calc(100vw - 16px));
+  }
+
+  /* ---------- Start menu: wider, larger text, submenus open inline ---------- */
+  .wmp-start-menu {
+    width: min(90vw, 280px);
+    max-height: calc(100dvh - var(--taskbar-height) - var(--safe-bottom) - var(--safe-top) - 8px);
+    font-size: 14px;
+  }
+
+  .start-menu-list {
+    overflow-y: auto;
+  }
+
+  .start-menu-row {
+    min-height: 44px;
+    padding: 6px 10px;
+  }
+
+  .start-menu-icon {
+    font-size: 20px;
+  }
+
+  .start-menu-item.open > .start-menu-row .start-menu-arrow {
+    transform: rotate(90deg);
+  }
+
+  .start-menu-submenu {
+    position: static;
+    min-width: 0;
+    max-width: none;
+    max-height: none;
+    margin: 0 0 4px 24px;
+    border: none;
+    box-shadow: var(--inset);
+    background: var(--win-face-light);
+    font-size: 13px;
+  }
+
+  .start-menu-submenu .start-menu-row {
+    min-height: 40px;
+  }
+
+  /* ---------- Desktop icons ---------- */
+  .desktop-icon {
+    width: 84px;
+    padding: 4px;
+  }
+
+  .desktop-icon-img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .desktop-icon-text {
+    font-size: 12px;
+  }
+
+  /* ---------- Context menu & dialogs ---------- */
+  .context-menu {
+    min-width: 200px;
+  }
+
+  .context-menu-item {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .dialog-backdrop {
+    align-items: flex-end;
+    padding: calc(8px + var(--safe-top)) calc(8px + var(--safe-right)) calc(8px + var(--safe-bottom)) calc(8px + var(--safe-left));
+  }
+
+  .os-dialog {
+    width: 100%;
+  }
+
+  .os-dialog-body {
+    font-size: 14px;
+    padding: 16px;
+  }
+
+  .os-dialog-body button,
+  .os-dialog-body select,
+  .os-dialog-body input[type='text'] {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .dialog-buttons button {
+    flex: 1;
+  }
+
+  .dialog-options {
+    margin-left: 0;
+    gap: 12px;
+  }
+
+  .dialog-options .field-row {
+    min-height: 32px;
+  }
+
+  .field-row input[type='radio'] + label,
+  .field-row input[type='checkbox'] + label {
+    font-size: 14px;
+  }
+
+  .device-row {
+    min-height: 48px;
+    font-size: 14px;
+  }
+
+  /* ---------- Player ---------- */
+  .os-window .window-body {
+    margin: 0 2px 2px;
+  }
+
+  .mobile-view-bar {
+    flex-shrink: 0;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-bottom: 1px solid var(--win-shadow);
+  }
+
+  .mobile-view-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+  }
+
+  .mobile-view-tab {
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 12px;
+    text-align: center;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px grey, inset 2px 2px #dfdfdf !important;
+  }
+
+  .mobile-view-tab.active {
+    box-shadow: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px grey !important;
+    background-image: repeating-conic-gradient(#ffffff 0 25%, transparent 0 50%);
+    background-size: 2px 2px;
+    font-weight: bold;
+  }
+
+  .mobile-view-tab .toolbar-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mobile-presets {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+
+  .mobile-presets .toolbar-text-btn {
+    min-height: 40px;
+    font-size: 13px;
+  }
+
+  .wmp-error {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  .wmp-error button {
+    min-height: 40px;
+  }
+
+  .wmp-now-playing-view {
+    padding: 16px;
+    gap: 16px;
+    justify-content: flex-start;
+  }
+
+  .wmp-album-art-large,
+  .wmp-album-art-placeholder {
+    width: min(64vw, 30dvh);
+    height: min(64vw, 30dvh);
+  }
+
+  /* The control bar already has the seek bar */
+  .wmp-now-playing-view .wmp-progress-area {
+    display: none;
+  }
+
+  .wmp-visualization-bars {
+    height: 32px;
+    gap: 3px;
+  }
+
+  .viz-bar {
+    width: 6px;
+  }
+
+  .wmp-track-title {
+    font-size: 18px;
+  }
+
+  .wmp-track-artist {
+    font-size: 14px;
+  }
+
+  .seek-track {
+    height: 10px;
+  }
+
+  .seek-track::before {
+    /* Taller invisible hit area for thumbs */
+    content: '';
+    position: absolute;
+    inset: -12px 0;
+  }
+
+  .seek-thumb {
+    opacity: 1;
+    width: 14px;
+    height: 22px;
+    margin-left: -7px;
+  }
+
+  .seek-times {
+    font-size: 12px;
+  }
+
+  /* Library: stacked drill-down list */
+  .library-list {
+    flex: 1;
+    overflow-y: auto;
+    background: #ffffff;
+    padding-bottom: 8px;
+  }
+
+  .library-list-heading {
+    padding: 12px 12px 6px;
+    font-size: 12px;
+    color: var(--win-shadow);
+    background: var(--win-face);
+    border-bottom: 1px solid var(--win-shadow);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .library-list-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    min-height: 56px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+
+  .library-list-row img,
+  .library-list-placeholder {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--win-shadow);
+    background-color: var(--win-face-light);
+    background-size: 60%;
+    display: block;
+  }
+
+  .library-list-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .library-list-label {
+    font-size: 14px;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .library-list-sub {
+    font-size: 12px;
+    color: var(--win-shadow);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .library-list-chevron {
+    color: var(--win-shadow);
+  }
+
+  .library-list-row:active {
+    background: var(--win-hover);
+  }
+
+  .library-source-header,
+  .wmp-playlist-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .library-back {
+    min-height: 40px;
+    min-width: 0;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .library-source-title {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .library-source-title h3,
+  .wmp-playlist-header h3 {
+    font-size: 16px;
+  }
+
+  .library-play-all {
+    min-height: 40px;
+    margin-left: auto;
+    font-size: 13px;
+  }
+
+  /* Track rows: two lines with art */
+  .track-table.compact .track-table-row {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 10px;
+    min-height: 56px;
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+
+  .track-row-art {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    display: block;
+    border: 1px solid #d0d0d0;
+  }
+
+  .track-row-art.placeholder {
+    background: var(--win-face-light);
+  }
+
+  .track-row-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .track-row-title,
+  .track-row-sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .track-row-sub {
+    font-size: 12px;
+    font-weight: normal;
+    opacity: 0.75;
+  }
+
+  .track-table-row.current .track-row-sub {
+    color: inherit;
+  }
+
+  .track-table-more button {
+    min-height: 44px;
+    min-width: 160px;
+    font-size: 14px;
+  }
+
+  /* Transport: big centered row + devices/volume row */
+  .wmp-control-bar.mobile {
+    padding: 10px 12px calc(10px);
+    gap: 10px;
+    border-top: 1px solid var(--win-shadow);
+  }
+
+  .control-bar-transport {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 360px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .wmp-control-bar.mobile .control-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .wmp-control-bar.mobile .control-btn .toolbar-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .wmp-control-bar.mobile .control-btn.large {
+    width: 56px;
+    height: 52px;
+  }
+
+  .wmp-control-bar.mobile .control-btn.large .toolbar-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .control-bar-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .devices-btn {
+    min-height: 40px;
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    font-size: 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .control-bar-secondary .control-volume {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .control-bar-secondary .control-volume-slider {
+    width: 120px;
+  }
+
+  /* Sign-in panel */
+  .wmp-login {
+    padding: 16px;
+  }
+
+  .wmp-login h1 {
+    font-size: 20px;
+  }
+
+  .wmp-login-features {
+    font-size: 14px;
+  }
+
+  .wmp-login-btn {
+    min-height: 48px;
+    width: 100%;
+    font-size: 15px;
+  }
+}
+
+/* Tiny phones: drop the tray volume icon (the player has its own) */
+@media (max-width: 360px) {
+  .tray-icon-volume {
+    display: none;
+  }
+
+  .mobile-view-tab {
+    font-size: 11px;
+  }
+}
+
+/* Landscape phones: compact chrome so the content isn't squeezed out */
+@media (max-height: 500px) and (pointer: coarse) {
+  .title-bar {
+    min-height: 32px;
+  }
+
+  .title-bar-controls button {
+    height: 28px;
+  }
+
+  .mobile-view-tab {
+    min-height: 32px;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .mobile-view-tab .toolbar-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .mobile-presets {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .mobile-presets .toolbar-text-btn {
+    min-height: 30px;
+  }
+
+  .wmp-control-bar.mobile {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+  }
+
+  .wmp-control-bar.mobile .seek-bar {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .wmp-control-bar.mobile .seek-times {
+    margin-top: 2px;
+  }
+
+  .control-bar-transport {
+    width: auto;
+    margin: 0;
+    gap: 4px;
+  }
+
+  .wmp-control-bar.mobile .control-btn,
+  .wmp-control-bar.mobile .control-btn.large {
+    width: 40px;
+    height: 36px;
+  }
+
+  .wmp-control-bar.mobile .control-btn.large .toolbar-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .control-bar-secondary .devices-btn {
+    flex: 0 0 auto;
+    max-width: 160px;
+  }
+
+  .control-bar-secondary .control-volume-slider {
+    width: 90px;
+  }
+
+  .wmp-now-playing-view {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 16px;
+  }
+
+  .wmp-album-art-large,
+  .wmp-album-art-placeholder {
+    width: 40dvh;
+    height: 40dvh;
+  }
+
+  .wmp-visualization-bars {
+    display: none;
+  }
+
+  .track-table.compact .track-table-row,
+  .library-list-row {
+    min-height: 48px;
+  }
+}

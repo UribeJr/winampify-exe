@@ -44,10 +44,9 @@ SPOTIFY_CLIENT_ID=your_client_id_here
 SPOTIFY_CLIENT_SECRET=your_client_secret_here
 SPOTIFY_REDIRECT_URI=http://localhost:3000/callback
 PORT=3001
-
-VITE_SPOTIFY_CLIENT_ID=your_client_id_here
-VITE_SPOTIFY_REDIRECT_URI=http://localhost:3000/callback
 ```
+
+The client needs no Spotify variables: in dev, Vite proxies `/login`, `/callback`, `/refresh_token` and `/api` to the Express server, and in production Express serves both.
 
 Replace `your_client_id_here` and `your_client_secret_here` with your actual Spotify app credentials.
 
@@ -74,11 +73,16 @@ The backend will run on `http://localhost:3001` and the frontend on `http://loca
 
 ## Usage
 
-1. Open your browser and navigate to `http://localhost:3000`
-2. Click "Login to Spotify"
-3. Authorize the application
-4. Once connected, you can control playback using the player controls
-5. The currently playing track will be displayed with album art
+1. Open `http://127.0.0.1:3000` — Winampify boots to a Windows 98 desktop
+2. Click **Sign In** (or open Media Player) and authorize Spotify
+3. Browse playlists, liked songs and albums in the Media Library and click a track to play it
+4. Drag/maximize/minimize the window, right-click (or long-press) the desktop, try Start → Run… (`wmp.exe`, or paste a playlist link) and Start → Settings → Themes
+
+### Desktop vs. mobile
+
+- **Desktop browsers** play audio in the page via the Web Playback SDK (Spotify Premium).
+- **Phones and tablets** can't run the SDK, so Winampify becomes a **Spotify Connect remote**: music plays in the Spotify app (or any speaker) and you pick the device under **Devices**. The same fallback kicks in if a desktop browser can't start the SDK.
+- Under 767px wide (or short touch screens) the window is always maximized, the menu bar/toolbar become a row of view tabs, the library becomes a drill-down list, and all touch targets are 44px+.
 
 ## Project Structure
 
@@ -88,10 +92,15 @@ The backend will run on `http://localhost:3001` and the frontend on `http://loca
 ├── vite.config.js      # Vite configuration
 ├── index.html          # HTML template (Vite entry point)
 ├── src/
-│   ├── App.jsx         # Main React component with Web Playback SDK
-│   ├── index.jsx       # React entry point
-│   └── index.css       # Styles
-├── public/             # Static assets (if needed)
+│   ├── App.jsx         # Providers, boot screen, desktop shell wiring
+│   ├── os/             # Window manager, Window, Taskbar, StartMenu, Desktop, ContextMenu, app registry
+│   ├── player/         # Media player: views, track table, control bar, seek bar, visualizer
+│   ├── spotify/        # Auth, API client, SDK + Connect playback engines, context
+│   ├── dialogs/        # Run, Shut Down, Themes, sign-in, message boxes
+│   ├── contexts/       # ThemeContext (desktop themes)
+│   ├── hooks/          # useIsMobile, useClock, useLongPress, …
+│   └── styles/         # base, shell, player, mobile CSS
+├── public/assets/      # Icons and wallpaper
 ├── package.json        # Dependencies and scripts
 └── .env               # Environment variables (create this)
 ```
@@ -101,6 +110,9 @@ The backend will run on `http://localhost:3001` and the frontend on `http://loca
 - `GET /login` - Initiates Spotify OAuth flow
 - `GET /callback` - Handles OAuth callback from Spotify
 - `POST /refresh_token` - Refreshes access token
+- `GET /api/playlists`, `/api/playlists/:id/tracks`, `/api/library/tracks|albums`, `/api/albums/:id` - Library
+- `PUT /api/playback/play`, `PUT /api/playback/transfer` - Start playback / move it to a device
+- `GET /api/player`, `GET /api/player/devices`, `PUT /api/player/pause|seek|volume|shuffle|repeat`, `POST /api/player/next|previous` - Spotify Connect remote control
 
 ## Deployment to Render
 
@@ -149,14 +161,13 @@ PORT=3001
 If deploying separately, create a `.env` file with:
 
 ```env
-VITE_API_BASE_URL=https://your-app.onrender.com
-VITE_SPOTIFY_CLIENT_ID=your_client_id
-VITE_SPOTIFY_REDIRECT_URI=https://your-app.onrender.com/callback
+VITE_API_BASE_URL=https://your-api.onrender.com
 ```
 
 ## Notes
 
-- This application requires **Spotify Premium** to use the Web Playback SDK
+- Playback control (in-browser or remote) requires **Spotify Premium**
+- Spotify only allows loopback or HTTPS redirect URIs, so test sign-in on phones against a deployed HTTPS build; `npm run client -- --host` is fine for previewing layout
 - The app uses `localhost` for development. For production, update the redirect URIs and use HTTPS
 - Access tokens expire after 1 hour. The refresh token endpoint can be used to get new tokens
 - In production, the Express server serves both the API and the static React build files

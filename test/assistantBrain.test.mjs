@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  initialBrain, decide, flushQueue, registerClick, funFact, setHidden, persisted,
+  initialBrain, decide, decideTip, flushQueue, registerClick, funFact, setHidden, persisted,
   COOLDOWN_MS, SESSION_CAP, QUEUE_LIMIT
 } from '../src/assistant/brain.js';
 import { FUN_FACTS } from '../src/assistant/tips.js';
@@ -52,7 +52,7 @@ test('tips wait while a dialog blocks them, keeping only the newest', () => {
   assert.equal(brain.queue.length, QUEUE_LIMIT);
   const { tip, brain: after } = flushQueue(brain, T0 + 10);
   assert.equal(tip.id, 'run-unknown');
-  assert.equal(after.queue.includes('run-unknown'), false);
+  assert.equal(after.queue.some((t) => t.id === 'run-unknown'), false);
 });
 
 test('the welcome wins over newer queued tips', () => {
@@ -60,7 +60,7 @@ test('the welcome wins over newer queued tips', () => {
   brain = decide(brain, 'player-opened', T0 + 5, { blocked: true }).brain;
   const { tip, brain: after } = flushQueue(brain, T0 + 10);
   assert.equal(tip.id, 'welcome');
-  assert.deepEqual(after.queue, ['player-opened']);
+  assert.deepEqual(after.queue.map((t) => t.id), ['player-opened']);
 });
 
 test('hidden Disky says nothing and drops the queue', () => {
@@ -94,4 +94,22 @@ test('initialBrain ignores bad saved data', () => {
   const brain = initialBrain({ hidden: 'yes', seen: ['ok', 5, null] });
   assert.equal(brain.hidden, true);
   assert.deepEqual(brain.seen, ['ok']);
+});
+
+test('dynamic tips (note reactions) follow the same rules', () => {
+  const tip = { id: 'note:n1:reminder:123', mood: 'happy', text: 'Dentist at 3!' };
+  let { brain, tip: shown } = decideTip(initialBrain(), tip, T0);
+  assert.equal(shown.id, tip.id);
+  ({ tip: shown } = decideTip(brain, tip, T0 + COOLDOWN_MS * 2));
+  assert.equal(shown, null); // once per note
+});
+
+test('forced reminders show even when Disky is hidden, and survive hiding in the queue', () => {
+  const reminder = { id: 'reminder:1', once: false, text: 'Dentist now!' };
+  const hidden = setHidden(initialBrain(), true);
+  assert.equal(decideTip(hidden, reminder, T0).tip, null);
+  assert.equal(decideTip(hidden, reminder, T0, { force: true }).tip.id, 'reminder:1');
+  const queued = decideTip(initialBrain(), reminder, T0, { blocked: true, force: true }).brain;
+  const stillQueued = setHidden(queued, true);
+  assert.equal(flushQueue(stillQueued, T0 + 5).tip.id, 'reminder:1');
 });

@@ -17,7 +17,9 @@ Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic AP
 - **Display Properties** — pick a wallpaper (5 built-in pixel-art wallpapers or your own picture, shown
   centered, tiled or stretched) and a color scheme. Right-click the desktop → Properties, or Start → Settings
 - **Disky, your (mostly) helpful assistant** — an original CD mascot with a first-visit tour, one-time tips,
-  naps when you're idle, and a few easter eggs. Hide him from his menu; Start → Help → Show Disky brings him back
+  naps when you're idle, and a few easter eggs. He also reads your sticky notes (locally): write "dentist 3pm"
+  and he'll offer a reminder, and he cheers when every `[ ]` on a checklist becomes `[x]`. Reminders pop up
+  while Winampify is open. Hide him from his menu; Start → Help → Show Disky brings him back
 - **Sticky notes** on the desktop — four colors, collapse to the title bar, and a Recycle Bin to restore
   deleted notes (right-click or long-press the desktop → New Sticky Note)
 - **Media Library** — artists, albums, playlists, Liked Songs (Navidrome favorites),

@@ -17,7 +17,7 @@ const SpeechBubble = ({ bubble, onAct, onClose }) => {
       {actions.length > 0 && (
         <div className={bubble.kind === 'menu' ? 'assistant-menu' : 'assistant-bubble-actions'}>
           {actions.map((a) => (
-            <button type="button" key={a.label} onClick={() => onAct(a.action)}>{a.label}</button>
+            <button type="button" key={a.label} onClick={() => onAct(a.action, a.payload)}>{a.label}</button>
           ))}
         </div>
       )}
@@ -50,7 +50,8 @@ const Assistant = ({ docked }) => {
 
   const longPress = useLongPress(useCallback(() => openMenu(), [openMenu]));
 
-  if (hidden) return null;
+  // A reminder the user asked for still pops up while Disky is hidden
+  if (hidden && bubble?.kind !== 'reminder') return null;
   if (docked && !bubble) return null; // only the tray icon shows
 
   return (

@@ -6,16 +6,17 @@ import { FUN_FACTS, tipForEvent } from './tips.js';
 export const COOLDOWN_MS = 60 * 1000;
 export const SESSION_CAP = 5;
 export const QUEUE_LIMIT = 2;
+export const SEEN_LIMIT = 300;
 export const DIZZY_CLICKS = 5;
 export const DIZZY_WINDOW_MS = 2000;
 
 export const initialBrain = (saved = {}) => ({
   hidden: Boolean(saved.hidden),
-  seen: Array.isArray(saved.seen) ? saved.seen.filter((id) => typeof id === 'string') : [],
+  seen: Array.isArray(saved.seen) ? saved.seen.filter((id) => typeof id === 'string').slice(-SEEN_LIMIT) : [],
   tourDone: Boolean(saved.tourDone),
   lastShownAt: 0,
   sessionCount: 0,
-  queue: [],
+  queue: [], // tip objects waiting for a dialog to close
   clicks: []
 });
 
@@ -24,42 +25,47 @@ export const persisted = (brain) => ({ hidden: brain.hidden, seen: brain.seen, t
 
 const markShown = (brain, tip, now, counted) => ({
   ...brain,
-  seen: tip.once === false || brain.seen.includes(tip.id) ? brain.seen : [...brain.seen, tip.id],
+  seen: tip.once === false || brain.seen.includes(tip.id) ? brain.seen : [...brain.seen, tip.id].slice(-SEEN_LIMIT),
   lastShownAt: now,
   sessionCount: counted ? brain.sessionCount + 1 : brain.sessionCount,
-  queue: brain.queue.filter((id) => id !== tip.id)
+  queue: brain.queue.filter((t) => t.id !== tip.id)
 });
 
+const alreadySeen = (brain, tip) => tip.once !== false && brain.seen.includes(tip.id);
+
 /**
- * React to an app event. Returns { brain, tip } where tip is null when Disky stays quiet.
+ * Decide whether to say `tip` (a catalog tip or one built on the fly, e.g. a note reaction).
+ * Returns { brain, tip } where tip is null when Disky stays quiet.
  * - once-only tips never repeat
  * - unprompted tips respect a cooldown and a per-session cap
  * - while `blocked` (a dialog is open) tips wait in a small queue
- * - `prompted` (the user asked) skips the rate limits but still respects `hidden`
+ * - `prompted` (the user asked or acted) skips the rate limits
+ * - `force` (a reminder the user set) is said even when Disky is hidden
  */
-export function decide(brain, event, now, { blocked = false, prompted = false } = {}) {
-  const tip = tipForEvent(event);
-  if (!tip || brain.hidden) return { brain, tip: null };
-  if (tip.once !== false && brain.seen.includes(tip.id)) return { brain, tip: null };
+export function decideTip(brain, tip, now, { blocked = false, prompted = false, force = false } = {}) {
+  if (!tip || (brain.hidden && !force)) return { brain, tip: null };
+  if (alreadySeen(brain, tip)) return { brain, tip: null };
   if (blocked) {
-    const queue = [...brain.queue.filter((id) => id !== event), event].slice(-QUEUE_LIMIT);
+    const queue = [...brain.queue.filter((t) => t.id !== tip.id), { ...tip, force }].slice(-QUEUE_LIMIT);
     return { brain: { ...brain, queue }, tip: null };
   }
-  if (!prompted) {
+  if (!prompted && !force) {
     if (now - brain.lastShownAt < COOLDOWN_MS && brain.lastShownAt !== 0) return { brain, tip: null };
     if (brain.sessionCount >= SESSION_CAP) return { brain, tip: null };
   }
-  return { brain: markShown(brain, tip, now, !prompted), tip };
+  return { brain: markShown(brain, tip, now, !prompted && !force), tip };
 }
+
+// React to an app event from the tip catalog (see tips.js)
+export const decide = (brain, event, now, options) => decideTip(brain, tipForEvent(event), now, options);
 
 // Once nothing is blocking, deliver a queued tip (it was queued, so it skips the cooldown):
 // priority tips first (the welcome), otherwise the newest
 export function flushQueue(brain, now) {
-  const order = [...brain.queue].reverse().sort((a, b) => Number(Boolean(tipForEvent(b)?.priority)) - Number(Boolean(tipForEvent(a)?.priority)));
-  for (const event of order) {
-    const tip = tipForEvent(event);
-    const rest = { ...brain, queue: brain.queue.filter((e) => e !== event) };
-    if (tip && !brain.hidden && !(tip.once !== false && brain.seen.includes(tip.id))) {
+  const order = [...brain.queue].reverse().sort((a, b) => Number(Boolean(b.priority)) - Number(Boolean(a.priority)));
+  for (const tip of order) {
+    const rest = { ...brain, queue: brain.queue.filter((t) => t.id !== tip.id) };
+    if ((!brain.hidden || tip.force) && !alreadySeen(brain, tip)) {
       return { brain: markShown(rest, tip, now, true), tip };
     }
     brain = rest;
@@ -80,5 +86,5 @@ export function registerClick(brain, now) {
   return { brain: { ...brain, clicks }, dizzy: false };
 }
 
-export const setHidden = (brain, hidden) => ({ ...brain, hidden, queue: hidden ? [] : brain.queue });
+export const setHidden = (brain, hidden) => ({ ...brain, hidden, queue: hidden ? brain.queue.filter((t) => t.force) : brain.queue });
 export const finishTour = (brain) => ({ ...brain, tourDone: true });

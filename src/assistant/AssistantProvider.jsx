@@ -1,10 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  initialBrain, persisted, decide, flushQueue, registerClick, funFact, setHidden, finishTour
+  initialBrain, persisted, decide, decideTip, flushQueue, registerClick, funFact, setHidden, finishTour
 } from './brain';
+import { formatClock } from './noteSense';
 import { tipById, TOUR } from './tips';
 
 const STORAGE_KEY = 'winampify-assistant';
+const REMINDERS_KEY = 'winampify-reminders';
+const SNOOZE_MS = 10 * 60 * 1000;
+const MAX_TIMER_MS = 60 * 60 * 1000; // re-check at least hourly (long timeouts drift)
+const LATE_MS = 5 * 60 * 1000;
 const IDLE_MS = 3 * 60 * 1000;
 const TALK_MS = 1400; // mouth flaps this long before settling into the tip's mood
 
@@ -12,9 +17,30 @@ const load = () => {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
 };
 
+const loadReminders = () => {
+  try {
+    const list = JSON.parse(localStorage.getItem(REMINDERS_KEY));
+    return Array.isArray(list) ? list.filter((r) => r && typeof r.label === 'string' && Number.isFinite(r.at)) : [];
+  } catch {
+    return [];
+  }
+};
+
+// What Disky says when a reminder is due
+const reminderTip = (r, now) => ({
+  id: `reminder:${r.id}:${r.at}`,
+  kind: 'reminder',
+  once: false,
+  mood: 'surprised',
+  text: now - r.at > LATE_MS
+    ? `While you were away: ${r.label} at ${formatClock(new Date(r.at))}. Hope it went well!`
+    : `⏰ It's ${formatClock(new Date(r.at))} — ${r.label}!`,
+  actions: [{ label: 'Snooze 10 min', action: 'snooze', payload: r }, { label: 'Got it', action: 'close' }]
+});
+
 const NOOP = {
   hidden: true, mood: 'idle', bubble: null, docked: false,
-  notify: () => {}, setBlocked: () => {}, click: () => {}, openMenu: () => {}, close: () => {},
+  notify: () => {}, notifyTip: () => {}, setBlocked: () => {}, registerHandler: () => () => {}, reminders: [], click: () => {}, openMenu: () => {}, close: () => {},
   showTip: () => {}, startTour: () => {}, nextTourStep: () => {}, hide: () => {}, show: () => {}, act: () => {}
 };
 
@@ -33,7 +59,13 @@ export function AssistantProvider({ children }) {
   const blockedRef = useRef(false);
   const moodTimerRef = useRef(null);
   const lastFactRef = useRef(null);
+  const handlersRef = useRef({}); // actions handled by the app, e.g. 'recycle-note'
+  const [reminders, setReminders] = useState(loadReminders);
   brainRef.current = brain;
+
+  useEffect(() => {
+    try { localStorage.setItem(REMINDERS_KEY, JSON.stringify(reminders)); } catch { /* storage blocked */ }
+  }, [reminders]);
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted(brain))); } catch { /* storage blocked */ }
@@ -48,7 +80,7 @@ export function AssistantProvider({ children }) {
   }, []);
 
   const present = useCallback((tip) => {
-    say({ kind: 'tip', id: tip.id, text: tip.text, actions: tip.actions }, tip.mood);
+    say({ kind: tip.kind || 'tip', id: tip.id, text: tip.text, actions: tip.actions }, tip.mood);
   }, [say]);
 
   // Decided in a microtask: a child (e.g. a dialog) can notify from its effect before the
@@ -61,6 +93,40 @@ export function AssistantProvider({ children }) {
       if (tip) present(tip);
     });
   }, [present]);
+
+  // Same, for a tip built on the fly (note reactions, reminders)
+  const notifyTip = useCallback((tip, { prompted = false, force = false } = {}) => {
+    queueMicrotask(() => {
+      const { brain: next, tip: shown } = decideTip(brainRef.current, tip, Date.now(), { blocked: blockedRef.current, prompted, force });
+      brainRef.current = next;
+      setBrain(next);
+      if (shown) present(shown);
+    });
+  }, [present]);
+
+  // Reminders: fire when due (also right after a reload if one came due while the page was closed)
+  useEffect(() => {
+    if (!reminders.length) return undefined;
+    const now = Date.now();
+    const due = reminders.filter((r) => r.at <= now);
+    if (due.length) {
+      setReminders((list) => list.filter((r) => r.at > now));
+      due.forEach((r) => notifyTip(reminderTip(r, now), { prompted: true, force: true }));
+      return undefined;
+    }
+    const next = Math.min(...reminders.map((r) => r.at));
+    const timer = setTimeout(() => setReminders((list) => [...list]), Math.min(next - now, MAX_TIMER_MS));
+    return () => clearTimeout(timer);
+  }, [reminders, notifyTip]);
+
+  const addReminder = useCallback((r) => {
+    setReminders((list) => [...list.filter((x) => !(x.noteId === r.noteId && x.at === r.at)), { ...r, id: r.id || `${Date.now()}` }]);
+  }, []);
+
+  const registerHandler = useCallback((name, fn) => {
+    handlersRef.current[name] = fn;
+    return () => { if (handlersRef.current[name] === fn) delete handlersRef.current[name]; };
+  }, []);
 
   // While a dialog is open Disky waits; when it closes he delivers the newest queued tip
   const setBlocked = useCallback((blocked) => {
@@ -129,13 +195,22 @@ export function AssistantProvider({ children }) {
   }, [say]);
 
   // Bubble buttons
-  const act = useCallback((action) => {
+  const act = useCallback((action, payload) => {
     if (action === 'tour') startTour();
     else if (action === 'fact') showFact();
     else if (action === 'hide') hide();
     else if (action === 'next') nextTourStep();
-    else close();
-  }, [startTour, showFact, hide, nextTourStep, close]);
+    else if (action === 'remind') {
+      addReminder(payload);
+      say({ kind: 'tip', id: 'reminder-set', text: `Okay! I'll remind you at ${formatClock(new Date(payload.at))}${payload.dayText ? ` ${payload.dayText}` : ''}. Keep Winampify open and I'll pop up.` }, 'happy');
+    } else if (action === 'snooze') {
+      addReminder({ ...payload, id: `${payload.id}-snooze`, at: Date.now() + SNOOZE_MS });
+      say({ kind: 'tip', id: 'snoozed', text: 'Snoozed! Ten more minutes. I\'ll be right here.' }, 'sleepy');
+    } else if (handlersRef.current[action]) {
+      handlersRef.current[action](payload);
+      close();
+    } else close();
+  }, [startTour, showFact, hide, nextTourStep, close, addReminder, say]);
 
   // Clicking Disky: wake him up, make him dizzy (5 quick clicks), or toggle his menu
   const click = useCallback(() => {
@@ -198,6 +273,9 @@ export function AssistantProvider({ children }) {
     mood,
     bubble,
     notify,
+    notifyTip,
+    registerHandler,
+    reminders,
     setBlocked,
     click,
     openMenu,
@@ -208,7 +286,7 @@ export function AssistantProvider({ children }) {
     hide,
     show,
     act
-  }), [brain.hidden, brain.tourDone, mood, bubble, notify, setBlocked, click, openMenu, close, present, startTour, nextTourStep, hide, show, act]);
+  }), [brain.hidden, brain.tourDone, mood, bubble, notify, notifyTip, registerHandler, reminders, setBlocked, click, openMenu, close, present, startTour, nextTourStep, hide, show, act]);
 
   return <AssistantContext.Provider value={value}>{children}</AssistantContext.Provider>;
 }

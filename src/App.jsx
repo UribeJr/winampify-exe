@@ -19,6 +19,7 @@ import NotesLayer, { noteSize } from './os/NotesLayer';
 import useStickyNotes from './os/useStickyNotes';
 import { AssistantProvider, useAssistant } from './assistant/AssistantProvider';
 import Assistant from './assistant/Assistant';
+import useNoteCompanion from './assistant/useNoteCompanion';
 import { NOTE_COLORS } from './os/stickyNotes';
 import { useForceMaximized, useIsMobile } from './hooks/useMediaQuery';
 import useElementSize from './hooks/useElementSize';
@@ -269,6 +270,12 @@ function Shell() {
   useEffect(() => {
     if (/can't reach/i.test(music.statusMessage || '')) notify('server-unreachable');
   }, [music.statusMessage, notify]);
+
+  // Disky reads sticky notes as you write them, and can recycle a finished checklist
+  useNoteCompanion(stickies.notes, assistant);
+  const { registerHandler } = assistant;
+  const removeNote = stickies.remove;
+  useEffect(() => registerHandler('recycle-note', (id) => removeNote(id)), [registerHandler, removeNote]);
 
   // Dock Disky in the tray on phones or when a window fills the screen, so he never covers controls
   const assistantDocked = isMobile || wm.windows.some((w) => !w.isMinimized && (w.isMaximized || forceMaximized));

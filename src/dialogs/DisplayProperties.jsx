@@ -1,6 +1,7 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import Dialog, { DialogButtons } from './Dialog';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAssistant } from '../assistant/AssistantProvider';
 import { getThemeList } from '../data/themes';
 import { WALLPAPERS, MODES, CUSTOM_WALLPAPER_ID, DEFAULT_WALLPAPER, getWallpaper, wallpaperStyle } from '../data/wallpapers';
 
@@ -48,6 +49,10 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
   } = useTheme();
   const themes = getThemeList();
   const fileRef = useRef(null);
+  const { notify } = useAssistant();
+
+  // Disky's Browse… tip (he waits until this dialog closes)
+  useEffect(() => { notify('display-opened'); }, [notify]);
 
   const [tab, setTab] = useState(initialTab);
   const [draftWallpaper, setDraftWallpaper] = useState(wallpaper);

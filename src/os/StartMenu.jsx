@@ -75,6 +75,10 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
           ...(playlists.length === 0 ? [{ id: 'empty', label: '(No playlists)', disabled: true }] : [])
         ]
       : [{ id: 'signin', label: `Connect to ${providerName} to see playlists…`, action: 'open-app', data: 'media-player' }],
+    help: [
+      { id: 'help', label: 'Winampify Help', icon: 'help', action: 'help' },
+      { id: 'disky', label: 'Show Disky', icon: 'disky', action: 'show-disky' }
+    ],
     settings: [
       { id: 'wallpaper', label: 'Wallpaper…', action: 'wallpaper' },
       { id: 'themes', label: 'Themes…', action: 'themes' },
@@ -138,7 +142,7 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
         {SubmenuItem({ id: 'programs', icon: 'programs', label: 'Programs' })}
         {SubmenuItem({ id: 'playlists', icon: 'documents', label: 'Playlists' })}
         {SubmenuItem({ id: 'settings', icon: 'settings', label: 'Settings' })}
-        {Item({ icon: 'help', label: 'Help', action: 'help' })}
+        {SubmenuItem({ id: 'help', icon: 'help', label: 'Help' })}
         {Item({ icon: 'run', label: 'Run…', action: 'run' })}
         <div className="start-menu-separator" />
         {isAuthenticated

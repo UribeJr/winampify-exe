@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import StartMenu from './StartMenu';
 import useClock from '../hooks/useClock';
 import { useMusic } from '../music/MusicContext';
+import { DiskyTrayButton } from '../assistant/Assistant';
 
 const VolumePopup = ({ onClose }) => {
   const { playback, controls } = useMusic();
@@ -45,7 +46,7 @@ const VolumePopup = ({ onClose }) => {
   );
 };
 
-const Taskbar = ({ windows, activeId, onToggleWindow, onMenuAction }) => {
+const Taskbar = ({ windows, activeId, onToggleWindow, onMenuAction, assistantDocked }) => {
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [volumeOpen, setVolumeOpen] = useState(false);
   const time = useClock();
@@ -78,6 +79,7 @@ const Taskbar = ({ windows, activeId, onToggleWindow, onMenuAction }) => {
           ))}
         </div>
         <div className="taskbar-tray">
+          {assistantDocked && <DiskyTrayButton />}
           {isAuthenticated && (
             <button
               type="button"

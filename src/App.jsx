@@ -17,6 +17,8 @@ import LoginDialog from './dialogs/LoginDialog';
 import RecycleBinDialog from './dialogs/RecycleBinDialog';
 import NotesLayer, { noteSize } from './os/NotesLayer';
 import useStickyNotes from './os/useStickyNotes';
+import { AssistantProvider, useAssistant } from './assistant/AssistantProvider';
+import Assistant from './assistant/Assistant';
 import { NOTE_COLORS } from './os/stickyNotes';
 import { useForceMaximized, useIsMobile } from './hooks/useMediaQuery';
 import useElementSize from './hooks/useElementSize';
@@ -64,6 +66,7 @@ const ICON_MENU = [
 ];
 
 const NOTE_COMMANDS = ['notes', 'sticky', 'stikynot', 'stikynot.exe', 'stickynotes'];
+const DISKY_COMMANDS = ['disky', 'disky.exe', 'clippy', 'help me'];
 const colorLabel = (c) => c[0].toUpperCase() + c.slice(1);
 
 // Right-click / long-press menu on a sticky note's title bar
@@ -82,6 +85,7 @@ const parseSpotifyLink = (text) => {
 
 function Shell() {
   const music = useMusic();
+  const assistant = useAssistant();
   const { switchProvider } = useService();
   const { status, isAuthenticated, authError, clearAuthError, playlists, mode, provider } = music;
   const forceMaximized = useForceMaximized();
@@ -97,6 +101,7 @@ function Shell() {
   const [dialog, setDialog] = useState(null); // { type, props }
   const [contextMenu, setContextMenu] = useState(null); // { x, y, items, target }
   const startupHandledRef = useRef(false);
+  const [startupDone, setStartupDone] = useState(false); // after boot: player opened or sign-in shown
 
   const closeDialog = useCallback(() => setDialog(null), []);
   const showMessage = useCallback((message, title, type) => setDialog({ type: 'message', props: { message, title, type } }), []);
@@ -104,7 +109,8 @@ function Shell() {
   const openApp = useCallback((appId, request) => {
     // The measured window layer already excludes the taskbar
     wm.open(appId, { request, viewport: desktopSize, taskbarHeight: 0 });
-  }, [wm, desktopSize]);
+    if (appId === 'media-player') assistant.notify('player-opened');
+  }, [wm, desktopSize, assistant]);
 
   const onBootComplete = useCallback(() => {
     try { sessionStorage.setItem(BOOTED_KEY, '1'); } catch { /* storage blocked */ }
@@ -115,6 +121,7 @@ function Shell() {
   useEffect(() => {
     if (!booted || status === 'checking' || startupHandledRef.current) return;
     startupHandledRef.current = true;
+    setStartupDone(true);
     if (isAuthenticated) openApp('media-player');
     else setDialog({ type: 'login' });
   }, [booted, status, isAuthenticated, openApp]);
@@ -153,7 +160,8 @@ function Shell() {
       y: Math.min(Math.max(0, y), Math.max(0, desktopSize.height - size.height))
     });
     if (!id) showMessage('You have a lot of sticky notes already. Delete a few to make room.', 'Sticky Notes', 'warning');
-  }, [desktopSize, isMobile, layerEl, showMessage, stickies]);
+    else assistant.notify('note-created');
+  }, [desktopSize, isMobile, layerEl, showMessage, stickies, assistant]);
 
   const runCommand = useCallback((raw) => {
     const command = raw.trim().toLowerCase();
@@ -163,6 +171,16 @@ function Shell() {
     }
     if (['desk.cpl', 'control desk', 'control', 'display'].includes(command)) {
       setDialog({ type: 'display', props: { initialTab: 'background' } });
+      return;
+    }
+    if (DISKY_COMMANDS.includes(command)) {
+      if (assistant.hidden) assistant.show();
+      else assistant.openMenu();
+      return;
+    }
+    if (command === 'hello' || command === 'hi') {
+      if (assistant.hidden) assistant.show();
+      assistant.notify('hello', { prompted: true });
       return;
     }
     if (NOTE_COMMANDS.includes(command)) {
@@ -181,7 +199,8 @@ function Shell() {
       return;
     }
     showMessage(`Cannot find '${raw}'. Make sure you typed the name correctly, and then try again.`, raw, 'error');
-  }, [openApp, playlists, provider, showMessage, createNote]);
+    assistant.notify('run-unknown');
+  }, [openApp, playlists, provider, showMessage, createNote, assistant]);
 
   const handleAction = useCallback((action, data) => {
     switch (action) {
@@ -205,6 +224,10 @@ function Shell() {
         break;
       case 'shutdown':
         setDialog({ type: 'shutdown' });
+        break;
+      case 'show-disky':
+        if (assistant.hidden) assistant.show();
+        else assistant.openMenu();
         break;
       case 'help':
         showMessage(HELP_MESSAGE, 'Winampify Help');
@@ -230,7 +253,25 @@ function Shell() {
       default:
         break;
     }
-  }, [openApp, showMessage, signOut, music, createNote]);
+  }, [openApp, showMessage, signOut, music, createNote, assistant]);
+
+  // Disky waits while any dialog or menu is open, greets first-time visitors after boot,
+  // and chimes in when the music server can't be reached
+  const { setBlocked, notify } = assistant;
+  useEffect(() => {
+    setBlocked(!startupDone || Boolean(dialog) || Boolean(contextMenu));
+  }, [startupDone, dialog, contextMenu, setBlocked]);
+
+  useEffect(() => {
+    if (booted) notify('first-visit');
+  }, [booted, notify]);
+
+  useEffect(() => {
+    if (/can't reach/i.test(music.statusMessage || '')) notify('server-unreachable');
+  }, [music.statusMessage, notify]);
+
+  // Dock Disky in the tray on phones or when a window fills the screen, so he never covers controls
+  const assistantDocked = isMobile || wm.windows.some((w) => !w.isMinimized && (w.isMaximized || forceMaximized));
 
   // Read-only facts for Display Properties → Settings
   const displayInfo = [
@@ -320,7 +361,10 @@ function Shell() {
         activeId={wm.activeId}
         onToggleWindow={wm.toggleFromTaskbar}
         onMenuAction={handleAction}
+        assistantDocked={assistantDocked}
       />
+
+      <Assistant docked={assistantDocked} />
 
       {contextMenu && (
         <ContextMenu
@@ -363,7 +407,9 @@ export default function App() {
     <ThemeProvider>
       <Suspense fallback={null}>
         <MusicProvider backends={BACKENDS} fallback={NoServiceBackend}>
-          <Shell />
+          <AssistantProvider>
+            <Shell />
+          </AssistantProvider>
         </MusicProvider>
       </Suspense>
     </ThemeProvider>

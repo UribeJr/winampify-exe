@@ -85,7 +85,9 @@ test('bad credentials map to 401, unreachable server to 502', async () => {
   try {
     const res = await fetch(`${down.baseUrl}/ping`);
     assert.equal(res.status, 502);
-    assert.match((await res.json()).error, /Can't reach Navidrome/);
+    const { error } = await res.json();
+    assert.match(error, /Can't reach your Navidrome server/);
+    assert.ok(!error.includes('navidrome.test'), 'error must not reveal the server address');
   } finally {
     down.close();
   }

@@ -1,8 +1,8 @@
 # winampify.exe
 
 A Windows 98 desktop with a Windows Media Player–style music player — for **your own music library**.
-Winampify streams from a self-hosted [Navidrome](https://www.navidrome.org/) server through the
-OpenSubsonic API, and can optionally run against Spotify instead.
+Pick your service when you sign in: a self-hosted [Navidrome](https://www.navidrome.org/) server
+(through the OpenSubsonic API) or Spotify.
 
 ```
 Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic API ──► Navidrome ──► your library
@@ -10,6 +10,8 @@ Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic AP
 
 ## Features
 
+- **Select your music service** — a Win98 logon-style picker for Navidrome or Spotify, remembered per browser
+  (switch any time from Start → Log Off or Start → Settings → Music Service…)
 - **Windows 98 desktop** — draggable, maximizable windows, taskbar with a working clock and volume tray,
   Start menu, desktop icons, right-click / long-press menus, Run… and Shut Down… dialogs, and color themes
 - **Media Library** — artists, albums, playlists, Liked Songs (Navidrome favorites),
@@ -38,7 +40,9 @@ cp .env.example .env    # then fill in your Navidrome URL, username and password
 npm run dev
 ```
 
-Open <http://localhost:3000>. The desktop boots, connects to Navidrome and opens the player.
+Open <http://localhost:3000>. After the boot screen, choose your music service; Navidrome connects and
+opens the player, Spotify sends you to Spotify to sign in. Services that aren't configured in `.env` are
+shown greyed out.
 
 ## Configuration
 
@@ -52,7 +56,7 @@ the browser. See [`.env.example`](.env.example).
 | `NAVIDROME_PASSWORD` | yes | Navidrome password |
 | `NAVIDROME_NAME` | no | Server name shown in the UI ("Connect to …"). Default `Navidrome` |
 | `NAVIDROME_CLIENT_ID` | no | Player name Navidrome shows under Players. Default `winampify` |
-| `MUSIC_PROVIDER` | no | `navidrome` (default) or `spotify` |
+| `MUSIC_PROVIDER` | no | Service pre-selected on the sign-in picker: `navidrome` (default) or `spotify` |
 | `PORT` | no | API server port. Default `3001` |
 | `HOST` | no | Interface the API server listens on. Default: this computer only (localhost) in development |
 
@@ -79,9 +83,9 @@ touch screens) the player opens full-screen, the menu bar and toolbar become a r
 becomes a drill-down list, and the transport controls get bigger. iOS doesn't let web pages change volume, so
 the slider is disabled there — use the hardware buttons.
 
-## Spotify mode (optional)
+## Spotify (optional)
 
-Set `MUSIC_PROVIDER=spotify` and fill in the Spotify section of `.env.example`:
+To offer Spotify on the sign-in picker, fill in the Spotify section of `.env.example`:
 
 1. Create an app in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
 2. Add `http://127.0.0.1:3000/callback` as a Redirect URI. Spotify requires this exact loopback form (it rejects `localhost`), and it's the same on every computer.
@@ -89,7 +93,7 @@ Set `MUSIC_PROVIDER=spotify` and fill in the Spotify section of `.env.example`:
 
 Spotify playback requires **Spotify Premium**. Desktop browsers play through the Web Playback SDK; phones can't
 run the SDK, so Winampify acts as a **Spotify Connect remote** for the Spotify app or a speaker. Search, artists
-and favorites are Navidrome-only and are hidden in Spotify mode.
+and favorites are Navidrome-only and are hidden while you're signed in to Spotify.
 
 ## Scripts
 

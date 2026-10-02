@@ -10,6 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 // The proxy holds music-server credentials, so dev only listens on loopback unless HOST says otherwise
 const HOST = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
+// Pre-selected service on the client's service picker; both are available when configured
 const MUSIC_PROVIDER = process.env.MUSIC_PROVIDER === 'spotify' ? 'spotify' : 'navidrome';
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://127.0.0.1:3000';
 const FRONTEND_URL = process.env.FRONTEND_URL || CLIENT_ORIGIN;
@@ -32,15 +33,22 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 /**
- * Which music backend the client should use, and whether it's configured (no secrets)
+ * Music services this server can offer, for the client's "select your service" screen (no secrets).
+ * MUSIC_PROVIDER only picks which one is pre-selected.
  */
 app.get('/api/config', (req, res) => {
+  const navidromeConfigured = isConfigured(readConfig());
+  const spotifyConfigured = Boolean(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET);
   res.json({
     provider: MUSIC_PROVIDER,
-    navidromeConfigured: isConfigured(readConfig()),
-    // Friendly name for the Navidrome server in the UI (not a secret)
+    providers: {
+      // Friendly server name shown in the UI (not a secret)
+      navidrome: { configured: navidromeConfigured, name: process.env.NAVIDROME_NAME || 'Navidrome' },
+      spotify: { configured: spotifyConfigured, name: 'Spotify' }
+    },
+    navidromeConfigured,
     navidromeName: process.env.NAVIDROME_NAME || 'Navidrome',
-    spotifyConfigured: Boolean(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET)
+    spotifyConfigured
   });
 });
 

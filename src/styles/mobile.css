@@ -720,3 +720,23 @@
     min-height: 48px;
   }
 }
+
+@media (max-width: 767px), (max-height: 500px) and (pointer: coarse) {
+  .service-option {
+    min-height: 64px;
+    padding: 10px 12px;
+  }
+
+  .service-name {
+    font-size: 15px;
+  }
+
+  .service-blurb {
+    font-size: 13px;
+  }
+
+  .wmp-login .wmp-link-button {
+    font-size: 14px;
+    min-height: 44px;
+  }
+}

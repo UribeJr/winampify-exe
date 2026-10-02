@@ -1,11 +1,26 @@
 import React from 'react';
 import Dialog, { DialogButtons } from './Dialog';
+import ServicePicker from './ServicePicker';
+import { useService } from '../music/MusicContext';
 
 // Win98 logon-style prompt shown after boot when there's no music session.
-// Navidrome: the server holds the credentials, so this just (re)connects and explains failures.
+// No service yet → "Select your music service"; otherwise sign in / reconnect to the chosen one.
 const LoginDialog = ({ music, onClose }) => {
+  const { switchProvider } = useService();
   const { provider, providerName, serverLabel, status, statusMessage, login, mode } = music;
   const checking = status === 'checking';
+
+  if (!provider) {
+    return (
+      <Dialog title="Welcome to Winampify" onClose={onClose} className="login-dialog" closeOnBackdrop={false}>
+        <div className="dialog-message">
+          <span className="dialog-icon icon-login-large" aria-hidden="true" />
+          <p><b>Select your music service</b> to get started. You can switch later from Start → Log Off.</p>
+        </div>
+        <ServicePicker onCancel={onClose} />
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog title="Welcome to Winampify" onClose={onClose} className="login-dialog" closeOnBackdrop={false}>
@@ -32,6 +47,7 @@ const LoginDialog = ({ music, onClose }) => {
         <button type="button" onClick={login} disabled={checking} autoFocus>
           {provider === 'navidrome' ? (statusMessage ? 'Retry' : 'Connect') : 'Sign In'}
         </button>
+        <button type="button" onClick={switchProvider}>Other Service…</button>
         <button type="button" onClick={onClose}>Cancel</button>
       </DialogButtons>
     </Dialog>

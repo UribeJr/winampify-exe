@@ -11,7 +11,8 @@ import useTrackList from './useTrackList';
 import { useLibraryCollections, useArtistDetail, useSearchExtras } from './useLibraryData';
 import { LIKED_SOURCE, sourceKey } from './utils';
 import { playlistSource, searchSource } from '../music/models';
-import { useMusic } from '../music/MusicContext';
+import { useMusic, useService } from '../music/MusicContext';
+import ServicePicker from '../dialogs/ServicePicker';
 import { useIsMobile } from '../hooks/useMediaQuery';
 
 const SEEK_STEP_MS = 10000;
@@ -46,7 +47,7 @@ const useNavigation = () => {
   };
 };
 
-const SignInPanel = ({ music }) => {
+const SignInPanel = ({ music, onSwitchService }) => {
   const { provider, providerName, serverLabel, status, statusMessage, login, mode } = music;
   const checking = status === 'checking';
   return (
@@ -54,7 +55,12 @@ const SignInPanel = ({ music }) => {
       <div className="wmp-login-content">
         <span className="wmp-icon-large" aria-hidden="true" />
         <h1>Windows Media Player</h1>
-        {provider === 'navidrome' ? (
+        {!provider ? (
+          <>
+            <p className="wmp-login-subtitle">Select your music service</p>
+            <ServicePicker />
+          </>
+        ) : provider === 'navidrome' ? (
           <>
             <p className="wmp-login-subtitle">
               {checking ? `Connecting to ${serverLabel}…` : `Connect to your ${providerName} server on ${serverLabel}`}
@@ -82,6 +88,9 @@ const SignInPanel = ({ music }) => {
             <p className="wmp-login-note">You'll be redirected to Spotify to authorize Winampify.</p>
           </>
         )}
+        {provider && (
+          <button type="button" className="wmp-link-button" onClick={onSwitchService}>Use a different music service</button>
+        )}
       </div>
     </div>
   );
@@ -93,6 +102,7 @@ const SignInPanel = ({ music }) => {
  */
 const MediaPlayer = ({ request, onClose }) => {
   const music = useMusic();
+  const { switchProvider } = useService();
   const { library, capabilities, isAuthenticated, playback, controls, mode, playerError, clearPlayerError, providerName } = music;
   const isMobile = useIsMobile();
 
@@ -169,7 +179,8 @@ const MediaPlayer = ({ request, onClose }) => {
         'separator',
         isAuthenticated
           ? { label: `Sign Out of ${providerName}`, onSelect: music.logout }
-          : { label: `Connect to ${providerName}…`, onSelect: music.login },
+          : { label: `Connect to ${providerName}…`, onSelect: music.login, disabled: !music.provider },
+        { label: 'Switch Music Service…', onSelect: () => { music.logout(); switchProvider(); } },
         { label: 'Close', onSelect: onClose }
       ]
     },
@@ -236,10 +247,10 @@ const MediaPlayer = ({ request, onClose }) => {
         { label: 'Media Library Home', onSelect: () => navigate({ viewMode: 'mediaLibrary', source: null }) }
       ]
     }
-  ], [back, canGoBack, canGoForward, capabilities.star, controls, currentStarred, currentTrack, forward, isAuthenticated, mode, music, navigate, onClose, paneVisible, playback, providerName, selectView, toggleVisualizer, toolbarVisible, viewMode, visualizerOn]);
+  ], [switchProvider, back, canGoBack, canGoForward, capabilities.star, controls, currentStarred, currentTrack, forward, isAuthenticated, mode, music, navigate, onClose, paneVisible, playback, providerName, selectView, toggleVisualizer, toolbarVisible, viewMode, visualizerOn]);
 
   const body = !isAuthenticated ? (
-    <SignInPanel music={music} />
+    <SignInPanel music={music} onSwitchService={switchProvider} />
   ) : (
     <div className="wmp-content-wrapper">
       <div className="wmp-main-content">

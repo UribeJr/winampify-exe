@@ -12,6 +12,7 @@ const MAX_PLAYLIST_ITEMS = 12;
 const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
   const menuRef = useRef(null);
   const closeTimerRef = useRef(null);
+  const pointerTypeRef = useRef('mouse');
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const { isAuthenticated, playlists, user, providerName } = useMusic();
 
@@ -74,7 +75,8 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
         ]
       : [{ id: 'signin', label: `Connect to ${providerName} to see playlists…`, action: 'open-app', data: 'media-player' }],
     settings: [
-      { id: 'themes', label: 'Themes…', action: 'themes' }
+      { id: 'themes', label: 'Themes…', action: 'themes' },
+      { id: 'service', label: 'Music Service…', action: 'switch-service' }
     ]
   };
 
@@ -89,7 +91,9 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
         className="start-menu-row"
         aria-haspopup="menu"
         aria-expanded={openSubmenu === id}
-        onClick={() => setOpenSubmenu((current) => (current === id ? null : id))}
+        onPointerDown={(e) => { pointerTypeRef.current = e.pointerType; }}
+        // Mouse users already opened it on hover, so a click must not toggle it shut; taps toggle
+        onClick={() => setOpenSubmenu((current) => (current === id && pointerTypeRef.current !== 'mouse' ? null : id))}
       >
         <span className={`start-menu-icon icon-${icon}`} aria-hidden="true" />
         <span className="start-menu-text">{label}</span>

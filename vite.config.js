@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const API_TARGET = 'http://127.0.0.1:3001';
+// Express API server; override with API_TARGET when running it on another port
+const API_TARGET = process.env.API_TARGET || 'http://127.0.0.1:3001';
 const proxied = ['/login', '/callback', '/refresh_token', '/api'];
 
 export default defineConfig({

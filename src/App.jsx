@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { MusicProvider, useMusic } from './music/MusicContext';
+import { MusicProvider, useMusic, useService } from './music/MusicContext';
+import NoServiceBackend from './music/NoServiceBackend';
 import LoadingScreen from './os/LoadingScreen';
 import Desktop from './os/Desktop';
 import Taskbar from './os/Taskbar';
@@ -18,7 +19,7 @@ import useElementSize from './hooks/useElementSize';
 
 const BOOTED_KEY = 'winampify_booted';
 
-// Chosen by the server's MUSIC_PROVIDER; lazy so the unused backend never loads
+// Picked on the sign-in screen; lazy so the unused backend never loads
 const BACKENDS = {
   navidrome: lazy(() => import('./music/NavidromeBackend')),
   spotify: lazy(() => import('./spotify/SpotifyBackend'))
@@ -64,6 +65,7 @@ const parseSpotifyLink = (text) => {
 
 function Shell() {
   const music = useMusic();
+  const { switchProvider } = useService();
   const { status, isAuthenticated, authError, clearAuthError, playlists, mode, provider } = music;
   const forceMaximized = useForceMaximized();
   const wm = useWindowManager();
@@ -113,11 +115,13 @@ function Shell() {
     }
   }, [authError, booted, clearAuthError, showMessage]);
 
+  // Log Off / Shut Down: sign out, close windows and go back to "Select your music service"
   const signOut = useCallback(() => {
     music.logout();
+    switchProvider();
     wm.closeAll();
     setDialog({ type: 'login' });
-  }, [music, wm]);
+  }, [music, switchProvider, wm]);
 
   const runCommand = useCallback((raw) => {
     const command = raw.trim().toLowerCase();
@@ -163,9 +167,11 @@ function Shell() {
         showMessage(HELP_MESSAGE, 'Winampify Help');
         break;
       case 'login':
-        music.login();
+        if (music.provider) music.login();
+        else setDialog({ type: 'login' });
         break;
       case 'logoff':
+      case 'switch-service':
         signOut();
         break;
       case 'recycle-bin':
@@ -273,7 +279,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <Suspense fallback={null}>
-        <MusicProvider backends={BACKENDS}>
+        <MusicProvider backends={BACKENDS} fallback={NoServiceBackend}>
           <Shell />
         </MusicProvider>
       </Suspense>

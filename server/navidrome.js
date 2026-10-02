@@ -61,7 +61,8 @@ function createNavidromeRouter({ env = process.env, fetchImpl = fetch } = {}) {
   const router = express.Router();
   const config = readConfig(env);
 
-  const unreachable = () => new NavidromeError(502, `Can't reach Navidrome at ${config.url}. Is the server on and reachable from this machine?`);
+  // Deliberately omits the URL so private addresses never show up in the UI (or in screenshots)
+  const unreachable = () => new NavidromeError(502, 'Can\'t reach your Navidrome server. Is it on, and is this computer on the same network?');
 
   // JSON methods use the formPost extension so auth tokens stay out of upstream URLs/logs
   async function call(method, params = {}) {

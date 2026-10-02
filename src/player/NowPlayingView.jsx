@@ -2,7 +2,7 @@ import React, { useRef, useCallback, lazy, Suspense } from 'react';
 import SeekBar from './SeekBar';
 import usePlaybackPosition from './usePlaybackPosition';
 import { artistNames, trackArt } from './utils';
-import { useSpotify } from '../spotify/SpotifyContext';
+import { useMusic } from '../music/MusicContext';
 
 const BAR_COUNT = 8;
 
@@ -10,7 +10,7 @@ const BAR_COUNT = 8;
 const Visualizer = lazy(() => import('./Visualizer'));
 
 const NowPlayingView = ({ visualizerOn, visualizerRef, activePreset }) => {
-  const { playback, controls, api } = useSpotify();
+  const { playback, controls, library, providerName } = useMusic();
   const position = usePlaybackPosition(playback);
   const { track, isActive, isPaused, duration } = playback;
   const playing = isActive && !isPaused;
@@ -30,15 +30,15 @@ const NowPlayingView = ({ visualizerOn, visualizerRef, activePreset }) => {
           <Visualizer
             ref={visualizerRef}
             isActive={playing}
-            trackId={track?.type === 'episode' ? null : track?.id}
+            trackId={track?.id}
             getPosition={getPosition}
-            api={api}
+            getAudioAnalysis={library.getAudioAnalysis}
             initialPreset={activePreset}
           />
         </Suspense>
         {track && (
           <div className="visualizer-caption">
-            <b>{track.name}</b> — {artistNames(track)}
+            <b>{track.title}</b> — {artistNames(track)}
           </div>
         )}
       </div>
@@ -51,7 +51,7 @@ const NowPlayingView = ({ visualizerOn, visualizerRef, activePreset }) => {
     <div className="wmp-now-playing-view">
       <div className="wmp-visualization-area">
         {art ? (
-          <img src={art} alt={track.album?.name || track.name} className="wmp-album-art-large" />
+          <img src={art} alt={track.album?.name || track.title} className="wmp-album-art-large" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
         ) : (
           <div className="wmp-album-art-placeholder" aria-hidden="true">
             <span className="icon-cd-large" />
@@ -62,8 +62,8 @@ const NowPlayingView = ({ visualizerOn, visualizerRef, activePreset }) => {
         </div>
       </div>
       <div className="wmp-track-info-large">
-        <h2 className="wmp-track-title">{track?.name || 'No track playing'}</h2>
-        <p className="wmp-track-artist">{track ? artistNames(track) : 'Pick something from the Media Library'}</p>
+        <h2 className="wmp-track-title">{track?.title || 'No track playing'}</h2>
+        <p className="wmp-track-artist">{track ? artistNames(track) : `Pick something from your ${providerName} library`}</p>
         {track?.album?.name && <p className="wmp-track-album">{track.album.name}</p>}
       </div>
       <div className="wmp-progress-area">

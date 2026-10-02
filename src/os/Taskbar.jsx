@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import StartMenu from './StartMenu';
 import useClock from '../hooks/useClock';
-import { useSpotify } from '../spotify/SpotifyContext';
+import { useMusic } from '../music/MusicContext';
 
 const VolumePopup = ({ onClose }) => {
-  const { playback, controls } = useSpotify();
+  const { playback, controls } = useMusic();
   const ref = useRef(null);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ const Taskbar = ({ windows, activeId, onToggleWindow, onMenuAction }) => {
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [volumeOpen, setVolumeOpen] = useState(false);
   const time = useClock();
-  const { isAuthenticated } = useSpotify();
+  const { isAuthenticated } = useMusic();
 
   return (
     <>

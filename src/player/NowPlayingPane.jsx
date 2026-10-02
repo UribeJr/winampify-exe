@@ -2,11 +2,11 @@ import React from 'react';
 import SeekBar from './SeekBar';
 import usePlaybackPosition from './usePlaybackPosition';
 import { artistNames, trackArt } from './utils';
-import { useSpotify } from '../spotify/SpotifyContext';
+import { useMusic } from '../music/MusicContext';
 
 // Desktop-only side pane showing the current track next to the library/playlist views.
 const NowPlayingPane = ({ onClose }) => {
-  const { playback, controls } = useSpotify();
+  const { playback, controls } = useMusic();
   const position = usePlaybackPosition(playback);
   const { track, isActive, duration } = playback;
   const art = trackArt(track, 200);
@@ -26,7 +26,7 @@ const NowPlayingPane = ({ onClose }) => {
           )}
         </div>
         <div className="wmp-now-playing-pane-info">
-          <h3 className="wmp-now-playing-pane-title">{track?.name || 'No track playing'}</h3>
+          <h3 className="wmp-now-playing-pane-title">{track?.title || 'No track playing'}</h3>
           <p className="wmp-now-playing-pane-artist">{track ? artistNames(track) : 'Select a track to play'}</p>
           {track?.album?.name && <p className="wmp-now-playing-pane-album">{track.album.name}</p>}
         </div>

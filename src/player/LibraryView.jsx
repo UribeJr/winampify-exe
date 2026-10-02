@@ -1,12 +1,20 @@
 import React from 'react';
 import TrackTable from './TrackTable';
-import { imageUrl, LIKED_SOURCE, sourceKey } from './utils';
-import { useSpotify } from '../spotify/SpotifyContext';
+import SearchBox from './SearchBox';
+import { coverUrl, LIKED_SOURCE, sourceKey } from './utils';
+import { playlistSource, albumSource, artistSource } from '../music/models';
+import { useMusic } from '../music/MusicContext';
 
-const playlistSource = (pl) => ({ type: 'playlist', id: pl.id, name: pl.name, uri: pl.uri, images: pl.images });
-const albumSource = (album) => ({ type: 'album', id: album.id, name: album.name, uri: album.uri, images: album.images });
+const Art = ({ item, size, className, icon }) => {
+  const url = coverUrl(item, size);
+  return url
+    ? <img src={url} alt="" className={className} loading="lazy" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
+    : <span className={`${className} placeholder icon-${icon}`} aria-hidden="true" />;
+};
 
-const SourceHeader = ({ source, total, onPlayAll, onBack }) => (
+const sourceIcon = (type) => (type === 'liked' ? 'heart' : type === 'artist' ? 'directory_closed-4' : 'cd');
+
+const SourceHeader = ({ source, meta, onPlayAll, onBack }) => (
   <div className="library-source-header">
     {onBack && (
       <button type="button" className="library-back" onClick={onBack} aria-label="Back to library">
@@ -14,33 +22,27 @@ const SourceHeader = ({ source, total, onPlayAll, onBack }) => (
       </button>
     )}
     <div className="library-source-title">
-      {imageUrl(source.images, 64)
-        ? <img src={imageUrl(source.images, 64)} alt="" className="library-source-art" />
-        : <span className={`library-source-art placeholder icon-${source.type === 'liked' ? 'heart' : 'cd'}`} aria-hidden="true" />}
+      <Art item={source} size={96} className="library-source-art" icon={sourceIcon(source.type)} />
       <div>
         <h3>{source.name}</h3>
-        <span className="library-source-meta">{total ? `${total} songs` : ''}</span>
+        <span className="library-source-meta">{meta}</span>
       </div>
     </div>
-    <button type="button" className="library-play-all" onClick={onPlayAll}>▶ Play all</button>
+    {onPlayAll && <button type="button" className="library-play-all" onClick={onPlayAll}>▶ Play all</button>}
   </div>
 );
 
-const Tile = ({ label, sublabel, images, icon, onClick }) => (
-  <button type="button" className="library-tile" onClick={onClick}>
-    {imageUrl(images, 150)
-      ? <img src={imageUrl(images, 150)} alt="" loading="lazy" />
-      : <span className={`library-tile-placeholder icon-${icon}`} aria-hidden="true" />}
+const Tile = ({ item, label, sublabel, icon, onClick }) => (
+  <button type="button" className="library-tile" onClick={onClick} title={label}>
+    <Art item={item} size={300} className="library-tile-art" icon={icon} />
     <span className="library-tile-label">{label}</span>
     {sublabel && <span className="library-tile-sub">{sublabel}</span>}
   </button>
 );
 
-const ListRow = ({ label, sublabel, images, icon, onClick }) => (
+const ListRow = ({ item, label, sublabel, icon, onClick }) => (
   <button type="button" className="library-list-row" onClick={onClick}>
-    {imageUrl(images, 64)
-      ? <img src={imageUrl(images, 64)} alt="" loading="lazy" />
-      : <span className={`library-list-placeholder icon-${icon}`} aria-hidden="true" />}
+    <Art item={item} size={96} className="library-list-art" icon={icon} />
     <span className="library-list-text">
       <span className="library-list-label">{label}</span>
       {sublabel && <span className="library-list-sub">{sublabel}</span>}
@@ -49,64 +51,130 @@ const ListRow = ({ label, sublabel, images, icon, onClick }) => (
   </button>
 );
 
-/**
- * Media Library. Desktop: tree sidebar + content pane (dashboard tiles or a track table).
- * Phones: a stacked list that drills into a source, with a back button.
- */
-const LibraryView = ({ source, onSelectSource, trackList, albums, currentUri, onPlayTrack, onPlayAll, isMobile }) => {
-  const { playlists, playlistsLoading } = useSpotify();
-  const selectedKey = sourceKey(source);
+const albumSub = (al) => [al.artist, al.year].filter(Boolean).join(' · ');
+const songs = (n) => `${n} song${n === 1 ? '' : 's'}`;
 
-  const sourceContent = source && (
-    <div className="library-source">
-      <SourceHeader
-        source={source}
-        total={trackList.total}
-        onPlayAll={onPlayAll}
-        onBack={isMobile ? () => onSelectSource(null) : undefined}
-      />
-      <TrackTable
-        tracks={trackList.tracks}
-        currentUri={currentUri}
-        onPlay={onPlayTrack}
-        compact={isMobile}
-        loading={trackList.loading}
-        error={trackList.error}
-        hasMore={trackList.hasMore}
-        onLoadMore={trackList.loadMore}
-        showAlbum={source.type !== 'album'}
-      />
-    </div>
+const AlbumTiles = ({ albums, onSelectSource }) => (
+  <div className="library-tiles">
+    {albums.map((al) => (
+      <Tile key={al.id} item={al} label={al.name} sublabel={albumSub(al)} icon="cd" onClick={() => onSelectSource(albumSource(al))} />
+    ))}
+  </div>
+);
+
+const TreeItem = ({ selected, onClick, children, title }) => (
+  <li>
+    <button type="button" className={selected ? 'selected' : ''} onClick={onClick} title={title}>{children}</button>
+  </li>
+);
+
+/**
+ * Media Library. Desktop: tree sidebar + content pane; phones: a drill-down list.
+ * Content by source: dashboard (none), artist → album tiles, search → artists/albums/songs,
+ * everything else → a track table.
+ */
+const LibraryView = ({
+  source, onSelectSource, onSearch, trackList, collections, artistDetail, searchExtras,
+  currentKey, onPlayTrack, onPlayAll, isMobile
+}) => {
+  const { playlists, playlistsLoading, capabilities, isStarred, providerName } = useMusic();
+  const selectedKey = sourceKey(source);
+  const { albums, artists, newest, recent } = collections;
+  const back = isMobile ? () => onSelectSource(null) : undefined;
+
+  const trackTable = (showAlbum) => (
+    <TrackTable
+      tracks={trackList.tracks}
+      currentKey={currentKey}
+      onPlay={onPlayTrack}
+      compact={isMobile}
+      loading={trackList.loading}
+      error={trackList.error}
+      hasMore={trackList.hasMore}
+      onLoadMore={trackList.loadMore}
+      showAlbum={showAlbum}
+      isStarred={capabilities.star ? isStarred : undefined}
+    />
+  );
+
+  let content = null;
+  if (source?.type === 'artist') {
+    const { artist, albums: artistAlbums, loading, error } = artistDetail;
+    content = (
+      <div className="library-source">
+        <SourceHeader source={{ ...source, coverArt: artist?.coverArt || source.coverArt }} meta={artistAlbums.length ? `${artistAlbums.length} albums` : ''} onBack={back} />
+        <div className="library-scroll">
+          {loading && <div className="wmp-library-placeholder">Loading…</div>}
+          {error && <div className="wmp-library-placeholder">{error}</div>}
+          <AlbumTiles albums={artistAlbums} onSelectSource={onSelectSource} />
+        </div>
+      </div>
+    );
+  } else if (source?.type === 'search') {
+    const nothing = !trackList.loading && !searchExtras.loading
+      && !trackList.tracks.length && !searchExtras.artists.length && !searchExtras.albums.length;
+    content = (
+      <div className="library-source">
+        <SourceHeader source={source} meta={`in your ${providerName} library`} onBack={back} onPlayAll={trackList.tracks.length ? onPlayAll : undefined} />
+        <div className="library-scroll search-results">
+          {nothing && <div className="wmp-library-placeholder">No matches for “{source.query}”.</div>}
+          {searchExtras.artists.length > 0 && (
+            <section>
+              <h4 className="library-section-heading">Artists</h4>
+              <div className="search-artists">
+                {searchExtras.artists.map((ar) => (
+                  <ListRow key={ar.id} item={ar} label={ar.name} sublabel={`${ar.albumCount} albums`} icon="directory_closed-4" onClick={() => onSelectSource(artistSource(ar))} />
+                ))}
+              </div>
+            </section>
+          )}
+          {searchExtras.albums.length > 0 && (
+            <section>
+              <h4 className="library-section-heading">Albums</h4>
+              <AlbumTiles albums={searchExtras.albums} onSelectSource={onSelectSource} />
+            </section>
+          )}
+          {(trackList.loading || trackList.tracks.length > 0) && (
+            <section className="search-songs">
+              <h4 className="library-section-heading">Songs</h4>
+              {trackTable(true)}
+            </section>
+          )}
+        </div>
+      </div>
+    );
+  } else if (source) {
+    content = (
+      <div className="library-source">
+        <SourceHeader source={source} meta={trackList.total ? songs(trackList.total) : ''} onPlayAll={onPlayAll} onBack={back} />
+        {trackTable(source.type !== 'album')}
+      </div>
+    );
+  }
+
+  const searchBox = capabilities.search && (
+    <SearchBox onSearch={onSearch} initial={source?.type === 'search' ? source.query : ''} label={`Search ${providerName}`} className="library-search" />
   );
 
   if (isMobile) {
     return (
       <div className="wmp-media-library-view mobile">
-        {source ? sourceContent : (
+        {content || (
           <div className="library-list">
-            <ListRow label="Liked Songs" sublabel="Your saved tracks" icon="heart" onClick={() => onSelectSource(LIKED_SOURCE)} />
-            <h4 className="library-list-heading">My Playlists</h4>
+            {searchBox}
+            <ListRow item={null} label="Liked Songs" sublabel="Your favorites" icon="heart" onClick={() => onSelectSource(LIKED_SOURCE)} />
+            {artists.length > 0 && <h4 className="library-list-heading">Artists</h4>}
+            {artists.map((ar) => (
+              <ListRow key={ar.id} item={ar} label={ar.name} sublabel={`${ar.albumCount} albums`} icon="directory_closed-4" onClick={() => onSelectSource(artistSource(ar))} />
+            ))}
+            {playlists.length > 0 && <h4 className="library-list-heading">My Playlists</h4>}
             {playlistsLoading && <div className="wmp-library-placeholder">Loading playlists…</div>}
             {playlists.map((pl) => (
-              <ListRow
-                key={pl.id}
-                label={pl.name}
-                sublabel={`${pl.tracks?.total ?? 0} songs`}
-                images={pl.images}
-                icon="cd"
-                onClick={() => onSelectSource(playlistSource(pl))}
-              />
+              <ListRow key={pl.id} item={pl} label={pl.name} sublabel={songs(pl.songCount)} icon="cd" onClick={() => onSelectSource(playlistSource(pl))} />
             ))}
             {albums.length > 0 && <h4 className="library-list-heading">My Albums</h4>}
-            {albums.map((album) => (
-              <ListRow
-                key={album.id}
-                label={album.name}
-                sublabel={album.artists?.map((a) => a.name).join(', ')}
-                images={album.images}
-                icon="cd"
-                onClick={() => onSelectSource(albumSource(album))}
-              />
+            {albums.map((al) => (
+              <ListRow key={al.id} item={al} label={al.name} sublabel={albumSub(al)} icon="cd" onClick={() => onSelectSource(albumSource(al))} />
             ))}
           </div>
         )}
@@ -122,34 +190,37 @@ const LibraryView = ({ source, onSelectSource, trackList, albums, currentUri, on
             <details open>
               <summary>My Music</summary>
               <ul>
-                <li>
-                  <button
-                    type="button"
-                    className={selectedKey === sourceKey(LIKED_SOURCE) ? 'selected' : ''}
-                    onClick={() => onSelectSource(LIKED_SOURCE)}
-                  >
-                    Liked Songs
-                  </button>
-                </li>
+                <TreeItem selected={selectedKey === sourceKey(LIKED_SOURCE)} onClick={() => onSelectSource(LIKED_SOURCE)}>
+                  Liked Songs
+                </TreeItem>
               </ul>
             </details>
           </li>
+          {capabilities.artists && (
+            <li>
+              <details open>
+                <summary>Artists</summary>
+                <ul>
+                  {artists.length === 0 && <li className="tree-muted">No artists</li>}
+                  {artists.map((ar) => (
+                    <TreeItem key={ar.id} selected={selectedKey === `artist:${ar.id}`} onClick={() => onSelectSource(artistSource(ar))} title={ar.name}>
+                      {ar.name}
+                    </TreeItem>
+                  ))}
+                </ul>
+              </details>
+            </li>
+          )}
           <li>
             <details open>
               <summary>My Playlists</summary>
               <ul>
                 {playlistsLoading && <li className="tree-muted">Loading…</li>}
+                {!playlistsLoading && playlists.length === 0 && <li className="tree-muted">No playlists</li>}
                 {playlists.map((pl) => (
-                  <li key={pl.id}>
-                    <button
-                      type="button"
-                      className={selectedKey === `playlist:${pl.id}` ? 'selected' : ''}
-                      onClick={() => onSelectSource(playlistSource(pl))}
-                      title={pl.name}
-                    >
-                      {pl.name}
-                    </button>
-                  </li>
+                  <TreeItem key={pl.id} selected={selectedKey === `playlist:${pl.id}`} onClick={() => onSelectSource(playlistSource(pl))} title={pl.name}>
+                    {pl.name}
+                  </TreeItem>
                 ))}
               </ul>
             </details>
@@ -158,18 +229,11 @@ const LibraryView = ({ source, onSelectSource, trackList, albums, currentUri, on
             <details>
               <summary>My Albums</summary>
               <ul>
-                {albums.length === 0 && <li className="tree-muted">No saved albums</li>}
-                {albums.map((album) => (
-                  <li key={album.id}>
-                    <button
-                      type="button"
-                      className={selectedKey === `album:${album.id}` ? 'selected' : ''}
-                      onClick={() => onSelectSource(albumSource(album))}
-                      title={album.name}
-                    >
-                      {album.name}
-                    </button>
-                  </li>
+                {albums.length === 0 && <li className="tree-muted">No albums</li>}
+                {albums.map((al) => (
+                  <TreeItem key={al.id} selected={selectedKey === `album:${al.id}`} onClick={() => onSelectSource(albumSource(al))} title={`${al.name} — ${al.artist}`}>
+                    {al.name}
+                  </TreeItem>
                 ))}
               </ul>
             </details>
@@ -177,25 +241,33 @@ const LibraryView = ({ source, onSelectSource, trackList, albums, currentUri, on
         </ul>
       </nav>
       <div className="wmp-library-content">
-        {sourceContent || (
+        {content || (
           <div className="wmp-dashboard">
             <div className="dashboard-header">
               <h2>Media Library</h2>
               <p className="dashboard-subtitle">Welcome to your music collection</p>
             </div>
-            <div className="library-tiles">
-              <Tile label="Liked Songs" icon="heart" onClick={() => onSelectSource(LIKED_SOURCE)} />
-              {playlists.map((pl) => (
-                <Tile
-                  key={pl.id}
-                  label={pl.name}
-                  sublabel={`${pl.tracks?.total ?? 0} songs`}
-                  images={pl.images}
-                  icon="cd"
-                  onClick={() => onSelectSource(playlistSource(pl))}
-                />
-              ))}
-            </div>
+            {newest.length > 0 && (
+              <section>
+                <h4 className="library-section-heading">Recently Added</h4>
+                <AlbumTiles albums={newest} onSelectSource={onSelectSource} />
+              </section>
+            )}
+            {recent.length > 0 && (
+              <section>
+                <h4 className="library-section-heading">Recently Played</h4>
+                <AlbumTiles albums={recent} onSelectSource={onSelectSource} />
+              </section>
+            )}
+            <section>
+              <h4 className="library-section-heading">Playlists</h4>
+              <div className="library-tiles">
+                <Tile item={null} label="Liked Songs" icon="heart" onClick={() => onSelectSource(LIKED_SOURCE)} />
+                {playlists.map((pl) => (
+                  <Tile key={pl.id} item={pl} label={pl.name} sublabel={songs(pl.songCount)} icon="cd" onClick={() => onSelectSource(playlistSource(pl))} />
+                ))}
+              </div>
+            </section>
             {playlistsLoading && <div className="wmp-library-placeholder">Loading playlists…</div>}
           </div>
         )}

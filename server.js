@@ -4,9 +4,13 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
+const { createNavidromeRouter, readConfig, isConfigured } = require('./server/navidrome');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+// The proxy holds music-server credentials, so dev only listens on loopback unless HOST says otherwise
+const HOST = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
+const MUSIC_PROVIDER = process.env.MUSIC_PROVIDER === 'spotify' ? 'spotify' : 'navidrome';
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://127.0.0.1:3000';
 const FRONTEND_URL = process.env.FRONTEND_URL || CLIENT_ORIGIN;
 
@@ -26,6 +30,22 @@ if (process.env.NODE_ENV === 'production') {
     console.error('dist/ not found at', distPath, '- run `npm run build` first.');
   }
 }
+
+/**
+ * Which music backend the client should use, and whether it's configured (no secrets)
+ */
+app.get('/api/config', (req, res) => {
+  res.json({
+    provider: MUSIC_PROVIDER,
+    navidromeConfigured: isConfigured(readConfig()),
+    // Friendly name for the Navidrome server in the UI (not a secret)
+    navidromeName: process.env.NAVIDROME_NAME || 'Navidrome',
+    spotifyConfigured: Boolean(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET)
+  });
+});
+
+// Navidrome / OpenSubsonic proxy (allowlisted routes; credentials stay server-side)
+app.use('/api/nd', createNavidromeRouter());
 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
@@ -510,6 +530,6 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
+app.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT} (${process.env.NODE_ENV || 'development'}, provider: ${MUSIC_PROVIDER})`);
 });

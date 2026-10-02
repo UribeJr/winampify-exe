@@ -8,33 +8,16 @@ import NowPlayingPane from './NowPlayingPane';
 import ControlBar from './ControlBar';
 import DevicePicker from './DevicePicker';
 import useTrackList from './useTrackList';
+import { useLibraryCollections, useArtistDetail, useSearchExtras } from './useLibraryData';
 import { LIKED_SOURCE, sourceKey } from './utils';
-import { useSpotify } from '../spotify/SpotifyContext';
+import { playlistSource, searchSource } from '../music/models';
+import { useMusic } from '../music/MusicContext';
 import { useIsMobile } from '../hooks/useMediaQuery';
 
-const QUEUE_LIMIT = 100; // Spotify caps `uris` playback requests; Liked Songs queue from the tapped track
 const SEEK_STEP_MS = 10000;
 
 // Position right now, without subscribing this whole window to the playback ticker
 const livePosition = (p) => (p.isActive && !p.isPaused ? p.position + (Date.now() - p.updatedAt) : p.position);
-
-const useSavedAlbums = (api, enabled) => {
-  const [albums, setAlbums] = useState([]);
-  useEffect(() => {
-    if (!enabled) {
-      setAlbums([]);
-      return undefined;
-    }
-    let cancelled = false;
-    api.getSavedAlbums(0, 50)
-      .then((data) => {
-        if (!cancelled) setAlbums((data.items || []).map((item) => item.album).filter(Boolean));
-      })
-      .catch((err) => console.error('Failed to load saved albums', err));
-    return () => { cancelled = true; };
-  }, [api, enabled]);
-  return albums;
-};
 
 // Back/forward history over { viewMode, source }
 const useNavigation = () => {
@@ -63,30 +46,54 @@ const useNavigation = () => {
   };
 };
 
-const SignInPanel = ({ onLogin, remoteMode }) => (
-  <div className="wmp-login">
-    <div className="wmp-login-content">
-      <span className="wmp-icon-large" aria-hidden="true" />
-      <h1>Windows Media Player</h1>
-      <p className="wmp-login-subtitle">Connect to Spotify to access your music library</p>
-      <ul className="wmp-login-features">
-        <li>Your playlists, liked songs and albums</li>
-        <li>{remoteMode ? 'Control Spotify on your phone or speakers' : 'Stream right here in the browser (Premium)'}</li>
-        <li>MilkDrop-style visualizations</li>
-      </ul>
-      <button type="button" className="wmp-login-btn" onClick={onLogin}>Sign In with Spotify</button>
-      <p className="wmp-login-note">You'll be redirected to Spotify to authorize Winampify.</p>
+const SignInPanel = ({ music }) => {
+  const { provider, providerName, serverLabel, status, statusMessage, login, mode } = music;
+  const checking = status === 'checking';
+  return (
+    <div className="wmp-login">
+      <div className="wmp-login-content">
+        <span className="wmp-icon-large" aria-hidden="true" />
+        <h1>Windows Media Player</h1>
+        {provider === 'navidrome' ? (
+          <>
+            <p className="wmp-login-subtitle">
+              {checking ? `Connecting to ${serverLabel}…` : `Connect to your ${providerName} server on ${serverLabel}`}
+            </p>
+            {!checking && statusMessage && <p className="wmp-login-status" role="status">{statusMessage}</p>}
+            <ul className="wmp-login-features">
+              <li>Your artists, albums, playlists and favorites</li>
+              <li>Streams straight from your own library</li>
+              <li>MilkDrop-style visualizations</li>
+            </ul>
+            <button type="button" className="wmp-login-btn" onClick={login} disabled={checking}>
+              {checking ? 'Connecting…' : `Connect to ${serverLabel}`}
+            </button>
+            <p className="wmp-login-note">Server credentials are read from the server's .env and never sent to this page.</p>
+          </>
+        ) : (
+          <>
+            <p className="wmp-login-subtitle">Connect to Spotify to access your music library</p>
+            <ul className="wmp-login-features">
+              <li>Your playlists, liked songs and albums</li>
+              <li>{mode === 'connect' ? 'Control Spotify on your phone or speakers' : 'Stream right here in the browser (Premium)'}</li>
+              <li>MilkDrop-style visualizations</li>
+            </ul>
+            <button type="button" className="wmp-login-btn" onClick={login}>Sign In with Spotify</button>
+            <p className="wmp-login-note">You'll be redirected to Spotify to authorize Winampify.</p>
+          </>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 /**
  * Windows Media Player app body (lives inside an OS window).
  * `request` lets the shell deep-link: { type: 'view', view } or { type: 'source', source }.
  */
 const MediaPlayer = ({ request, onClose }) => {
-  const spotify = useSpotify();
-  const { api, isAuthenticated, playback, controls, mode, playerError, clearPlayerError } = spotify;
+  const music = useMusic();
+  const { library, capabilities, isAuthenticated, playback, controls, mode, playerError, clearPlayerError, providerName } = music;
   const isMobile = useIsMobile();
 
   const { viewMode, source, navigate, canGoBack, canGoForward, back, forward } = useNavigation();
@@ -97,9 +104,13 @@ const MediaPlayer = ({ request, onClose }) => {
   const [devicesOpen, setDevicesOpen] = useState(false);
   const visualizerRef = useRef(null);
 
-  const trackList = useTrackList(api, source);
-  const albums = useSavedAlbums(api, isAuthenticated);
-  const currentUri = playback.track?.uri;
+  const trackList = useTrackList(library, source, music.libraryVersion);
+  const collections = useLibraryCollections(library, isAuthenticated);
+  const artistDetail = useArtistDetail(library, source);
+  const searchExtras = useSearchExtras(library, source);
+  const currentKey = playback.track?.key;
+  const currentTrack = playback.track;
+  const currentStarred = music.isStarred(currentTrack);
 
   // Deep links from the desktop, start menu and Run dialog
   useEffect(() => {
@@ -133,24 +144,19 @@ const MediaPlayer = ({ request, onClose }) => {
     visualizerRef.current?.loadPreset(index);
   }, []);
 
+  // The whole list becomes the queue (Navidrome) or the Spotify context, starting at the clicked track
   const playTrack = useCallback((track, index) => {
-    if (!source) return;
-    if (source.type === 'liked') {
-      const uris = trackList.tracks.slice(index, index + QUEUE_LIMIT).filter((t) => !t.is_local).map((t) => t.uri);
-      controls.play({ uris });
-    } else {
-      controls.play({ contextUri: source.uri, offsetUri: track.uri });
-    }
+    if (source) controls.playQueue(trackList.tracks, index, source);
   }, [controls, source, trackList.tracks]);
 
   const playAll = useCallback(() => {
-    if (!source) return;
-    if (source.type === 'liked') {
-      controls.play({ uris: trackList.tracks.slice(0, QUEUE_LIMIT).filter((t) => !t.is_local).map((t) => t.uri) });
-    } else {
-      controls.play({ contextUri: source.uri });
-    }
+    if (source && trackList.tracks.length) controls.playQueue(trackList.tracks, 0, source);
   }, [controls, source, trackList.tracks]);
+
+  const search = useCallback((query) => {
+    setVisualizerOn(false);
+    navigate({ viewMode: 'mediaLibrary', source: searchSource(query) });
+  }, [navigate]);
 
   const menus = useMemo(() => [
     {
@@ -162,8 +168,8 @@ const MediaPlayer = ({ request, onClose }) => {
         { label: 'Open Liked Songs', onSelect: () => navigate({ viewMode: 'mediaLibrary', source: LIKED_SOURCE }), disabled: !isAuthenticated },
         'separator',
         isAuthenticated
-          ? { label: 'Sign Out of Spotify', onSelect: spotify.logout }
-          : { label: 'Sign In with Spotify…', onSelect: spotify.login },
+          ? { label: `Sign Out of ${providerName}`, onSelect: music.logout }
+          : { label: `Connect to ${providerName}…`, onSelect: music.login },
         { label: 'Close', onSelect: onClose }
       ]
     },
@@ -205,10 +211,18 @@ const MediaPlayer = ({ request, onClose }) => {
       label: 'Favorites',
       accessKey: 'a',
       items: [
+        ...(capabilities.star ? [
+          {
+            label: currentStarred ? 'Remove Current Song from Liked Songs' : 'Add Current Song to Liked Songs',
+            onSelect: () => music.toggleStar(currentTrack),
+            disabled: !currentTrack
+          },
+          'separator'
+        ] : []),
         { label: 'Liked Songs', onSelect: () => navigate({ viewMode: 'mediaLibrary', source: LIKED_SOURCE }), disabled: !isAuthenticated },
-        ...spotify.playlists.slice(0, 8).map((pl) => ({
+        ...music.playlists.slice(0, 8).map((pl) => ({
           label: pl.name,
-          onSelect: () => navigate({ viewMode: 'mediaLibrary', source: { type: 'playlist', id: pl.id, name: pl.name, uri: pl.uri, images: pl.images } })
+          onSelect: () => navigate({ viewMode: 'mediaLibrary', source: playlistSource(pl) })
         }))
       ]
     },
@@ -222,10 +236,10 @@ const MediaPlayer = ({ request, onClose }) => {
         { label: 'Media Library Home', onSelect: () => navigate({ viewMode: 'mediaLibrary', source: null }) }
       ]
     }
-  ], [back, canGoBack, canGoForward, controls, forward, isAuthenticated, mode, navigate, onClose, paneVisible, playback, selectView, spotify.login, spotify.logout, spotify.playlists, toggleVisualizer, toolbarVisible, viewMode, visualizerOn]);
+  ], [back, canGoBack, canGoForward, capabilities.star, controls, currentStarred, currentTrack, forward, isAuthenticated, mode, music, navigate, onClose, paneVisible, playback, providerName, selectView, toggleVisualizer, toolbarVisible, viewMode, visualizerOn]);
 
   const body = !isAuthenticated ? (
-    <SignInPanel onLogin={spotify.login} remoteMode={mode === 'connect'} />
+    <SignInPanel music={music} />
   ) : (
     <div className="wmp-content-wrapper">
       <div className="wmp-main-content">
@@ -236,9 +250,12 @@ const MediaPlayer = ({ request, onClose }) => {
           <LibraryView
             source={source}
             onSelectSource={(next) => navigate({ viewMode: 'mediaLibrary', source: next })}
+            onSearch={search}
             trackList={trackList}
-            albums={albums}
-            currentUri={currentUri}
+            collections={collections}
+            artistDetail={artistDetail}
+            searchExtras={searchExtras}
+            currentKey={currentKey}
             onPlayTrack={playTrack}
             onPlayAll={playAll}
             isMobile={isMobile}
@@ -248,7 +265,7 @@ const MediaPlayer = ({ request, onClose }) => {
           <PlaylistView
             source={source}
             trackList={trackList}
-            currentUri={currentUri}
+            currentKey={currentKey}
             onPlayTrack={playTrack}
             onPlayAll={playAll}
             onOpenLibrary={() => selectView('mediaLibrary')}
@@ -277,6 +294,9 @@ const MediaPlayer = ({ request, onClose }) => {
           onToggleVisualizer={() => toggleVisualizer()}
           activePreset={activePreset}
           onSelectPreset={selectPreset}
+          onSearch={capabilities.search ? search : undefined}
+          searchLabel={`Search ${providerName}`}
+          searchValue={source?.type === 'search' ? source.query : ''}
         />
       )}
       {isAuthenticated && isMobile && (

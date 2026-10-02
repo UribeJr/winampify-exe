@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Dialog, { DialogButtons } from '../dialogs/Dialog';
-import { useSpotify } from '../spotify/SpotifyContext';
+import { useMusic } from '../music/MusicContext';
 
 const DEVICE_ICONS = { Smartphone: '📱', Computer: '💻', Speaker: '🔊', TV: '📺', Tablet: '📱', CastAudio: '📡' };
 
 // Spotify Connect device chooser (remote mode). Picking a device transfers playback to it.
 const DevicePicker = ({ onClose }) => {
-  const { devices, selectedDeviceId, controls } = useSpotify();
+  const { devices, selectedDeviceId, controls } = useMusic();
   const [refreshing, setRefreshing] = useState(false);
 
   const refresh = async () => {

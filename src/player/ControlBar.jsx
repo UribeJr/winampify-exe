@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import SeekBar from './SeekBar';
 import usePlaybackPosition from './usePlaybackPosition';
-import { useSpotify } from '../spotify/SpotifyContext';
+import { useMusic } from '../music/MusicContext';
 
 const SEEK_STEP_MS = 10000;
 const REPEAT_LABELS = { off: 'Repeat: Off', context: 'Repeat: All', track: 'Repeat: One' };
@@ -25,10 +25,11 @@ const ControlButton = ({ icon, title, onClick, disabled, active, large }) => (
  * phones get a big centered transport row plus a Devices button and a tap-to-open volume slider.
  */
 const ControlBar = ({ isMobile, paneVisible, onTogglePane, onOpenDevices }) => {
-  const { playback, controls, mode } = useSpotify();
+  const { playback, controls, mode } = useMusic();
   const position = usePlaybackPosition(playback);
   const [volumeOpen, setVolumeOpen] = useState(false);
-  const { isActive, isPaused, duration, volume, shuffle, repeat, canSetVolume, ready } = playback;
+  const { isActive, isPaused, duration, volume, shuffle, repeat, canSetVolume, ready, buffering } = playback;
+  const status = buffering && isActive ? <span className="control-status" role="status">Buffering…</span> : null;
   const noSession = !isActive;
 
   const playPause = (
@@ -88,6 +89,7 @@ const ControlBar = ({ isMobile, paneVisible, onTogglePane, onOpenDevices }) => {
           {repeatBtn}
         </div>
         <div className="control-bar-secondary">
+          {status}
           {mode === 'connect' && (
             <button type="button" className="devices-btn" onClick={onOpenDevices}>
               <span className="toolbar-icon toolbar-icon-devices" aria-hidden="true" />
@@ -119,6 +121,7 @@ const ControlBar = ({ isMobile, paneVisible, onTogglePane, onOpenDevices }) => {
           {repeatBtn}
         </div>
         <div className="control-buttons-right">
+          {status}
           {mode === 'connect' && (
             <ControlButton icon="devices" title={playback.deviceName ? `Playing on ${playback.deviceName}` : 'Devices'} onClick={onOpenDevices} />
           )}

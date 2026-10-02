@@ -1,7 +1,7 @@
 {
   "name": "winampify.exe",
   "version": "1.0.0",
-  "description": "winampify.exe - A retro Windows 98-style Spotify Web Player",
+  "description": "winampify.exe - A retro Windows 98-style music player for Navidrome (OpenSubsonic) or Spotify",
   "main": "server.js",
   "scripts": {
     "start": "NODE_ENV=production node server.js",
@@ -9,7 +9,8 @@
     "server": "node server.js",
     "client": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test server/navidrome.test.js test/normalize.test.mjs"
   },
   "keywords": [
     "spotify",

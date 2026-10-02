@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useSpotify } from '../spotify/SpotifyContext';
+import { useMusic } from '../music/MusicContext';
+import { playlistSource } from '../music/models';
 
 const HOVER_CLOSE_DELAY_MS = 300;
 const MAX_PLAYLIST_ITEMS = 12;
@@ -12,7 +13,7 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
   const menuRef = useRef(null);
   const closeTimerRef = useRef(null);
   const [openSubmenu, setOpenSubmenu] = useState(null);
-  const { isAuthenticated, playlists, user } = useSpotify();
+  const { isAuthenticated, playlists, user, providerName } = useMusic();
 
   useEffect(() => {
     if (!isOpen) {
@@ -67,11 +68,11 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
             id: pl.id,
             label: pl.name,
             action: 'open-source',
-            data: { type: 'playlist', id: pl.id, name: pl.name, uri: pl.uri }
+            data: playlistSource(pl)
           })),
           ...(playlists.length === 0 ? [{ id: 'empty', label: '(No playlists)', disabled: true }] : [])
         ]
-      : [{ id: 'signin', label: 'Sign in to see playlists…', action: 'open-app', data: 'media-player' }],
+      : [{ id: 'signin', label: `Connect to ${providerName} to see playlists…`, action: 'open-app', data: 'media-player' }],
     settings: [
       { id: 'themes', label: 'Themes…', action: 'themes' }
     ]
@@ -135,8 +136,8 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
         {Item({ icon: 'run', label: 'Run…', action: 'run' })}
         <div className="start-menu-separator" />
         {isAuthenticated
-          ? Item({ icon: 'logoff', label: `Log Off ${user?.display_name || ''}…`.replace(' …', '…'), action: 'logoff' })
-          : Item({ icon: 'logoff', label: 'Sign In…', action: 'login' })}
+          ? Item({ icon: 'logoff', label: `Log Off ${user?.name || ''}…`.replace(' …', '…'), action: 'logoff' })
+          : Item({ icon: 'logoff', label: providerName === 'Spotify' ? 'Sign In…' : `Connect to ${providerName}…`, action: 'login' })}
         {Item({ icon: 'shutdown', label: 'Shut Down…', action: 'shutdown' })}
       </div>
     </div>

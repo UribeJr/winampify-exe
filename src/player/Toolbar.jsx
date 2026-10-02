@@ -1,5 +1,6 @@
 import React from 'react';
 import { WMP_PRESETS } from './presets';
+import SearchBox from './SearchBox';
 
 const PresetButtons = ({ activePreset, onSelectPreset, className }) => (
   <div className={className}>
@@ -17,8 +18,8 @@ const PresetButtons = ({ activePreset, onSelectPreset, className }) => (
   </div>
 );
 
-// Desktop toolbar: navigation history, Home, and the visualizer toggle + presets.
-export const Toolbar = ({ canGoBack, canGoForward, onBack, onForward, onHome, viewMode, visualizerOn, onToggleVisualizer, activePreset, onSelectPreset }) => (
+// Desktop toolbar: navigation history, Home, the visualizer toggle + presets, and library search.
+export const Toolbar = ({ canGoBack, canGoForward, onBack, onForward, onHome, viewMode, visualizerOn, onToggleVisualizer, activePreset, onSelectPreset, onSearch, searchLabel, searchValue }) => (
   <div className="wmp-toolbar">
     <button type="button" className="toolbar-nav-btn" onClick={onBack} disabled={!canGoBack} title="Back" aria-label="Back">
       <span className="toolbar-icon toolbar-icon-back" />
@@ -42,6 +43,7 @@ export const Toolbar = ({ canGoBack, canGoForward, onBack, onForward, onHome, vi
     {visualizerOn && viewMode === 'nowPlaying' && (
       <PresetButtons className="toolbar-presets" activePreset={activePreset} onSelectPreset={onSelectPreset} />
     )}
+    {onSearch && <SearchBox onSearch={onSearch} initial={searchValue} label={searchLabel} className="toolbar-search" />}
   </div>
 );
 

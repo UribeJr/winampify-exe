@@ -1,186 +1,133 @@
 # winampify.exe
 
-A retro Windows 98-style Spotify web player built using the Spotify Web Playback SDK. This project combines nostalgic UI design with modern Spotify integration, featuring a React frontend and Node.js backend for OAuth authentication.
+A Windows 98 desktop with a Windows Media Player–style music player — for **your own music library**.
+Winampify streams from a self-hosted [Navidrome](https://www.navidrome.org/) server through the
+OpenSubsonic API, and can optionally run against Spotify instead.
+
+```
+Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic API ──► Navidrome ──► your library
+```
 
 ## Features
 
-- OAuth 2.0 authentication with Spotify
-- Play/pause controls
-- Next/previous track navigation
-- Display of currently playing track with album art
-- Real-time playback state updates
+- **Windows 98 desktop** — draggable, maximizable windows, taskbar with a working clock and volume tray,
+  Start menu, desktop icons, right-click / long-press menus, Run… and Shut Down… dialogs, and color themes
+- **Media Library** — artists, albums, playlists, Liked Songs (Navidrome favorites),
+  Recently Added and Recently Played
+- **Search** across songs, albums and artists
+- **Playback in the browser** — original files are streamed as-is (M4A/AAC, MP3, FLAC… whatever your browser
+  supports); anything it can't decode automatically falls back to an MP3 transcode
+- **Queue controls** — play/pause, stop, previous/next, ±10 s, seek, volume, mute, shuffle, repeat all/one,
+  lock-screen and hardware media keys
+- **Scrobbling** to Navidrome, and the queue and position survive a page refresh
+- **MilkDrop-style visualizations** (butterchurn)
+- **Phone layout** — full-screen player, view tabs, drill-down library and 44 px touch targets
 
-## Prerequisites
+## Requirements
 
-- **Spotify Premium account** (required for Web Playback SDK)
-- **Node.js** (v18 or higher recommended)
-- **Spotify Developer App** credentials:
-  - Client ID
-  - Client Secret
-  - Redirect URI configured in Spotify Dashboard
+- Node.js 18 or newer
+- A Navidrome server (tested with 0.64) that the machine running Winampify can reach
 
-## Setup
-
-### 1. Create a Spotify App
-
-1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-2. Click "Create an app"
-3. Fill in the app details
-4. Note your **Client ID** and **Client Secret**
-5. Add `http://localhost:3000/callback` to your app's **Redirect URIs**
-
-### 2. Install Dependencies
+## Quick start
 
 ```bash
+git clone https://github.com/UribeJr/winampify-exe.git
+cd winampify-exe
 npm install
-```
-
-### 3. Configure Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```env
-SPOTIFY_CLIENT_ID=your_client_id_here
-SPOTIFY_CLIENT_SECRET=your_client_secret_here
-SPOTIFY_REDIRECT_URI=http://localhost:3000/callback
-PORT=3001
-```
-
-The client needs no Spotify variables: in dev, Vite proxies `/login`, `/callback`, `/refresh_token` and `/api` to the Express server, and in production Express serves both.
-
-Replace `your_client_id_here` and `your_client_secret_here` with your actual Spotify app credentials.
-
-### 4. Run the Application
-
-#### Option 1: Run both server and client together
-```bash
+cp .env.example .env    # then fill in your Navidrome URL, username and password
 npm run dev
 ```
 
-#### Option 2: Run separately
+Open <http://127.0.0.1:3000>. The desktop boots, connects to Navidrome and opens the player.
 
-Terminal 1 (Backend):
-```bash
-npm run server
+## Configuration
+
+All settings live in `.env` (gitignored) and are read **only by the Express server** — nothing is bundled into
+the browser. See [`.env.example`](.env.example).
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NAVIDROME_URL` | yes | Base URL of your Navidrome server, e.g. `http://your-navidrome-host:4533` |
+| `NAVIDROME_USERNAME` | yes | Navidrome user |
+| `NAVIDROME_PASSWORD` | yes | Navidrome password |
+| `NAVIDROME_NAME` | no | Server name shown in the UI ("Connect to …"). Default `Navidrome` |
+| `NAVIDROME_CLIENT_ID` | no | Player name Navidrome shows under Players. Default `winampify` |
+| `MUSIC_PROVIDER` | no | `navidrome` (default) or `spotify` |
+| `PORT` | no | API server port. Default `3001` |
+| `HOST` | no | Interface the API server listens on. Default `127.0.0.1` in development |
+
+## Security model
+
+- **Credentials never reach the browser.** The server signs each upstream request with Subsonic token auth
+  (a fresh random salt `s` and `t = md5(password + s)`); JSON calls use the OpenSubsonic `formPost`
+  extension so tokens stay out of URLs and logs.
+- **Allowlisted proxy.** The browser can only call the routes in [`server/navidrome.js`](server/navidrome.js)
+  (search, browse, favorites, scrobble, stream and cover art) with validated ids and clamped sizes. The
+  upstream host is fixed by `NAVIDROME_URL`, so the proxy can't be pointed anywhere else.
+- **Streams and artwork are proxied** too (with HTTP Range support for seeking), so no tokens appear in
+  `<audio>` or `<img>` URLs.
+- **Loopback by default.** In development the API listens on `127.0.0.1` only.
+
+> **⚠️ Don't expose this server to the internet as-is.** Whoever can reach the Express server can play your
+> library — it has no login of its own. To use it from a phone on your home network, set `HOST=0.0.0.0` and run
+> `npm run client -- --host`; everyone on that network will have access.
+
+## Using it on a phone
+
+Navidrome playback is plain HTML5 audio, so it works in mobile browsers too. Under 767 px wide (or on short
+touch screens) the player opens full-screen, the menu bar and toolbar become a row of view tabs, the library
+becomes a drill-down list, and the transport controls get bigger. iOS doesn't let web pages change volume, so
+the slider is disabled there — use the hardware buttons.
+
+## Spotify mode (optional)
+
+Set `MUSIC_PROVIDER=spotify` and fill in the Spotify section of `.env.example`:
+
+1. Create an app in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
+2. Add `http://127.0.0.1:3000/callback` as a Redirect URI (Spotify only allows loopback or HTTPS redirects).
+3. Set `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` and `SPOTIFY_REDIRECT_URI` in `.env`.
+
+Spotify playback requires **Spotify Premium**. Desktop browsers play through the Web Playback SDK; phones can't
+run the SDK, so Winampify acts as a **Spotify Connect remote** for the Spotify app or a speaker. Search, artists
+and favorites are Navidrome-only and are hidden in Spotify mode.
+
+## Scripts
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | API server (port 3001) + Vite dev server (port 3000) |
+| `npm test` | Proxy and normalizer tests (Node's built-in test runner, no extra dependencies) |
+| `npm run build` | Production build into `dist/` |
+| `npm start` | Serve `dist/` and the API from Express (`NODE_ENV=production`) |
+
+## Project structure
+
+```
+server.js              Express: /api/config, Spotify OAuth + proxy, static files in production
+server/navidrome.js    Allowlisted Navidrome / OpenSubsonic proxy (token auth, streaming, cover art)
+src/
+  App.jsx              Boot screen, desktop shell wiring, dialogs
+  os/                  Window manager, Window, Taskbar, Start menu, Desktop, context menu, app registry
+  player/              Media player: views, track table, search, control bar, seek bar, visualizer
+  music/               Provider layer: app models, MusicContext, Navidrome library + <audio> engine
+  spotify/             Spotify backend: OAuth, API client, Web Playback SDK and Connect engines
+  dialogs/             Run, Shut Down, Themes, sign-in and message dialogs
+  styles/              base, shell, player and mobile CSS
+test/                  Normalizer tests
 ```
 
-Terminal 2 (Frontend):
-```bash
-npm run client
-```
+Adding another music backend means implementing the library surface in `src/music/navidrome/library.js`
+and providing the same `MusicContext` value as `NavidromeBackend.jsx`.
 
-The backend will run on `http://localhost:3001` and the frontend on `http://localhost:3000`.
+## Credits
 
-## Usage
+- [98.css](https://jdan.github.io/98.css/) for the Windows 98 widgets
+- [butterchurn](https://github.com/jberg/butterchurn) for the MilkDrop visualizer
+- [Navidrome](https://www.navidrome.org/) and the [OpenSubsonic API](https://opensubsonic.netlify.app/)
 
-1. Open `http://127.0.0.1:3000` — Winampify boots to a Windows 98 desktop
-2. Click **Sign In** (or open Media Player) and authorize Spotify
-3. Browse playlists, liked songs and albums in the Media Library and click a track to play it
-4. Drag/maximize/minimize the window, right-click (or long-press) the desktop, try Start → Run… (`wmp.exe`, or paste a playlist link) and Start → Settings → Themes
+## License
 
-### Desktop vs. mobile
+[MIT](LICENSE)
 
-- **Desktop browsers** play audio in the page via the Web Playback SDK (Spotify Premium).
-- **Phones and tablets** can't run the SDK, so Winampify becomes a **Spotify Connect remote**: music plays in the Spotify app (or any speaker) and you pick the device under **Devices**. The same fallback kicks in if a desktop browser can't start the SDK.
-- Under 767px wide (or short touch screens) the window is always maximized, the menu bar/toolbar become a row of view tabs, the library becomes a drill-down list, and all touch targets are 44px+.
-
-## Project Structure
-
-```
-.
-├── server.js           # Express backend with OAuth endpoints
-├── vite.config.js      # Vite configuration
-├── index.html          # HTML template (Vite entry point)
-├── src/
-│   ├── App.jsx         # Providers, boot screen, desktop shell wiring
-│   ├── os/             # Window manager, Window, Taskbar, StartMenu, Desktop, ContextMenu, app registry
-│   ├── player/         # Media player: views, track table, control bar, seek bar, visualizer
-│   ├── spotify/        # Auth, API client, SDK + Connect playback engines, context
-│   ├── dialogs/        # Run, Shut Down, Themes, sign-in, message boxes
-│   ├── contexts/       # ThemeContext (desktop themes)
-│   ├── hooks/          # useIsMobile, useClock, useLongPress, …
-│   └── styles/         # base, shell, player, mobile CSS
-├── public/assets/      # Icons and wallpaper
-├── package.json        # Dependencies and scripts
-└── .env               # Environment variables (create this)
-```
-
-## API Endpoints
-
-- `GET /login` - Initiates Spotify OAuth flow
-- `GET /callback` - Handles OAuth callback from Spotify
-- `POST /refresh_token` - Refreshes access token
-- `GET /api/playlists`, `/api/playlists/:id/tracks`, `/api/library/tracks|albums`, `/api/albums/:id` - Library
-- `PUT /api/playback/play`, `PUT /api/playback/transfer` - Start playback / move it to a device
-- `GET /api/player`, `GET /api/player/devices`, `PUT /api/player/pause|seek|volume|shuffle|repeat`, `POST /api/player/next|previous` - Spotify Connect remote control
-
-## Deployment to Render
-
-This app is configured to deploy as a **Web Service** on Render.
-
-### Render Setup Steps:
-
-1. **Create a new Web Service** on Render
-2. **Connect your repository** (GitHub/GitLab)
-3. **Configure Build & Start Commands:**
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm start`
-4. **Set Environment Variables** in Render Dashboard:
-   ```
-   SPOTIFY_CLIENT_ID=your_client_id_here
-   SPOTIFY_CLIENT_SECRET=your_client_secret_here
-   SPOTIFY_REDIRECT_URI=https://your-app.onrender.com/callback
-   FRONTEND_URL=https://your-app.onrender.com
-   CLIENT_ORIGIN=https://your-app.onrender.com
-   NODE_ENV=production
-   ```
-5. **Update Spotify App Settings:**
-   - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-   - Add your Render URL to **Redirect URIs**: `https://your-app.onrender.com/callback`
-6. **Deploy!**
-
-### Environment Variables for Production:
-
-Create a `.env` file or set these in Render's environment variables:
-
-```env
-# Required
-SPOTIFY_CLIENT_ID=your_spotify_client_id
-SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-SPOTIFY_REDIRECT_URI=https://your-app.onrender.com/callback
-FRONTEND_URL=https://your-app.onrender.com
-CLIENT_ORIGIN=https://your-app.onrender.com
-NODE_ENV=production
-
-# Optional (Render sets PORT automatically)
-PORT=3001
-```
-
-### Frontend Environment Variables (for Vite):
-
-If deploying separately, create a `.env` file with:
-
-```env
-VITE_API_BASE_URL=https://your-api.onrender.com
-```
-
-## Notes
-
-- Playback control (in-browser or remote) requires **Spotify Premium**
-- Spotify only allows loopback or HTTPS redirect URIs, so test sign-in on phones against a deployed HTTPS build; `npm run client -- --host` is fine for previewing layout
-- The app uses `localhost` for development. For production, update the redirect URIs and use HTTPS
-- Access tokens expire after 1 hour. The refresh token endpoint can be used to get new tokens
-- In production, the Express server serves both the API and the static React build files
-
-## Troubleshooting
-
-- **"Device not found"**: Make sure you have Spotify Premium and that no other device is actively playing
-- **"Invalid client"**: Verify your Client ID and Client Secret in the `.env` file
-- **CORS errors**: Ensure the backend is running on port 3001 and frontend on port 3000
-
-## Resources
-
-- [Spotify Web Playback SDK Documentation](https://developer.spotify.com/documentation/web-playback-sdk)
-- [Spotify Web API Documentation](https://developer.spotify.com/documentation/web-api)
-
-
+Winampify is a fan project and isn't affiliated with or endorsed by Microsoft, Navidrome or Spotify.
+Windows and Windows Media Player are trademarks of Microsoft Corporation; Spotify is a trademark of Spotify AB.

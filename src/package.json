@@ -1,0 +1,4 @@
+{
+  "//": "Browser source is ES modules (the Express server at the root is CommonJS)",
+  "type": "module"
+}

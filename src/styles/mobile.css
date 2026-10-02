@@ -336,6 +336,46 @@
     font-size: 12px;
   }
 
+  /* Search field at the top of the Library list */
+  .library-search {
+    padding: 8px 12px;
+    background: var(--win-face);
+    border-bottom: 1px solid var(--win-shadow);
+    gap: 4px;
+  }
+
+  .library-search input[type='search'] {
+    flex: 1;
+    width: auto;
+    height: 40px;
+    font-size: 16px; /* 16px stops iOS zooming on focus */
+  }
+
+  .library-search .wmp-search-go {
+    width: 44px;
+    height: 40px;
+  }
+
+  .library-scroll {
+    padding: 8px 0 12px;
+  }
+
+  .library-section-heading {
+    padding: 8px 12px 4px;
+    margin: 0;
+  }
+
+  .search-artists {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .library-scroll > .library-tiles,
+  section > .library-tiles {
+    padding: 0 12px;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  }
+
   /* Library: stacked drill-down list */
   .library-list {
     flex: 1;
@@ -365,8 +405,8 @@
     border-bottom: 1px solid #e8e8e8;
   }
 
-  .library-list-row img,
-  .library-list-placeholder {
+  .library-list-art,
+  .library-list-art.placeholder {
     width: 44px;
     height: 44px;
     object-fit: cover;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Dialog, { DialogButtons } from './Dialog';
 
 const OPTIONS = [
-  { value: 'shutdown', label: 'Shut down (sign out of Spotify)' },
+  { value: 'shutdown', label: 'Shut down (sign out and stop the music)' },
   { value: 'restart', label: 'Restart Winampify' }
 ];
 

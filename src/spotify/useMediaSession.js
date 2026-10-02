@@ -3,7 +3,8 @@ import { useEffect, useRef } from 'react';
 const ACTIONS = ['play', 'pause', 'previoustrack', 'nexttrack', 'seekto', 'seekbackward', 'seekforward'];
 
 /**
- * Lock-screen / hardware media keys for in-browser (SDK) playback.
+ * Lock-screen / hardware media keys for in-browser playback (Navidrome <audio> or the Spotify SDK).
+ * Expects the app Track model (src/music/models.js).
  */
 export default function useMediaSession({ enabled, playback, controls }) {
   const controlsRef = useRef(controls);
@@ -15,14 +16,14 @@ export default function useMediaSession({ enabled, playback, controls }) {
 
   useEffect(() => {
     if (!('mediaSession' in navigator) || !enabled || !track) return;
+    // Artwork URLs may be relative (Navidrome proxy); the OS needs absolute ones
+    const art = track.coverArt ? new URL(track.coverArt, window.location.href) : null;
+    if (art && art.pathname.startsWith('/api/nd/cover/')) art.searchParams.set('size', '512');
     navigator.mediaSession.metadata = new window.MediaMetadata({
-      title: track.name,
+      title: track.title,
       artist: track.artists?.map((a) => a.name).join(', ') || '',
       album: track.album?.name || '',
-      artwork: (track.album?.images || []).map((img) => ({
-        src: img.url,
-        sizes: img.width ? `${img.width}x${img.height}` : undefined
-      }))
+      artwork: art ? [{ src: art.href, sizes: '512x512' }] : []
     });
   }, [enabled, track]);
 

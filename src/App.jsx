@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { SpotifyProvider, useSpotify } from './spotify/SpotifyContext';
+import { MusicProvider, useMusic } from './music/MusicContext';
 import LoadingScreen from './os/LoadingScreen';
 import Desktop from './os/Desktop';
 import Taskbar from './os/Taskbar';
@@ -18,6 +18,12 @@ import useElementSize from './hooks/useElementSize';
 
 const BOOTED_KEY = 'winampify_booted';
 
+// Chosen by the server's MUSIC_PROVIDER; lazy so the unused backend never loads
+const BACKENDS = {
+  navidrome: lazy(() => import('./music/NavidromeBackend')),
+  spotify: lazy(() => import('./spotify/SpotifyBackend'))
+};
+
 const AUTH_ERRORS = {
   state_mismatch: 'Spotify sign-in was interrupted. Please try again.',
   invalid_token: 'Spotify didn\'t accept the sign-in. Please try again.',
@@ -26,12 +32,12 @@ const AUTH_ERRORS = {
 };
 
 const HELP_MESSAGE = {
-  intro: 'Winampify is a Windows 98-style Spotify player.',
+  intro: 'Winampify is a Windows 98-style music player for your Navidrome or Spotify library.',
   bullets: [
     'Open Media Player from the desktop or Start → Programs.',
     'Browse playlists, liked songs and albums in the Media Library.',
     'Click the progress bar to seek; drag it to scrub.',
-    'On phones, Winampify is a remote: pick a device under Devices and music plays there.',
+    'Search your library from the toolbar (or the top of the Library on phones).',
     'Right-click (or long-press) the desktop for more options.'
   ]
 };
@@ -50,15 +56,15 @@ const ICON_MENU = [
   { label: 'Properties', action: 'icon-properties' }
 ];
 
-// Spotify playlist/album links or URIs typed into Run…
+// Spotify playlist/album links or URIs typed into Run… (Spotify provider only)
 const parseSpotifyLink = (text) => {
   const match = text.match(/(playlist|album)[/:]([A-Za-z0-9]{22})/);
   return match ? { type: match[1], id: match[2], uri: `spotify:${match[1]}:${match[2]}` } : null;
 };
 
 function Shell() {
-  const spotify = useSpotify();
-  const { status, isAuthenticated, authError, clearAuthError, playlists, mode } = spotify;
+  const music = useMusic();
+  const { status, isAuthenticated, authError, clearAuthError, playlists, mode, provider } = music;
   const forceMaximized = useForceMaximized();
   const wm = useWindowManager();
   const [layerEl, setLayerEl] = useState(null);
@@ -92,6 +98,14 @@ function Shell() {
     else setDialog({ type: 'login' });
   }, [booted, status, isAuthenticated, openApp]);
 
+  // Connecting from the sign-in prompt: close it and open the player
+  useEffect(() => {
+    if (isAuthenticated && dialog?.type === 'login') {
+      setDialog(null);
+      openApp('media-player');
+    }
+  }, [isAuthenticated, dialog, openApp]);
+
   useEffect(() => {
     if (authError && booted) {
       showMessage(AUTH_ERRORS[authError] || `Sign-in failed (${authError}).`, 'Spotify', 'warning');
@@ -100,10 +114,10 @@ function Shell() {
   }, [authError, booted, clearAuthError, showMessage]);
 
   const signOut = useCallback(() => {
-    spotify.logout();
+    music.logout();
     wm.closeAll();
     setDialog({ type: 'login' });
-  }, [spotify, wm]);
+  }, [music, wm]);
 
   const runCommand = useCallback((raw) => {
     const command = raw.trim().toLowerCase();
@@ -115,7 +129,7 @@ function Shell() {
       setDialog({ type: 'themes' });
       return;
     }
-    const link = parseSpotifyLink(raw);
+    const link = provider === 'spotify' ? parseSpotifyLink(raw) : null;
     if (link) {
       const known = link.type === 'playlist' && playlists.find((pl) => pl.id === link.id);
       const name = known?.name || (link.type === 'album' ? 'Album' : 'Playlist');
@@ -149,7 +163,7 @@ function Shell() {
         showMessage(HELP_MESSAGE, 'Winampify Help');
         break;
       case 'login':
-        spotify.login();
+        music.login();
         break;
       case 'logoff':
         signOut();
@@ -161,8 +175,9 @@ function Shell() {
         showMessage({
           intro: 'Winampify 98',
           bullets: [
-            `Playback: ${mode === 'sdk' ? 'in this browser (Web Playback SDK)' : 'remote control (Spotify Connect)'}`,
-            `Signed in: ${isAuthenticated ? spotify.user?.display_name || 'yes' : 'no'}`,
+            `Library: ${music.providerName}${provider === 'navidrome' ? ` on ${music.serverLabel}` : ''}`,
+            `Playback: ${{ local: 'in this browser (HTML5 audio)', sdk: 'in this browser (Web Playback SDK)', connect: 'remote control (Spotify Connect)' }[mode]}`,
+            `Signed in: ${isAuthenticated ? music.user?.name || 'yes' : 'no'}`,
             `Screen: ${Math.round(desktopSize.width)} × ${Math.round(desktopSize.height)}`
           ]
         }, 'Display Properties');
@@ -170,7 +185,7 @@ function Shell() {
       default:
         break;
     }
-  }, [openApp, showMessage, signOut, spotify, mode, isAuthenticated, desktopSize]);
+  }, [openApp, showMessage, signOut, music, mode, provider, isAuthenticated, desktopSize]);
 
   const openIconMenu = useCallback((x, y, target) => {
     setContextMenu({ x, y, items: target ? ICON_MENU : DESKTOP_MENU, target });
@@ -186,9 +201,9 @@ function Shell() {
   const closeWindow = useCallback((id) => {
     const win = wm.windows.find((w) => w.id === id);
     // Closing the player stops in-browser audio, like WMP; remote playback keeps going
-    if (win?.appId === 'media-player') spotify.controls.pauseIfPlaying();
+    if (win?.appId === 'media-player') music.controls.pauseIfPlaying();
     wm.close(id);
-  }, [wm, spotify.controls]);
+  }, [wm, music.controls]);
 
   const closeContextMenu = useCallback(() => setContextMenu(null), []);
 
@@ -248,7 +263,7 @@ function Shell() {
         />
       )}
       {dialog?.type === 'login' && !isAuthenticated && (
-        <LoginDialog onLogin={spotify.login} onClose={closeDialog} remoteMode={mode === 'connect'} />
+        <LoginDialog music={music} onClose={closeDialog} />
       )}
     </div>
   );
@@ -257,9 +272,11 @@ function Shell() {
 export default function App() {
   return (
     <ThemeProvider>
-      <SpotifyProvider>
-        <Shell />
-      </SpotifyProvider>
+      <Suspense fallback={null}>
+        <MusicProvider backends={BACKENDS}>
+          <Shell />
+        </MusicProvider>
+      </Suspense>
     </ThemeProvider>
   );
 }

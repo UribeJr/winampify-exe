@@ -1,8 +1,10 @@
 import React from 'react';
 import TrackTable from './TrackTable';
+import { useMusic } from '../music/MusicContext';
 
 // Full-width track table for the selected source (WMP's "Playlist" view).
-const PlaylistView = ({ source, trackList, currentUri, onPlayTrack, onPlayAll, onOpenLibrary, isMobile }) => {
+const PlaylistView = ({ source, trackList, currentKey, onPlayTrack, onPlayAll, onOpenLibrary, isMobile }) => {
+  const { capabilities, isStarred } = useMusic();
   if (!source) {
     return (
       <div className="wmp-playlist-view">
@@ -23,7 +25,8 @@ const PlaylistView = ({ source, trackList, currentUri, onPlayTrack, onPlayAll, o
       </div>
       <TrackTable
         tracks={trackList.tracks}
-        currentUri={currentUri}
+        currentKey={currentKey}
+        isStarred={capabilities.star ? isStarred : undefined}
         onPlay={onPlayTrack}
         compact={isMobile}
         loading={trackList.loading}

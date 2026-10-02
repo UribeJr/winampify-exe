@@ -13,11 +13,11 @@ const findPreset = (presets, index) => {
 };
 
 /**
- * MilkDrop-style visualizer. Spotify audio is DRM-protected and can't be analysed directly, so a
- * silent oscillator drives butterchurn: shaped by Spotify's audio-analysis (loudness, beats, pitch)
- * when available, and by a gentle sine wave otherwise.
+ * MilkDrop-style visualizer. A silent oscillator drives butterchurn, shaped by the provider's
+ * audio-analysis (Spotify: loudness, beats, pitch) when `getAudioAnalysis` is available, and by a
+ * gentle sine wave otherwise (Navidrome).
  */
-const Visualizer = forwardRef(({ isActive, trackId, getPosition, api, initialPreset = 0 }, ref) => {
+const Visualizer = forwardRef(({ isActive, trackId, getPosition, getAudioAnalysis, initialPreset = 0 }, ref) => {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const visualizerRef = useRef(null);
@@ -89,13 +89,13 @@ const Visualizer = forwardRef(({ isActive, trackId, getPosition, api, initialPre
   // Audio analysis for the current track (may be unavailable for newer Spotify apps)
   useEffect(() => {
     analysisRef.current = null;
-    if (!trackId || !api) return undefined;
+    if (!trackId || !getAudioAnalysis) return undefined;
     let cancelled = false;
-    api.getAudioAnalysis(trackId)
+    getAudioAnalysis(trackId)
       .then((data) => { if (!cancelled && data?.segments) analysisRef.current = data; })
       .catch(() => { /* fall back to the sine driver */ });
     return () => { cancelled = true; };
-  }, [trackId, api]);
+  }, [trackId, getAudioAnalysis]);
 
   // Render loop
   useEffect(() => {

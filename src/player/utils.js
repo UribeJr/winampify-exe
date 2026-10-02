@@ -1,3 +1,6 @@
+// Helpers over the app models in src/music/models.js (provider-neutral).
+export { LIKED_SOURCE } from '../music/models';
+
 export const formatTime = (ms) => {
   if (!ms || Number.isNaN(ms) || ms < 0) return '0:00';
   const totalSeconds = Math.floor(ms / 1000);
@@ -6,18 +9,15 @@ export const formatTime = (ms) => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-export const artistNames = (track) =>
-  track?.artists?.map((a) => a.name).join(', ') || track?.show?.name || '';
+export const artistNames = (track) => track?.artists?.map((a) => a.name).join(', ') || '';
 
-// Pick the smallest image at least `minSize` wide (Spotify lists images largest-first)
-export const imageUrl = (images, minSize = 0) => {
-  if (!images?.length) return null;
-  const sorted = [...images].sort((a, b) => (a.width || 0) - (b.width || 0));
-  return (sorted.find((img) => (img.width || 0) >= minSize) || sorted[sorted.length - 1]).url;
+// Artwork URL at roughly `size` px. Navidrome's proxy resizes on request; Spotify offers fixed sizes.
+export const coverUrl = (item, size = 300) => {
+  if (!item?.coverArt) return null;
+  if (item.coverArt.startsWith('/api/nd/cover/')) return `${item.coverArt}?size=${size}`;
+  return size <= 100 ? item.coverArtSmall || item.coverArt : item.coverArt;
 };
 
-export const trackArt = (track, minSize) => imageUrl(track?.album?.images || track?.images, minSize);
+export const trackArt = coverUrl;
 
 export const sourceKey = (source) => (source ? `${source.type}:${source.id || ''}` : '');
-
-export const LIKED_SOURCE = { type: 'liked', id: 'liked', name: 'Liked Songs' };

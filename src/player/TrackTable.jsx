@@ -3,9 +3,9 @@ import { artistNames, formatTime, trackArt } from './utils';
 
 /**
  * Track list. Desktop renders WMP's column table; phones get two-line rows with art.
- * Clicking (tapping) a row plays it.
+ * Clicking (tapping) a row plays it. Tracks are app models (src/music/models.js).
  */
-const TrackTable = ({ tracks, currentUri, onPlay, compact, loading, error, hasMore, onLoadMore, showAlbum = true }) => {
+const TrackTable = ({ tracks, currentKey, onPlay, compact, loading, error, hasMore, onLoadMore, showAlbum = true, isStarred }) => {
   if (error) return <div className="wmp-library-placeholder">{error}</div>;
   if (!loading && tracks.length === 0) return <div className="wmp-library-placeholder">No tracks here yet.</div>;
 
@@ -22,16 +22,17 @@ const TrackTable = ({ tracks, currentUri, onPlay, compact, loading, error, hasMo
       )}
       <div className="track-table-body">
         {tracks.map((track, index) => {
-          const isCurrent = track.uri === currentUri;
-          const unplayable = track.is_local || track.is_playable === false;
+          const isCurrent = track.key === currentKey;
+          const unplayable = track.playable === false;
+          const heart = isStarred?.(track) ? <span className="track-heart" title="In Liked Songs">♥</span> : null;
           return (
             <button
               type="button"
-              key={`${track.uri}-${index}`}
+              key={`${track.key}-${index}`}
               className={`track-table-row ${isCurrent ? 'current' : ''}`}
               onClick={() => onPlay(track, index)}
               disabled={unplayable}
-              title={unplayable ? 'This track can\'t be played from Spotify' : `Play ${track.name}`}
+              title={unplayable ? 'This track can\'t be played' : `Play ${track.title}`}
             >
               {compact ? (
                 <>
@@ -39,18 +40,18 @@ const TrackTable = ({ tracks, currentUri, onPlay, compact, loading, error, hasMo
                     ? <img className="track-row-art" src={trackArt(track, 64)} alt="" loading="lazy" />
                     : <span className="track-row-art placeholder" aria-hidden="true" />}
                   <span className="track-row-text">
-                    <span className="track-row-title">{isCurrent && '▶ '}{track.name}</span>
-                    <span className="track-row-sub">{artistNames(track)}</span>
+                    <span className="track-row-title">{isCurrent && '▶ '}{track.title}</span>
+                    <span className="track-row-sub">{heart}{artistNames(track)}</span>
                   </span>
-                  <span className="col-length">{formatTime(track.duration_ms)}</span>
+                  <span className="col-length">{formatTime(track.durationMs)}</span>
                 </>
               ) : (
                 <>
                   <span className="col-index">{isCurrent ? '▶' : index + 1}</span>
-                  <span className="col-title">{track.name}</span>
+                  <span className="col-title">{heart}{track.title}</span>
                   <span className="col-artist">{artistNames(track)}</span>
                   {showAlbum && <span className="col-album">{track.album?.name || ''}</span>}
-                  <span className="col-length">{formatTime(track.duration_ms)}</span>
+                  <span className="col-length">{formatTime(track.durationMs)}</span>
                 </>
               )}
             </button>

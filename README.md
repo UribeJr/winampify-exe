@@ -38,7 +38,7 @@ cp .env.example .env    # then fill in your Navidrome URL, username and password
 npm run dev
 ```
 
-Open <http://127.0.0.1:3000>. The desktop boots, connects to Navidrome and opens the player.
+Open <http://localhost:3000>. The desktop boots, connects to Navidrome and opens the player.
 
 ## Configuration
 
@@ -54,7 +54,7 @@ the browser. See [`.env.example`](.env.example).
 | `NAVIDROME_CLIENT_ID` | no | Player name Navidrome shows under Players. Default `winampify` |
 | `MUSIC_PROVIDER` | no | `navidrome` (default) or `spotify` |
 | `PORT` | no | API server port. Default `3001` |
-| `HOST` | no | Interface the API server listens on. Default `127.0.0.1` in development |
+| `HOST` | no | Interface the API server listens on. Default: this computer only (localhost) in development |
 
 ## Security model
 
@@ -66,7 +66,7 @@ the browser. See [`.env.example`](.env.example).
   upstream host is fixed by `NAVIDROME_URL`, so the proxy can't be pointed anywhere else.
 - **Streams and artwork are proxied** too (with HTTP Range support for seeking), so no tokens appear in
   `<audio>` or `<img>` URLs.
-- **Loopback by default.** In development the API listens on `127.0.0.1` only.
+- **Localhost by default.** In development the API only accepts connections from the same computer.
 
 > **⚠️ Don't expose this server to the internet as-is.** Whoever can reach the Express server can play your
 > library — it has no login of its own. To use it from a phone on your home network, set `HOST=0.0.0.0` and run
@@ -84,7 +84,7 @@ the slider is disabled there — use the hardware buttons.
 Set `MUSIC_PROVIDER=spotify` and fill in the Spotify section of `.env.example`:
 
 1. Create an app in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
-2. Add `http://127.0.0.1:3000/callback` as a Redirect URI (Spotify only allows loopback or HTTPS redirects).
+2. Add `http://127.0.0.1:3000/callback` as a Redirect URI. Spotify requires this exact loopback form (it rejects `localhost`), and it's the same on every computer.
 3. Set `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` and `SPOTIFY_REDIRECT_URI` in `.env`.
 
 Spotify playback requires **Spotify Premium**. Desktop browsers play through the Web Playback SDK; phones can't

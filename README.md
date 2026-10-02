@@ -13,7 +13,9 @@ Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic AP
 - **Select your music service** — a Win98 logon-style picker for Navidrome or Spotify, remembered per browser
   (switch any time from Start → Log Off or Start → Settings → Music Service…)
 - **Windows 98 desktop** — draggable, maximizable windows, taskbar with a working clock and volume tray,
-  Start menu, desktop icons, right-click / long-press menus, Run… and Shut Down… dialogs, and color themes
+  Start menu, desktop icons, right-click / long-press menus, Run… and Shut Down… dialogs
+- **Display Properties** — pick a wallpaper (5 built-in pixel-art wallpapers or your own picture, shown
+  centered, tiled or stretched) and a color scheme. Right-click the desktop → Properties, or Start → Settings
 - **Media Library** — artists, albums, playlists, Liked Songs (Navidrome favorites),
   Recently Added and Recently Played
 - **Search** across songs, albums and artists

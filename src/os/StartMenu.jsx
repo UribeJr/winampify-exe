@@ -75,6 +75,7 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
         ]
       : [{ id: 'signin', label: `Connect to ${providerName} to see playlists…`, action: 'open-app', data: 'media-player' }],
     settings: [
+      { id: 'wallpaper', label: 'Wallpaper…', action: 'wallpaper' },
       { id: 'themes', label: 'Themes…', action: 'themes' },
       { id: 'service', label: 'Music Service…', action: 'switch-service' }
     ]

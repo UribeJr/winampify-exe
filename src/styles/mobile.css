@@ -740,3 +740,55 @@
     min-height: 44px;
   }
 }
+
+@media (max-width: 767px), (max-height: 500px) and (pointer: coarse) {
+  .display-tabs a {
+    font-size: 14px;
+    margin: 10px 12px;
+  }
+
+  .display-controls {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'label' 'list' 'buttons' 'mode';
+  }
+
+  .display-panel > .window-body {
+    padding: 10px;
+    min-height: 0;
+  }
+
+  .display-background {
+    gap: 8px;
+  }
+
+  .monitor-screen {
+    width: 132px;
+    height: 88px;
+    border-width: 7px;
+    border-bottom-width: 11px;
+  }
+
+  .wallpaper-list {
+    height: 132px;
+  }
+
+  .wallpaper-option {
+    min-height: 36px;
+    flex-shrink: 0;
+    font-size: 14px;
+    padding: 4px 8px;
+  }
+
+  .display-row {
+    flex-direction: row;
+  }
+
+  .display-row button {
+    flex: 1;
+  }
+
+  .display-settings,
+  .display-notice {
+    font-size: 13px;
+  }
+}

@@ -64,9 +64,12 @@
   right: 0;
   bottom: calc(var(--taskbar-height) + var(--safe-bottom));
   overflow: hidden;
-  background:
-    url('/assets/wmp-98.png') center / cover no-repeat,
-    var(--desktop-teal);
+  /* Set by ThemeContext from Display Properties → Background */
+  background-color: var(--desktop-teal);
+  background-image: var(--wallpaper-image, none);
+  background-size: var(--wallpaper-size, auto);
+  background-repeat: var(--wallpaper-repeat, no-repeat);
+  background-position: var(--wallpaper-position, center);
   -webkit-touch-callout: none;
   user-select: none;
 }
@@ -614,7 +617,8 @@
 .theme-preview {
   height: 120px;
   margin-bottom: 12px;
-  background: url('/assets/wmp-98.png') center / cover no-repeat, var(--desktop-teal);
+  /* background comes inline from the selected wallpaper */
+  background-color: var(--desktop-teal);
   box-shadow: var(--inset);
   position: relative;
   overflow: hidden;
@@ -778,4 +782,151 @@
 
 .wmp-login .wmp-link-button {
   margin-top: 4px;
+}
+
+/* ---------- Display Properties ---------- */
+.display-properties {
+  width: min(440px, 100%);
+}
+
+.display-tabs {
+  margin-top: 2px;
+}
+
+.display-tabs a {
+  font-size: 11px;
+}
+
+.display-panel {
+  margin-bottom: 12px;
+}
+
+.display-panel > .window-body {
+  margin: 0;
+  padding: 12px;
+  min-height: 236px;
+}
+
+.display-background {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Beige CRT drawn in CSS, like Win98's preview monitor */
+.monitor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.monitor-screen {
+  width: 176px;
+  height: 120px;
+  border: 10px solid #d4d0c8;
+  border-bottom-width: 16px;
+  border-radius: 4px;
+  box-shadow: inset 1px 1px 0 #808080, 1px 1px 0 #404040, -1px -1px 0 #ffffff, 2px 2px 0 #808080;
+  outline: 1px solid #808080;
+}
+
+.monitor-stand {
+  width: 72px;
+  height: 10px;
+  background: #d4d0c8;
+  border: 1px solid #808080;
+  border-top: none;
+  box-shadow: 1px 1px 0 #404040;
+}
+
+.display-controls {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'label label'
+    'list buttons'
+    'list mode';
+  gap: 4px 10px;
+  align-items: start;
+}
+
+.display-controls > span {
+  grid-area: label;
+}
+
+.wallpaper-list {
+  grid-area: list;
+  display: flex;
+  flex-direction: column;
+  height: 104px;
+  overflow-y: auto;
+  background: #ffffff;
+  box-shadow: inset -1px -1px #fff, inset 1px 1px grey, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
+  padding: 3px;
+}
+
+.wallpaper-option {
+  text-align: left;
+  padding: 1px 4px;
+  font-size: 11px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  min-width: 0;
+  min-height: 0;
+  color: #000000;
+  text-shadow: none;
+  cursor: default;
+}
+
+.wallpaper-option:not(:disabled):hover,
+.wallpaper-option:not(:disabled):active {
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.wallpaper-option.selected {
+  background: var(--win-select);
+  color: #ffffff;
+}
+
+.wallpaper-option:focus-visible {
+  outline: 1px dotted #000000;
+  outline-offset: -1px;
+}
+
+.display-row {
+  grid-area: buttons;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.display-controls .field-row-stacked {
+  grid-area: mode;
+}
+
+.display-appearance .theme-preview {
+  height: 150px;
+}
+
+.display-settings {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 12px;
+  font-size: 11px;
+}
+
+.display-settings dt {
+  font-weight: bold;
+}
+
+.display-notice {
+  margin: -4px 0 10px;
+  padding: 6px 8px;
+  background: #ffffe1;
+  border: 1px solid #000000;
+  font-size: 11px;
 }

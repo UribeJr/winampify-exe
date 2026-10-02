@@ -12,7 +12,7 @@ import { APP_REGISTRY, RUN_COMMANDS } from './os/appRegistry';
 import RunDialog from './dialogs/RunDialog';
 import ShutdownDialog from './dialogs/ShutdownDialog';
 import MessageDialog from './dialogs/MessageDialog';
-import ThemesDialog from './dialogs/ThemesDialog';
+import DisplayProperties from './dialogs/DisplayProperties';
 import LoginDialog from './dialogs/LoginDialog';
 import { useForceMaximized } from './hooks/useMediaQuery';
 import useElementSize from './hooks/useElementSize';
@@ -129,8 +129,12 @@ function Shell() {
       openApp(RUN_COMMANDS[command]);
       return;
     }
-    if (['themes', 'control', 'desk.cpl'].includes(command)) {
-      setDialog({ type: 'themes' });
+    if (['desk.cpl', 'control desk', 'control', 'display'].includes(command)) {
+      setDialog({ type: 'display', props: { initialTab: 'background' } });
+      return;
+    }
+    if (command === 'themes') {
+      setDialog({ type: 'display', props: { initialTab: 'appearance' } });
       return;
     }
     const link = provider === 'spotify' ? parseSpotifyLink(raw) : null;
@@ -155,7 +159,10 @@ function Shell() {
         openApp('media-player', { type: 'source', source: data });
         break;
       case 'themes':
-        setDialog({ type: 'themes' });
+        setDialog({ type: 'display', props: { initialTab: 'appearance' } });
+        break;
+      case 'wallpaper':
+        setDialog({ type: 'display', props: { initialTab: 'background' } });
         break;
       case 'run':
         setDialog({ type: 'run' });
@@ -178,20 +185,20 @@ function Shell() {
         showMessage('The Recycle Bin is empty.', 'Recycle Bin');
         break;
       case 'properties':
-        showMessage({
-          intro: 'Winampify 98',
-          bullets: [
-            `Library: ${music.providerName}${provider === 'navidrome' ? ` on ${music.serverLabel}` : ''}`,
-            `Playback: ${{ local: 'in this browser (HTML5 audio)', sdk: 'in this browser (Web Playback SDK)', connect: 'remote control (Spotify Connect)' }[mode]}`,
-            `Signed in: ${isAuthenticated ? music.user?.name || 'yes' : 'no'}`,
-            `Screen: ${Math.round(desktopSize.width)} × ${Math.round(desktopSize.height)}`
-          ]
-        }, 'Display Properties');
+        setDialog({ type: 'display', props: { initialTab: 'background' } });
         break;
       default:
         break;
     }
-  }, [openApp, showMessage, signOut, music, mode, provider, isAuthenticated, desktopSize]);
+  }, [openApp, showMessage, signOut, music]);
+
+  // Read-only facts for Display Properties → Settings
+  const displayInfo = [
+    ['Music service', music.provider ? `${music.providerName}${provider === 'navidrome' ? ` (${music.serverLabel})` : ''}` : 'None selected'],
+    ['Playback', music.provider ? { local: 'This browser (HTML5 audio)', sdk: 'This browser (Spotify Web Playback SDK)', connect: 'Remote control (Spotify Connect)' }[mode] : '—'],
+    ['Signed in', isAuthenticated ? music.user?.name || 'Yes' : 'No'],
+    ['Desktop area', `${Math.round(desktopSize.width)} × ${Math.round(desktopSize.height)} pixels`]
+  ];
 
   const openIconMenu = useCallback((x, y, target) => {
     setContextMenu({ x, y, items: target ? ICON_MENU : DESKTOP_MENU, target });
@@ -259,7 +266,13 @@ function Shell() {
       )}
 
       {dialog?.type === 'run' && <RunDialog onClose={closeDialog} onRun={runCommand} />}
-      {dialog?.type === 'themes' && <ThemesDialog onClose={closeDialog} />}
+      {dialog?.type === 'display' && (
+        <DisplayProperties
+          {...dialog.props}
+          info={displayInfo}
+          onClose={closeDialog}
+        />
+      )}
       {dialog?.type === 'message' && <MessageDialog {...dialog.props} onClose={closeDialog} />}
       {dialog?.type === 'shutdown' && (
         <ShutdownDialog

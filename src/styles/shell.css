@@ -74,14 +74,23 @@
   user-select: none;
 }
 
-.window-layer {
+/* Layers: icons (0) → sticky notes (1) → app windows (2) */
+.window-layer,
+.notes-layer {
   position: absolute;
   top: var(--safe-top);
   right: var(--safe-right);
   bottom: 0;
   left: var(--safe-left);
   pointer-events: none;
+}
+
+.notes-layer {
   z-index: 1;
+}
+
+.window-layer {
+  z-index: 2;
 }
 
 .wmp-desktop-icons {
@@ -929,4 +938,164 @@
   background: #ffffe1;
   border: 1px solid #000000;
   font-size: 11px;
+}
+
+/* ---------- Sticky notes ---------- */
+.note-yellow { --note-paper: #fff7a8; --note-title: #f2dc5d; --note-edge: #b39a1e; }
+.note-pink { --note-paper: #ffd3e4; --note-title: #f5a3c2; --note-edge: #b85f84; }
+.note-blue { --note-paper: #cfe8ff; --note-title: #96c8f2; --note-edge: #4f86b8; }
+.note-green { --note-paper: #d4f5c4; --note-title: #a3dd8a; --note-edge: #5c9a46; }
+
+.sticky-note {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--note-paper);
+  border: 1px solid var(--note-edge);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.7), 3px 3px 0 rgba(0, 0, 0, 0.25);
+  pointer-events: auto;
+  font-family: var(--font-ui);
+}
+
+.sticky-note-title {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 2px 0 6px;
+  background: var(--note-title);
+  border-bottom: 1px solid var(--note-edge);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  flex-shrink: 0;
+}
+
+.sticky-note-title:active {
+  cursor: grabbing;
+}
+
+.sticky-note.collapsed .sticky-note-title {
+  border-bottom: none;
+}
+
+.sticky-note-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: bold;
+  color: #2a2410;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sticky-note-btn {
+  width: 16px;
+  height: 14px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1;
+  color: #000000;
+  text-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sticky-note-text {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  resize: none;
+  border: none;
+  outline: none;
+  padding: 6px 8px;
+  background: transparent;
+  color: #1a1a1a;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: none;
+}
+
+.sticky-note-text::placeholder {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.icon-note::before { content: '📝'; }
+
+/* ---------- Recycle Bin ---------- */
+.recycle-bin-dialog {
+  width: min(400px, 100%);
+}
+
+.recycle-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  background: #ffffff;
+  box-shadow: inset -1px -1px #fff, inset 1px 1px grey, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
+  padding: 3px;
+}
+
+.recycle-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 3px 6px;
+  font-size: 11px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  min-width: 0;
+  min-height: 0;
+  color: #000000;
+  text-shadow: none;
+  cursor: default;
+}
+
+.recycle-item:not(:disabled):hover,
+.recycle-item:not(:disabled):active {
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.recycle-item.selected {
+  background: var(--win-select);
+  color: #ffffff;
+}
+
+.recycle-swatch {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  background: var(--note-paper);
+  border: 1px solid var(--note-edge);
+}
+
+.recycle-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recycle-date {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.recycle-confirm p {
+  margin-bottom: 10px;
 }

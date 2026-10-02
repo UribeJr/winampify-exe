@@ -14,7 +14,11 @@ import ShutdownDialog from './dialogs/ShutdownDialog';
 import MessageDialog from './dialogs/MessageDialog';
 import DisplayProperties from './dialogs/DisplayProperties';
 import LoginDialog from './dialogs/LoginDialog';
-import { useForceMaximized } from './hooks/useMediaQuery';
+import RecycleBinDialog from './dialogs/RecycleBinDialog';
+import NotesLayer, { noteSize } from './os/NotesLayer';
+import useStickyNotes from './os/useStickyNotes';
+import { NOTE_COLORS } from './os/stickyNotes';
+import { useForceMaximized, useIsMobile } from './hooks/useMediaQuery';
 import useElementSize from './hooks/useElementSize';
 
 const BOOTED_KEY = 'winampify_booted';
@@ -39,11 +43,13 @@ const HELP_MESSAGE = {
     'Browse playlists, liked songs and albums in the Media Library.',
     'Click the progress bar to seek; drag it to scrub.',
     'Search your library from the toolbar (or the top of the Library on phones).',
-    'Right-click (or long-press) the desktop for more options.'
+    'Right-click (or long-press) the desktop for more options, like New Sticky Note.'
   ]
 };
 
 const DESKTOP_MENU = [
+  { label: 'New Sticky Note', action: 'new-note', bold: true },
+  { separator: true },
   { label: 'Arrange Icons', disabled: true },
   { label: 'Refresh', action: 'refresh' },
   { separator: true },
@@ -57,6 +63,17 @@ const ICON_MENU = [
   { label: 'Properties', action: 'icon-properties' }
 ];
 
+const NOTE_COMMANDS = ['notes', 'sticky', 'stikynot', 'stikynot.exe', 'stickynotes'];
+const colorLabel = (c) => c[0].toUpperCase() + c.slice(1);
+
+// Right-click / long-press menu on a sticky note's title bar
+const noteMenu = (note) => [
+  ...NOTE_COLORS.map((color) => ({ label: `${note.color === color ? '✓ ' : '\u2003'}${colorLabel(color)}`, action: `note-color:${color}` })),
+  { separator: true },
+  { label: note.collapsed ? 'Expand' : 'Collapse', action: 'note-collapse' },
+  { label: 'Delete', action: 'note-delete' }
+];
+
 // Spotify playlist/album links or URIs typed into Run… (Spotify provider only)
 const parseSpotifyLink = (text) => {
   const match = text.match(/(playlist|album)[/:]([A-Za-z0-9]{22})/);
@@ -68,6 +85,8 @@ function Shell() {
   const { switchProvider } = useService();
   const { status, isAuthenticated, authError, clearAuthError, playlists, mode, provider } = music;
   const forceMaximized = useForceMaximized();
+  const isMobile = useIsMobile();
+  const stickies = useStickyNotes();
   const wm = useWindowManager();
   const [layerEl, setLayerEl] = useState(null);
   const desktopSize = useElementSize(layerEl);
@@ -123,6 +142,19 @@ function Shell() {
     setDialog({ type: 'login' });
   }, [music, switchProvider, wm]);
 
+  // New sticky note at a screen point (from the desktop menu), or near the middle of the desktop
+  const createNote = useCallback((clientX, clientY) => {
+    const size = noteSize(isMobile);
+    const rect = layerEl?.getBoundingClientRect() || { left: 0, top: 0 };
+    const x = clientX !== undefined ? clientX - rect.left - 8 : desktopSize.width / 2 - size.width / 2 + (stickies.notes.length % 6) * 18;
+    const y = clientY !== undefined ? clientY - rect.top - 8 : desktopSize.height / 3 - size.height / 2 + (stickies.notes.length % 6) * 18;
+    const id = stickies.create({
+      x: Math.min(Math.max(0, x), Math.max(0, desktopSize.width - size.width)),
+      y: Math.min(Math.max(0, y), Math.max(0, desktopSize.height - size.height))
+    });
+    if (!id) showMessage('You have a lot of sticky notes already. Delete a few to make room.', 'Sticky Notes', 'warning');
+  }, [desktopSize, isMobile, layerEl, showMessage, stickies]);
+
   const runCommand = useCallback((raw) => {
     const command = raw.trim().toLowerCase();
     if (RUN_COMMANDS[command]) {
@@ -131,6 +163,10 @@ function Shell() {
     }
     if (['desk.cpl', 'control desk', 'control', 'display'].includes(command)) {
       setDialog({ type: 'display', props: { initialTab: 'background' } });
+      return;
+    }
+    if (NOTE_COMMANDS.includes(command)) {
+      createNote();
       return;
     }
     if (command === 'themes') {
@@ -145,7 +181,7 @@ function Shell() {
       return;
     }
     showMessage(`Cannot find '${raw}'. Make sure you typed the name correctly, and then try again.`, raw, 'error');
-  }, [openApp, playlists, showMessage]);
+  }, [openApp, playlists, provider, showMessage, createNote]);
 
   const handleAction = useCallback((action, data) => {
     switch (action) {
@@ -182,7 +218,11 @@ function Shell() {
         signOut();
         break;
       case 'recycle-bin':
-        showMessage('The Recycle Bin is empty.', 'Recycle Bin');
+        setDialog({ type: 'recycle-bin' });
+        break;
+      case 'new-note':
+        // `data` carries the click point when opened from the desktop menu
+        createNote(data?.x, data?.y);
         break;
       case 'properties':
         setDialog({ type: 'display', props: { initialTab: 'background' } });
@@ -190,7 +230,7 @@ function Shell() {
       default:
         break;
     }
-  }, [openApp, showMessage, signOut, music]);
+  }, [openApp, showMessage, signOut, music, createNote]);
 
   // Read-only facts for Display Properties → Settings
   const displayInfo = [
@@ -204,9 +244,20 @@ function Shell() {
     setContextMenu({ x, y, items: target ? ICON_MENU : DESKTOP_MENU, target });
   }, []);
 
+  const openNoteMenu = useCallback((x, y, note) => {
+    setContextMenu({ x, y, items: noteMenu(note), target: { kind: 'note', id: note.id, collapsed: note.collapsed } });
+  }, []);
+
   const onContextAction = (action) => {
     const target = contextMenu?.target;
-    if (action === 'open-icon' && target) handleAction(target.action, target.data);
+    if (target?.kind === 'note') {
+      if (action.startsWith('note-color:')) stickies.update(target.id, { color: action.split(':')[1] });
+      else if (action === 'note-collapse') stickies.update(target.id, { collapsed: !target.collapsed });
+      else if (action === 'note-delete') stickies.remove(target.id);
+      return;
+    }
+    if (action === 'new-note') handleAction('new-note', { x: contextMenu.x, y: contextMenu.y });
+    else if (action === 'open-icon' && target) handleAction(target.action, target.data);
     else if (action === 'icon-properties' && target) showMessage({ intro: target.label, bullets: ['Type: Shortcut', 'Target: Windows Media Player'] }, `${target.label} Properties`);
     else handleAction(action);
   };
@@ -224,7 +275,23 @@ function Shell() {
 
   return (
     <div className="app-reveal">
-      <Desktop onOpenItem={(item) => handleAction(item.action, item.data)} onContextMenu={openIconMenu}>
+      <Desktop
+        onOpenItem={(item) => handleAction(item.action, item.data)}
+        onContextMenu={openIconMenu}
+        notes={(
+          <NotesLayer
+            notes={stickies.notes}
+            isMobile={isMobile}
+            bounds={desktopSize}
+            focusId={stickies.focusId}
+            onFocused={stickies.clearFocus}
+            onUpdate={stickies.update}
+            onFront={stickies.front}
+            onDelete={stickies.remove}
+            onMenu={openNoteMenu}
+          />
+        )}
+      >
         <div className="window-layer" ref={setLayerEl}>
           {wm.windows.map((win) => {
             const App = APP_REGISTRY[win.appId].component;
@@ -266,6 +333,9 @@ function Shell() {
       )}
 
       {dialog?.type === 'run' && <RunDialog onClose={closeDialog} onRun={runCommand} />}
+      {dialog?.type === 'recycle-bin' && (
+        <RecycleBinDialog trash={stickies.trash} onRestore={stickies.restore} onEmpty={stickies.empty} onClose={closeDialog} />
+      )}
       {dialog?.type === 'display' && (
         <DisplayProperties
           {...dialog.props}

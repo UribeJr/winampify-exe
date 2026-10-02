@@ -16,6 +16,8 @@ Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic AP
   Start menu, desktop icons, right-click / long-press menus, Run… and Shut Down… dialogs
 - **Display Properties** — pick a wallpaper (5 built-in pixel-art wallpapers or your own picture, shown
   centered, tiled or stretched) and a color scheme. Right-click the desktop → Properties, or Start → Settings
+- **Sticky notes** on the desktop — four colors, collapse to the title bar, and a Recycle Bin to restore
+  deleted notes (right-click or long-press the desktop → New Sticky Note)
 - **Media Library** — artists, albums, playlists, Liked Songs (Navidrome favorites),
   Recently Added and Recently Played
 - **Search** across songs, albums and artists

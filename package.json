@@ -10,7 +10,7 @@
     "client": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test server/navidrome.test.js test/normalize.test.mjs"
+    "test": "node --test server/navidrome.test.js test/normalize.test.mjs test/stickyNotes.test.mjs"
   },
   "keywords": [
     "spotify",

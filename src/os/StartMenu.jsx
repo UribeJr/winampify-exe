@@ -60,7 +60,8 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
 
   const submenus = {
     programs: [
-      { id: 'wmp', label: 'Windows Media Player', icon: 'media', action: 'open-app', data: 'media-player' }
+      { id: 'wmp', label: 'Windows Media Player', icon: 'media', action: 'open-app', data: 'media-player' },
+      { id: 'note', label: 'Sticky Note', icon: 'note', action: 'new-note' }
     ],
     playlists: isAuthenticated
       ? [

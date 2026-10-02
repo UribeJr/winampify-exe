@@ -792,3 +792,25 @@
     font-size: 13px;
   }
 }
+
+@media (max-width: 767px), (max-height: 500px) and (pointer: coarse) {
+  .sticky-note-label {
+    font-size: 13px;
+  }
+
+  .sticky-note-btn {
+    width: 32px;
+    height: 28px;
+    font-size: 16px;
+  }
+
+  /* 16px keeps iOS from zooming in when the note is tapped */
+  .sticky-note-text {
+    font-size: 16px;
+  }
+
+  .recycle-item {
+    min-height: 44px;
+    font-size: 14px;
+  }
+}

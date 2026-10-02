@@ -38,8 +38,9 @@ const DesktopIcon = ({ item, selected, onSelect, onOpen, onContextMenu }) => {
 /**
  * Desktop surface with icons. Icons open on a single click/tap (like the portfolio);
  * right-click or long-press opens a context menu on the icon or the desktop itself.
+ * Sticky notes (`notes`) sit between the icons and the app windows (`children`).
  */
-const Desktop = ({ onOpenItem, onContextMenu, children }) => {
+const Desktop = ({ onOpenItem, onContextMenu, notes, children }) => {
   const [selectedId, setSelectedId] = useState(null);
 
   const openDesktopMenu = useCallback((x, y) => onContextMenu(x, y, null), [onContextMenu]);
@@ -50,7 +51,8 @@ const Desktop = ({ onOpenItem, onContextMenu, children }) => {
       className="wmp-desktop-area"
       onClick={() => setSelectedId(null)}
       onContextMenu={(e) => {
-        if (e.target.closest('.os-window')) return;
+        // Windows and sticky notes handle their own right-clicks (notes keep copy/paste in the text)
+        if (e.target.closest('.os-window, .sticky-note')) return;
         e.preventDefault();
         openDesktopMenu(e.clientX, e.clientY);
       }}
@@ -73,6 +75,7 @@ const Desktop = ({ onOpenItem, onContextMenu, children }) => {
           />
         ))}
       </div>
+      {notes}
       {children}
     </div>
   );

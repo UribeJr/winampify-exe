@@ -83,6 +83,7 @@ export default function NavidromeBackend({ children, config = {} }) {
     mode: 'local',
     playback: engine.playback,
     controls: engine.controls,
+    audioGraph: engine.audioGraph, // { context, analyser } for the visualizer, once playback has started
     playerError: engine.error,
     clearPlayerError: engine.clearError,
     devices: [],

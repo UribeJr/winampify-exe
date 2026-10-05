@@ -300,25 +300,6 @@
   flex-shrink: 0;
 }
 
-.toolbar-presets {
-  display: flex;
-  gap: 2px;
-  margin-left: 2px;
-}
-
-.toolbar-text-btn {
-  min-width: 0;
-  min-height: 22px;
-  padding: 0 8px;
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.toolbar-text-btn.active {
-  box-shadow: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px grey;
-  font-weight: bold;
-}
-
 /* ---------- Now Playing (ported) ---------- */
 .wmp-now-playing-view {
   flex: 1;
@@ -353,18 +334,227 @@
   height: 100%;
 }
 
-.visualizer-caption {
+/* ---------- Visualizer view (WMP 7 style) ---------- */
+.viz-view {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #000000;
+  outline: none;
+}
+
+.viz-view:focus-visible .viz-stage {
+  outline: 1px dotted #ffffff;
+  outline-offset: -2px;
+}
+
+.viz-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+}
+
+.viz-now-playing {
   position: absolute;
-  left: 8px;
-  bottom: 8px;
-  right: 8px;
-  color: #ffffff;
+  top: 10px;
+  left: 10px;
+  max-width: calc(100% - 20px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 6px;
+  background: rgba(255, 255, 225, 0.92);
+  border: 1px solid #000000;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+  color: #000000;
   font-size: 11px;
-  text-shadow: 1px 1px 0 #000000;
   pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.viz-now-playing.visible {
+  opacity: 1;
+  transform: none;
+}
+
+.viz-now-playing img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--win-shadow);
+}
+
+.viz-now-playing > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.viz-now-playing b,
+.viz-now-playing span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.viz-now-playing .viz-album {
+  color: #404040;
+}
+
+.viz-strip {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 4px;
+  background: var(--win-face);
+  border-top: 1px solid var(--win-highlight);
+  flex-shrink: 0;
+  transition: opacity 0.3s ease;
+}
+
+.viz-btn {
+  flex-shrink: 0;
+  min-width: 24px;
+  min-height: 22px;
+  padding: 0 4px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.viz-text-btn {
+  padding: 0 8px;
+}
+
+.viz-btn.active {
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px grey;
+  font-weight: bold;
+}
+
+.viz-strip-spacer {
+  flex: 1;
+}
+
+.viz-picker {
+  position: relative;
+  min-width: 0;
+  flex: 0 1 260px;
+}
+
+.viz-name {
+  width: 100%;
+  min-height: 22px;
+  padding: 0 6px;
+  font-size: 11px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viz-menu {
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 0;
+  z-index: 20;
+  width: max(100%, 240px);
+  max-height: min(60vh, 360px);
+  overflow-y: auto;
+  padding: 2px;
+  background: var(--win-face);
+  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px grey, inset 2px 2px #fff;
+}
+
+.viz-menu-heading,
+.viz-menu-item {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  padding: 3px 6px 3px 20px;
+  border: none;
+  box-shadow: none;
+  background: none;
+  font-size: 11px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viz-menu-heading {
+  padding-left: 6px;
+  font-weight: bold;
+  color: #000000;
+}
+
+.viz-menu-heading:disabled {
+  color: #000000;
+  text-shadow: none;
+}
+
+.viz-menu-group + .viz-menu-group {
+  border-top: 1px solid var(--win-shadow);
+  box-shadow: 0 -1px 0 var(--win-highlight) inset;
+  margin-top: 2px;
+  padding-top: 2px;
+}
+
+.viz-menu-item:hover,
+.viz-menu-item:focus-visible,
+.viz-menu-heading:not(:disabled):hover {
+  background: var(--win-select);
+  color: #ffffff;
+  outline: none;
+}
+
+.viz-menu-item {
+  position: relative;
+}
+
+.viz-menu-item.checked::before {
+  content: '•';
+  position: absolute;
+  left: 8px;
+}
+
+.viz-menu-library {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Full screen: native (:fullscreen) or the fixed full-window fallback */
+.viz-view.pseudo-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+}
+
+.viz-view.is-fullscreen .viz-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.viz-view.is-fullscreen.is-idle {
+  cursor: none;
+}
+
+.viz-view.is-fullscreen.is-idle .viz-strip {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viz-now-playing,
+  .viz-strip {
+    transition: none;
+  }
 }
 
 .wmp-visualization-area {

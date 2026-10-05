@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import MenuBar from './MenuBar';
 import { Toolbar, MobileViewBar } from './Toolbar';
 import NowPlayingView from './NowPlayingView';
@@ -100,7 +100,7 @@ const SignInPanel = ({ music, onSwitchService }) => {
  * Windows Media Player app body (lives inside an OS window).
  * `request` lets the shell deep-link: { type: 'view', view } or { type: 'source', source }.
  */
-const MediaPlayer = ({ request, onClose }) => {
+const MediaPlayer = ({ request, onClose, active = true }) => {
   const music = useMusic();
   const { switchProvider } = useService();
   const { library, capabilities, isAuthenticated, playback, controls, mode, playerError, clearPlayerError, providerName } = music;
@@ -110,9 +110,7 @@ const MediaPlayer = ({ request, onClose }) => {
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [paneVisible, setPaneVisible] = useState(false);
   const [visualizerOn, setVisualizerOn] = useState(false);
-  const [activePreset, setActivePreset] = useState(0);
   const [devicesOpen, setDevicesOpen] = useState(false);
-  const visualizerRef = useRef(null);
 
   const trackList = useTrackList(library, source, music.libraryVersion);
   const collections = useLibraryCollections(library, isAuthenticated);
@@ -148,11 +146,6 @@ const MediaPlayer = ({ request, onClose }) => {
       setVisualizerOn((on) => !on);
     }
   }, [navigate, viewMode]);
-
-  const selectPreset = useCallback((index) => {
-    setActivePreset(index);
-    visualizerRef.current?.loadPreset(index);
-  }, []);
 
   // The whole list becomes the queue (Navidrome) or the Spotify context, starting at the clicked track
   const playTrack = useCallback((track, index) => {
@@ -255,7 +248,7 @@ const MediaPlayer = ({ request, onClose }) => {
     <div className="wmp-content-wrapper">
       <div className="wmp-main-content">
         {viewMode === 'nowPlaying' && (
-          <NowPlayingView visualizerOn={visualizerOn} visualizerRef={visualizerRef} activePreset={activePreset} />
+          <NowPlayingView visualizerOn={visualizerOn} active={active} />
         )}
         {viewMode === 'mediaLibrary' && (
           <LibraryView
@@ -303,8 +296,6 @@ const MediaPlayer = ({ request, onClose }) => {
           viewMode={viewMode}
           visualizerOn={visualizerOn}
           onToggleVisualizer={() => toggleVisualizer()}
-          activePreset={activePreset}
-          onSelectPreset={selectPreset}
           onSearch={capabilities.search ? search : undefined}
           searchLabel={`Search ${providerName}`}
           searchValue={source?.type === 'search' ? source.query : ''}
@@ -316,8 +307,6 @@ const MediaPlayer = ({ request, onClose }) => {
           visualizerOn={visualizerOn}
           onSelectView={selectView}
           onToggleVisualizer={toggleVisualizer}
-          activePreset={activePreset}
-          onSelectPreset={selectPreset}
         />
       )}
       {playerError && (

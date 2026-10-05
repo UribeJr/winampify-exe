@@ -357,7 +357,7 @@ function Shell() {
                 onClose={closeWindow}
                 onMove={wm.move}
               >
-                <App request={win.request} onClose={() => closeWindow(win.id)} />
+                <App request={win.request} onClose={() => closeWindow(win.id)} active={!win.isMinimized} />
               </Window>
             );
           })}

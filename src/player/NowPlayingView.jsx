@@ -3,14 +3,15 @@ import SeekBar from './SeekBar';
 import usePlaybackPosition from './usePlaybackPosition';
 import { artistNames, trackArt } from './utils';
 import { useMusic } from '../music/MusicContext';
+import { isMobileDevice } from '../hooks/useMediaQuery';
 
 const BAR_COUNT = 8;
 
 // butterchurn + presets are ~800 kB; only load them when the visualizer is opened
-const Visualizer = lazy(() => import('./Visualizer'));
+const VisualizerView = lazy(() => import('./VisualizerView'));
 
-const NowPlayingView = ({ visualizerOn, visualizerRef, activePreset }) => {
-  const { playback, controls, library, providerName } = useMusic();
+const NowPlayingView = ({ visualizerOn, active = true }) => {
+  const { playback, controls, library, providerName, audioGraph } = useMusic();
   const position = usePlaybackPosition(playback);
   const { track, isActive, isPaused, duration } = playback;
   const playing = isActive && !isPaused;
@@ -27,20 +28,16 @@ const NowPlayingView = ({ visualizerOn, visualizerRef, activePreset }) => {
     return (
       <div className="wmp-now-playing-view visualizer-mode">
         <Suspense fallback={<div className="wmp-visualizer-container visualizer-loading">Loading visualization…</div>}>
-          <Visualizer
-            ref={visualizerRef}
-            isActive={playing}
-            trackId={track?.id}
+          <VisualizerView
+            track={track}
+            playing={playing}
+            active={active}
+            audioGraph={audioGraph}
             getPosition={getPosition}
             getAudioAnalysis={library.getAudioAnalysis}
-            initialPreset={activePreset}
+            lowPower={isMobileDevice()}
           />
         </Suspense>
-        {track && (
-          <div className="visualizer-caption">
-            <b>{track.title}</b> — {artistNames(track)}
-          </div>
-        )}
       </div>
     );
   }

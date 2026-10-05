@@ -1,25 +1,9 @@
 import React from 'react';
-import { WMP_PRESETS } from './presets';
 import SearchBox from './SearchBox';
 
-const PresetButtons = ({ activePreset, onSelectPreset, className }) => (
-  <div className={className}>
-    {WMP_PRESETS.map((preset, index) => (
-      <button
-        type="button"
-        key={preset.name}
-        className={`toolbar-text-btn ${activePreset === index ? 'active' : ''}`}
-        onClick={() => onSelectPreset(index)}
-        aria-pressed={activePreset === index}
-      >
-        {preset.name}
-      </button>
-    ))}
-  </div>
-);
-
-// Desktop toolbar: navigation history, Home, the visualizer toggle + presets, and library search.
-export const Toolbar = ({ canGoBack, canGoForward, onBack, onForward, onHome, viewMode, visualizerOn, onToggleVisualizer, activePreset, onSelectPreset, onSearch, searchLabel, searchValue }) => (
+// Desktop toolbar: navigation history, Home, the visualizer toggle, and library search.
+// (Visualization choice lives on the visualizer's own strip, WMP 7 style.)
+export const Toolbar = ({ canGoBack, canGoForward, onBack, onForward, onHome, viewMode, visualizerOn, onToggleVisualizer, onSearch, searchLabel, searchValue }) => (
   <div className="wmp-toolbar">
     <button type="button" className="toolbar-nav-btn" onClick={onBack} disabled={!canGoBack} title="Back" aria-label="Back">
       <span className="toolbar-icon toolbar-icon-back" />
@@ -40,9 +24,6 @@ export const Toolbar = ({ canGoBack, canGoForward, onBack, onForward, onHome, vi
     >
       <span className="toolbar-icon toolbar-icon-visualizer" />
     </button>
-    {visualizerOn && viewMode === 'nowPlaying' && (
-      <PresetButtons className="toolbar-presets" activePreset={activePreset} onSelectPreset={onSelectPreset} />
-    )}
     {onSearch && <SearchBox onSearch={onSearch} initial={searchValue} label={searchLabel} className="toolbar-search" />}
   </div>
 );
@@ -55,7 +36,7 @@ const VIEWS = [
 ];
 
 // Phone replacement for the menu bar + toolbar: one row of 44px view tabs.
-export const MobileViewBar = ({ viewMode, visualizerOn, onSelectView, onToggleVisualizer, activePreset, onSelectPreset }) => {
+export const MobileViewBar = ({ viewMode, visualizerOn, onSelectView, onToggleVisualizer }) => {
   const current = viewMode === 'nowPlaying' && visualizerOn ? 'visualizer' : viewMode;
   return (
     <div className="mobile-view-bar">
@@ -74,9 +55,6 @@ export const MobileViewBar = ({ viewMode, visualizerOn, onSelectView, onToggleVi
           </button>
         ))}
       </div>
-      {current === 'visualizer' && (
-        <PresetButtons className="mobile-presets" activePreset={activePreset} onSelectPreset={onSelectPreset} />
-      )}
     </div>
   );
 };

@@ -271,7 +271,7 @@
   width: 16px;
   height: 16px;
   display: inline-block;
-  background: url('/assets/start-winampify.svg') center / contain no-repeat;
+  background: url('/assets/windows-0.png') center / contain no-repeat;
   image-rendering: pixelated;
   flex-shrink: 0;
 }

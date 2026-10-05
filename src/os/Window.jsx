@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import Draggable from 'react-draggable';
-
-const EDGE = 8; // keep at least this much of a window inside the desktop
+import { windowRect } from './windowGeometry';
 
 const TitleButton = ({ label, onPress }) => (
   <button
@@ -41,12 +40,8 @@ const Window = ({
   const nodeRef = useRef(null);
   const maximized = isMaximized || forceMaximized;
 
-  const width = Math.min(size.width, desktopSize.width - EDGE * 2);
-  const height = Math.min(size.height, desktopSize.height - EDGE * 2);
-  const clampedPosition = {
-    x: Math.min(Math.max(position.x, 0), Math.max(0, desktopSize.width - width)),
-    y: Math.min(Math.max(position.y, 0), Math.max(0, desktopSize.height - height))
-  };
+  const { x, y, width, height } = windowRect({ position, size }, desktopSize);
+  const clampedPosition = { x, y };
 
   const classes = [
     'window',

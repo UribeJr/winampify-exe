@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useService } from '../music/MusicContext';
+import { visibleServices } from '../music/services';
 import { API_BASE_URL } from '../spotify/config';
 
 export const SERVICE_DETAILS = {
@@ -43,7 +44,7 @@ const ServicePicker = ({ onCancel, continueLabel = 'Continue' }) => {
   return (
     <form className="service-picker" onSubmit={submit}>
       <div className="service-list" role="radiogroup" aria-label="Music service">
-        {services.map((svc) => {
+        {visibleServices(services).map((svc) => {
           const details = SERVICE_DETAILS[svc.id];
           return (
             <label

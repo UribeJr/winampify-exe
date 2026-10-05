@@ -105,6 +105,32 @@ Spotify playback requires **Spotify Premium**. Desktop browsers play through the
 run the SDK, so Winampify acts as a **Spotify Connect remote** for the Spotify app or a speaker. Search, artists
 and favorites are Navidrome-only and are hidden while you're signed in to Spotify.
 
+## Share it with friends (Vercel + Spotify)
+
+You can host a **Spotify-only** copy for people you invite, while your personal copy keeps running at home
+with Navidrome. It's the same code; the hosted copy simply never gets any Navidrome settings, so Navidrome is
+hidden there and nothing can reach your music server.
+
+1. **Create a Vercel project** from this repo (framework: Vite; `vercel.json` already routes the API to
+   `api/index.js`). `main` is the shared site; other branches get private preview links.
+2. **Set these environment variables** in the Vercel project (Production, and Preview with the preview URL):
+
+   | Variable | Value |
+   |---|---|
+   | `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` | From your Spotify app |
+   | `SPOTIFY_REDIRECT_URI` | `https://<your-site>/callback` |
+   | `FRONTEND_URL`, `CLIENT_ORIGIN` | `https://<your-site>` |
+   | `MUSIC_PROVIDER` | `spotify` |
+
+   **Never add `NAVIDROME_*` variables to a hosted site** — that would put your library on the internet,
+   and the app has no login of its own.
+3. **In the Spotify Developer Dashboard**, add `https://<your-site>/callback` as a Redirect URI, then add each
+   friend (name + Spotify email) under **User Management**. Apps in development mode allow up to 25 people;
+   anyone else who signs in is told the site is invite-only.
+
+Friends need Spotify Premium to play in the browser (on phones, Winampify controls their Spotify app instead).
+The equalizer and real-audio visualizer need audio the browser can process, so they're Navidrome-only.
+
 ## Scripts
 
 | Command | What it does |
@@ -117,7 +143,9 @@ and favorites are Navidrome-only and are hidden while you're signed in to Spotif
 ## Project structure
 
 ```
-server.js              Express: /api/config, Spotify OAuth + proxy, static files in production
+app.js                 Express app: /api/config, Spotify OAuth + proxy, Navidrome proxy, static files (self-hosted)
+server.js              Local / self-hosted entry point (app.listen)
+api/index.js           Vercel function wrapping app.js (see vercel.json)
 server/navidrome.js    Allowlisted Navidrome / OpenSubsonic proxy (token auth, streaming, cover art)
 src/
   App.jsx              Boot screen, desktop shell wiring, dialogs

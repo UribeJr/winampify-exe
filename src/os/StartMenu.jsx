@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useMusic } from '../music/MusicContext';
 import { playlistSource } from '../music/models';
+import { useTheme } from '../contexts/ThemeContext';
+import { useIsMobile } from '../hooks/useMediaQuery';
 
 const HOVER_CLOSE_DELAY_MS = 300;
 const MAX_PLAYLIST_ITEMS = 12;
@@ -8,6 +10,7 @@ const MAX_PLAYLIST_ITEMS = 12;
 /**
  * Start menu. Submenus open on hover for mouse users and on tap/click for everyone
  * (the portfolio's hover-only submenus didn't work on touch screens).
+ * The XP skin on desktop gets XP's two-column layout with the same items and actions.
  */
 const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
   const menuRef = useRef(null);
@@ -15,6 +18,8 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
   const pointerTypeRef = useRef('mouse');
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const { isAuthenticated, playlists, user, providerName } = useMusic();
+  const { skin } = useTheme();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!isOpen) {
@@ -75,6 +80,10 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
           ...(playlists.length === 0 ? [{ id: 'empty', label: '(No playlists)', disabled: true }] : [])
         ]
       : [{ id: 'signin', label: `Connect to ${providerName} to see playlists…`, action: 'open-app', data: 'media-player' }],
+    help: [
+      { id: 'help', label: 'Winampify Help', icon: 'help', action: 'help' },
+      { id: 'disky', label: 'Show Disky', icon: 'disky', action: 'show-disky' }
+    ],
     settings: [
       { id: 'wallpaper', label: 'Wallpaper…', action: 'wallpaper' },
       { id: 'themes', label: 'Themes…', action: 'themes' },
@@ -127,23 +136,78 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
     </button>
   );
 
+  const accountItem = isAuthenticated
+    ? { icon: 'logoff', label: `Log Off ${user?.name || ''}…`.replace(' …', '…'), action: 'logoff' }
+    : { icon: 'logoff', label: providerName === 'Spotify' ? 'Sign In…' : `Connect to ${providerName}…`, action: 'login' };
+
+  // XP: big two-line items on the left, folders and settings on the right
+  const XpItem = ({ icon, label, detail, action, data }) => (
+    <button type="button" className="start-menu-item start-menu-row xp-start-item" onClick={() => select(action, data)}>
+      <span className={`start-menu-icon icon-${icon}`} aria-hidden="true" />
+      <span className="start-menu-text">
+        <b>{label}</b>
+        {detail && <small>{detail}</small>}
+      </span>
+    </button>
+  );
+
+  if (skin === 'xp' && !isMobile) {
+    return (
+      <div className="wmp-start-menu xp-start-menu" ref={menuRef} role="menu">
+        <div className="xp-start-head">
+          <span className="xp-start-avatar icon-disky" aria-hidden="true" />
+          <b>Winampify</b>
+        </div>
+        <div className="xp-start-cols">
+          <div className="xp-start-left">
+            {XpItem({ icon: 'media', label: 'Media Player', detail: providerName, action: 'open-app', data: 'media-player' })}
+            {XpItem({ icon: 'heart', label: 'Liked Songs', detail: 'Your favorites', action: 'open-source', data: { type: 'liked' } })}
+            {XpItem({ icon: 'note', label: 'Sticky Note', detail: 'Jot something down', action: 'new-note' })}
+            <div className="xp-start-spacer" />
+            <div className="start-menu-separator" />
+            <div className="xp-start-all">
+              {SubmenuItem({ id: 'programs', icon: 'programs', label: 'All Programs' })}
+            </div>
+          </div>
+          <div className="xp-start-right">
+            {SubmenuItem({ id: 'playlists', icon: 'documents', label: 'My Playlists' })}
+            {Item({ icon: 'themes', label: 'Display Properties', action: 'themes' })}
+            {Item({ icon: 'settings', label: 'Wallpaper', action: 'wallpaper' })}
+            {Item({ icon: 'cd', label: 'Music Service', action: 'switch-service' })}
+            <div className="start-menu-separator" />
+            {SubmenuItem({ id: 'help', icon: 'help', label: 'Help and Support' })}
+            {Item({ icon: 'run', label: 'Run…', action: 'run' })}
+          </div>
+        </div>
+        <div className="xp-start-foot">
+          <button type="button" onClick={() => select(accountItem.action)}>
+            <span className={`start-menu-icon icon-${accountItem.icon}`} aria-hidden="true" />
+            {accountItem.label}
+          </button>
+          <button type="button" onClick={() => select('shutdown')}>
+            <span className="start-menu-icon icon-shutdown" aria-hidden="true" />
+            Turn Off…
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="wmp-start-menu" ref={menuRef} role="menu">
       <div className="start-menu-side">
         <span className="start-menu-brand">
-          <b>Winampify</b><span className="start-menu-brand-version">98</span>
+          <b>Winampify</b><span className="start-menu-brand-version">{skin === 'xp' ? 'xp' : '98'}</span>
         </span>
       </div>
       <div className="start-menu-list">
         {SubmenuItem({ id: 'programs', icon: 'programs', label: 'Programs' })}
         {SubmenuItem({ id: 'playlists', icon: 'documents', label: 'Playlists' })}
         {SubmenuItem({ id: 'settings', icon: 'settings', label: 'Settings' })}
-        {Item({ icon: 'help', label: 'Help', action: 'help' })}
+        {SubmenuItem({ id: 'help', icon: 'help', label: 'Help' })}
         {Item({ icon: 'run', label: 'Run…', action: 'run' })}
         <div className="start-menu-separator" />
-        {isAuthenticated
-          ? Item({ icon: 'logoff', label: `Log Off ${user?.name || ''}…`.replace(' …', '…'), action: 'logoff' })
-          : Item({ icon: 'logoff', label: providerName === 'Spotify' ? 'Sign In…' : `Connect to ${providerName}…`, action: 'login' })}
+        {Item(accountItem)}
         {Item({ icon: 'shutdown', label: 'Shut Down…', action: 'shutdown' })}
       </div>
     </div>

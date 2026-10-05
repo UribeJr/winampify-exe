@@ -17,6 +17,14 @@
   --desktop-teal: #008080;
   --font-ui: 'MS Sans Serif', 'Segoe UI', sans-serif;
   --inset: inset 1px 1px 0 var(--win-shadow), inset -1px -1px 0 var(--win-highlight);
+  /* Win98 bevels as tokens, so other skins can redefine them in one place */
+  --bevel-raised: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px grey, inset 2px 2px #fff;
+  --bevel-button: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px grey, inset 2px 2px #dfdfdf;
+  --bevel-pressed: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px grey;
+  --bevel-sunken: inset -1px -1px #fff, inset 1px 1px grey, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
+  --bevel-thin: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf;
+  --dither: repeating-conic-gradient(#ffffff 0 25%, transparent 0 50%);
+  --panel-border: 2px outset var(--win-face);
 
   /* Theme variables - defaults; ThemeContext overwrites these at runtime */
   --theme-title-bar-active-start: #000080;

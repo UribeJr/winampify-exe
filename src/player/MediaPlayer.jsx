@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import MenuBar from './MenuBar';
 import { Toolbar, MobileViewBar } from './Toolbar';
 import NowPlayingView from './NowPlayingView';
 import LibraryView from './LibraryView';
 import PlaylistView from './PlaylistView';
 import NowPlayingPane from './NowPlayingPane';
+import QueuePane from './QueuePane';
 import ControlBar from './ControlBar';
+import EqualizerPanel from './EqualizerPanel';
 import DevicePicker from './DevicePicker';
 import useTrackList from './useTrackList';
 import { useLibraryCollections, useArtistDetail, useSearchExtras } from './useLibraryData';
@@ -100,7 +102,7 @@ const SignInPanel = ({ music, onSwitchService }) => {
  * Windows Media Player app body (lives inside an OS window).
  * `request` lets the shell deep-link: { type: 'view', view } or { type: 'source', source }.
  */
-const MediaPlayer = ({ request, onClose }) => {
+const MediaPlayer = ({ request, onClose, active = true }) => {
   const music = useMusic();
   const { switchProvider } = useService();
   const { library, capabilities, isAuthenticated, playback, controls, mode, playerError, clearPlayerError, providerName } = music;
@@ -109,10 +111,9 @@ const MediaPlayer = ({ request, onClose }) => {
   const { viewMode, source, navigate, canGoBack, canGoForward, back, forward } = useNavigation();
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [paneVisible, setPaneVisible] = useState(false);
+  const [eqVisible, setEqVisible] = useState(false);
   const [visualizerOn, setVisualizerOn] = useState(false);
-  const [activePreset, setActivePreset] = useState(0);
   const [devicesOpen, setDevicesOpen] = useState(false);
-  const visualizerRef = useRef(null);
 
   const trackList = useTrackList(library, source, music.libraryVersion);
   const collections = useLibraryCollections(library, isAuthenticated);
@@ -149,11 +150,6 @@ const MediaPlayer = ({ request, onClose }) => {
     }
   }, [navigate, viewMode]);
 
-  const selectPreset = useCallback((index) => {
-    setActivePreset(index);
-    visualizerRef.current?.loadPreset(index);
-  }, []);
-
   // The whole list becomes the queue (Navidrome) or the Spotify context, starting at the clicked track
   const playTrack = useCallback((track, index) => {
     if (source) controls.playQueue(trackList.tracks, index, source);
@@ -167,6 +163,9 @@ const MediaPlayer = ({ request, onClose }) => {
     setVisualizerOn(false);
     navigate({ viewMode: 'mediaLibrary', source: searchSource(query) });
   }, [navigate]);
+
+  // The side pane shows the playlist next to Now Playing, and what's playing next to everything else
+  const paneLabel = viewMode === 'nowPlaying' ? 'Playlist Pane' : 'Now Playing Pane';
 
   const menus = useMemo(() => [
     {
@@ -195,7 +194,8 @@ const MediaPlayer = ({ request, onClose }) => {
         { label: 'Visualizations', checked: viewMode === 'nowPlaying' && visualizerOn, onSelect: () => toggleVisualizer(true) },
         'separator',
         { label: 'Toolbar', checked: toolbarVisible, onSelect: () => setToolbarVisible((v) => !v) },
-        { label: 'Now Playing Pane', checked: paneVisible, onSelect: () => setPaneVisible((v) => !v) }
+        { label: paneLabel, checked: paneVisible, onSelect: () => setPaneVisible((v) => !v) },
+        { label: 'Graphic Equalizer', checked: eqVisible, onSelect: () => setEqVisible((v) => !v), disabled: !isAuthenticated }
       ]
     },
     {
@@ -247,7 +247,7 @@ const MediaPlayer = ({ request, onClose }) => {
         { label: 'Media Library Home', onSelect: () => navigate({ viewMode: 'mediaLibrary', source: null }) }
       ]
     }
-  ], [switchProvider, back, canGoBack, canGoForward, capabilities.star, controls, currentStarred, currentTrack, forward, isAuthenticated, mode, music, navigate, onClose, paneVisible, playback, providerName, selectView, toggleVisualizer, toolbarVisible, viewMode, visualizerOn]);
+  ], [switchProvider, back, canGoBack, canGoForward, capabilities.star, controls, currentStarred, currentTrack, forward, isAuthenticated, mode, music, navigate, onClose, paneVisible, playback, providerName, selectView, toggleVisualizer, toolbarVisible, viewMode, visualizerOn, eqVisible, paneLabel]);
 
   const body = !isAuthenticated ? (
     <SignInPanel music={music} onSwitchService={switchProvider} />
@@ -255,7 +255,7 @@ const MediaPlayer = ({ request, onClose }) => {
     <div className="wmp-content-wrapper">
       <div className="wmp-main-content">
         {viewMode === 'nowPlaying' && (
-          <NowPlayingView visualizerOn={visualizerOn} visualizerRef={visualizerRef} activePreset={activePreset} />
+          <NowPlayingView visualizerOn={visualizerOn} active={active} />
         )}
         {viewMode === 'mediaLibrary' && (
           <LibraryView
@@ -284,9 +284,9 @@ const MediaPlayer = ({ request, onClose }) => {
           />
         )}
       </div>
-      {!isMobile && paneVisible && viewMode !== 'nowPlaying' && (
-        <NowPlayingPane onClose={() => setPaneVisible(false)} />
-      )}
+      {!isMobile && paneVisible && (viewMode === 'nowPlaying'
+        ? <QueuePane onClose={() => setPaneVisible(false)} />
+        : <NowPlayingPane onClose={() => setPaneVisible(false)} />)}
     </div>
   );
 
@@ -303,8 +303,6 @@ const MediaPlayer = ({ request, onClose }) => {
           viewMode={viewMode}
           visualizerOn={visualizerOn}
           onToggleVisualizer={() => toggleVisualizer()}
-          activePreset={activePreset}
-          onSelectPreset={selectPreset}
           onSearch={capabilities.search ? search : undefined}
           searchLabel={`Search ${providerName}`}
           searchValue={source?.type === 'search' ? source.query : ''}
@@ -316,8 +314,6 @@ const MediaPlayer = ({ request, onClose }) => {
           visualizerOn={visualizerOn}
           onSelectView={selectView}
           onToggleVisualizer={toggleVisualizer}
-          activePreset={activePreset}
-          onSelectPreset={selectPreset}
         />
       )}
       {playerError && (
@@ -330,11 +326,15 @@ const MediaPlayer = ({ request, onClose }) => {
         </div>
       )}
       <div className="window-content">{body}</div>
+      {isAuthenticated && !isMobile && eqVisible && <EqualizerPanel onClose={() => setEqVisible(false)} />}
       {isAuthenticated && (
         <ControlBar
           isMobile={isMobile}
           paneVisible={paneVisible}
+          paneLabel={paneLabel}
           onTogglePane={() => setPaneVisible((v) => !v)}
+          eqVisible={eqVisible}
+          onToggleEq={() => setEqVisible((v) => !v)}
           onOpenDevices={() => setDevicesOpen(true)}
         />
       )}

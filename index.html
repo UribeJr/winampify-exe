@@ -12,6 +12,10 @@
     />
     <link rel="icon" type="image/png" href="/assets/wm-0.png" />
     <title>winampify.exe</title>
+    <script>
+      // Pick the saved skin before anything paints (see src/contexts/ThemeContext.jsx)
+      try { if (localStorage.getItem('winampify-skin') === 'xp') document.documentElement.setAttribute('data-skin', 'xp'); } catch (e) {}
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

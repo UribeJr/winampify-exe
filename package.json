@@ -10,7 +10,7 @@
     "client": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test server/navidrome.test.js test/normalize.test.mjs test/stickyNotes.test.mjs"
+    "test": "node --test server/navidrome.test.js test/normalize.test.mjs test/stickyNotes.test.mjs test/assistantBrain.test.mjs test/noteSense.test.mjs test/placement.test.mjs test/visualizations.test.mjs test/equalizer.test.mjs test/scopeSkin.test.mjs test/skins.test.mjs"
   },
   "keywords": [
     "spotify",
@@ -35,7 +35,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-draggable": "^4.7.2",
-    "vite": "^5.0.8"
+    "vite": "^5.0.8",
+    "xp.css": "^0.2.6"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

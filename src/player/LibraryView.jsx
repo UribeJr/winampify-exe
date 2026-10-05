@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import TrackTable from './TrackTable';
 import SearchBox from './SearchBox';
 import { coverUrl, LIKED_SOURCE, sourceKey } from './utils';
 import { playlistSource, albumSource, artistSource } from '../music/models';
 import { useMusic } from '../music/MusicContext';
+import { useAssistant } from '../assistant/AssistantProvider';
 
 const Art = ({ item, size, className, icon }) => {
   const url = coverUrl(item, size);
@@ -81,6 +82,15 @@ const LibraryView = ({
   const selectedKey = sourceKey(source);
   const { albums, artists, newest, recent } = collections;
   const back = isMobile ? () => onSelectSource(null) : undefined;
+  const { notify } = useAssistant();
+  const searchEmpty = source?.type === 'search' && !trackList.loading && !searchExtras.loading
+    && !trackList.tracks.length && !searchExtras.artists.length && !searchExtras.albums.length;
+  // Wait a beat: right after a new search starts the lists are briefly empty before loading begins
+  useEffect(() => {
+    if (!searchEmpty) return undefined;
+    const t = setTimeout(() => notify('search-empty'), 800);
+    return () => clearTimeout(t);
+  }, [searchEmpty, notify]);
 
   const trackTable = (showAlbum) => (
     <TrackTable

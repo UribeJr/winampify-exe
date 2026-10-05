@@ -16,6 +16,10 @@ Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic AP
   Start menu, desktop icons, right-click / long-press menus, Run… and Shut Down… dialogs
 - **Display Properties** — pick a wallpaper (5 built-in pixel-art wallpapers or your own picture, shown
   centered, tiled or stretched) and a color scheme. Right-click the desktop → Properties, or Start → Settings
+- **Disky, your (mostly) helpful assistant** — an original CD mascot with a first-visit tour, one-time tips,
+  naps when you're idle, and a few easter eggs. He also reads your sticky notes (locally): write "dentist 3pm"
+  and he'll offer a reminder, and he cheers when every `[ ]` on a checklist becomes `[x]`. Reminders pop up
+  while Winampify is open. Hide him from his menu; Start → Help → Show Disky brings him back
 - **Sticky notes** on the desktop — four colors, collapse to the title bar, and a Recycle Bin to restore
   deleted notes (right-click or long-press the desktop → New Sticky Note)
 - **Media Library** — artists, albums, playlists, Liked Songs (Navidrome favorites),
@@ -26,7 +30,9 @@ Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic AP
 - **Queue controls** — play/pause, stop, previous/next, ±10 s, seek, volume, mute, shuffle, repeat all/one,
   lock-screen and hardware media keys
 - **Scrobbling** to Navidrome, and the queue and position survive a page refresh
-- **MilkDrop-style visualizations** (butterchurn)
+- **WMP 7-style visualizations**: classic Bars and Waves, Scope and Dots plus the full MilkDrop library (butterchurn), with Random, Auto-change and full screen. On desktop with Navidrome they react to the actual music; elsewhere a simulated signal drives them
+- **Windows XP skin**: switch between Windows 98 Classic and an XP-style look (Blue, Olive Green or Silver) in Display Properties → Appearance, with an XP Start menu, WMP 9-style player, Welcome screen and its own wallpaper. Your choice is remembered in this browser
+- **Graphic Equalizer**: 10 bands (31 Hz–16 kHz, ±12 dB) with presets, from View → Graphic Equalizer or the EQ button (Navidrome on a computer)
 - **Phone layout** — full-screen player, view tabs, drill-down library and 44 px touch targets
 
 ## Requirements
@@ -131,6 +137,7 @@ and providing the same `MusicContext` value as `NavidromeBackend.jsx`.
 
 - [98.css](https://jdan.github.io/98.css/) for the Windows 98 widgets
 - [butterchurn](https://github.com/jberg/butterchurn) for the MilkDrop visualizer
+- [XP.css](https://github.com/botoxparty/XP.css) for the Windows XP skin's controls (loaded only when that skin is chosen)
 - [Navidrome](https://www.navidrome.org/) and the [OpenSubsonic API](https://opensubsonic.netlify.app/)
 
 ## License

@@ -51,6 +51,8 @@ const VALUE = {
   mode: 'local',
   playback: IDLE_PLAYBACK,
   controls: IDLE_CONTROLS,
+  audioGraph: null,
+  equalizer: null,
   playerError: null,
   clearPlayerError: noop,
   devices: [],

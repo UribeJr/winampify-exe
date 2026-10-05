@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { isMobileDevice } from '../hooks/useMediaQuery';
+import { EQ_BANDS, loadEq, saveEq, withGain, withPreset, preampDb, dbToGain, filterGains } from './equalizer';
 
 const STORAGE_KEY = 'winampify_nd_queue';
 const MAX_SAVED_TRACKS = 500;
@@ -35,6 +37,17 @@ const buildOrder = (length, first, shuffled) => {
 
 const EMPTY_QUEUE = { tracks: [], order: [], cursor: -1, source: null };
 
+// Real-audio analysis for the visualizer is only safe when the stream is same-origin (otherwise
+// Web Audio outputs silence) and not on phones (iOS suspends Web Audio when the screen locks).
+const canAnalyse = (streamUrl) => {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    return Boolean(Ctx) && !isMobileDevice() && new URL(streamUrl, window.location.href).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+};
+
 // iOS ignores element.volume (hardware buttons only), so hide the slider there instead of faking it
 const volumeIsSettable = () => {
   try {
@@ -60,6 +73,11 @@ export default function useAudioEngine({ enabled, library }) {
   const [repeat, setRepeat] = useState('off');
   const [error, setError] = useState(null);
   const [canSetVolume] = useState(volumeIsSettable);
+  const graphRef = useRef(null); // { context, source, preamp, filters, analyser, gain } once built
+  const [audioGraph, setAudioGraph] = useState(null);
+  const [eq, setEq] = useState(loadEq);
+  const eqRef = useRef(eq);
+  eqRef.current = eq;
 
   const lastVolumeRef = useRef(0.8);
   const playRef = useRef({ trackId: null, transcoded: false, restoreAt: null, autoplay: false });
@@ -266,6 +284,90 @@ export default function useAudioEngine({ enabled, library }) {
     if (enabled && queue.tracks.length) persist();
   }, [enabled, shuffle, repeat, volume, persist, queue.tracks.length]);
 
+  // Volume lives on the Web Audio gain once the graph exists (element volume isn't applied
+  // consistently to a MediaElementSource), otherwise on the element itself
+  const applyVolume = useCallback((value) => {
+    const audio = audioRef.current;
+    if (graphRef.current) {
+      graphRef.current.gain.gain.value = value;
+      if (audio) audio.volume = 1;
+    } else if (audio) {
+      audio.volume = value;
+    }
+  }, []);
+
+  // Equalizer settings → filters (smoothly, so dragging a slider doesn't click)
+  const applyEq = useCallback((settings) => {
+    const graph = graphRef.current;
+    if (!graph) return;
+    const now = graph.context.currentTime;
+    filterGains(settings).forEach((db, i) => graph.filters[i].gain.setTargetAtTime(db, now, 0.02));
+    graph.preamp.gain.setTargetAtTime(dbToGain(preampDb(settings)), now, 0.02);
+  }, []);
+
+  // Route the <audio> element through the equalizer and an analyser (for the visualizer):
+  // source → preamp → 10 EQ filters → volume → speakers, with the analyser tapped before volume
+  // so visuals keep moving when muted. Built on the first user-initiated play (so the
+  // AudioContext may start), at most once.
+  const ensureGraph = useCallback(() => {
+    const audio = audioRef.current;
+    if (graphRef.current) {
+      if (graphRef.current.context.state === 'suspended') graphRef.current.context.resume().catch(() => {});
+      return;
+    }
+    if (!audio || !canAnalyse(live.current.library.getStreamUrl('probe'))) return;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      const context = new Ctx();
+      const source = context.createMediaElementSource(audio);
+      const preamp = context.createGain();
+      const filters = EQ_BANDS.map((frequency, i) => {
+        const filter = context.createBiquadFilter();
+        filter.type = i === 0 ? 'lowshelf' : i === EQ_BANDS.length - 1 ? 'highshelf' : 'peaking';
+        filter.frequency.value = frequency;
+        filter.Q.value = 1.4;
+        filter.gain.value = 0;
+        return filter;
+      });
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.8;
+      const gain = context.createGain();
+      [source, preamp, ...filters, gain].reduce((from, to) => { from.connect(to); return to; });
+      gain.connect(context.destination);
+      filters[filters.length - 1].connect(analyser);
+      graphRef.current = { context, source, preamp, filters, analyser, gain };
+      applyVolume(live.current.volume);
+      applyEq(eqRef.current);
+      context.resume().catch(() => {});
+      setAudioGraph({ context, analyser });
+    } catch (err) {
+      console.warn('Web Audio unavailable (no visualizer analysis or equalizer)', err);
+    }
+  }, [applyVolume, applyEq]);
+
+  useEffect(() => {
+    applyEq(eq);
+    saveEq(eq);
+  }, [eq, applyEq]);
+
+  // Works wherever the graph can be built (Navidrome, same-origin stream, not a phone)
+  const eqSupported = useMemo(() => canAnalyse(library.getStreamUrl('probe')), [library]);
+  const equalizer = useMemo(() => ({
+    supported: eqSupported,
+    settings: eq,
+    setEnabled: (enabled) => setEq((e) => ({ ...e, enabled })),
+    setGain: (index, db) => setEq((e) => withGain(e, index, db)),
+    setPreset: (id) => setEq((e) => withPreset(e, id)),
+    reset: () => setEq((e) => withPreset(e, 'flat'))
+  }), [eq, eqSupported]);
+
+  // Close the audio graph with the engine
+  useEffect(() => () => {
+    graphRef.current?.context.close().catch(() => {});
+    graphRef.current = null;
+  }, []);
+
   const controls = useMemo(() => ({
     playQueue: (tracks, index = 0, source = null) => {
       const playable = tracks.filter((t) => t.playable !== false);
@@ -273,7 +375,15 @@ export default function useAudioEngine({ enabled, library }) {
       const start = Math.max(0, playable.indexOf(tracks[index]));
       const next = { tracks: playable, order: buildOrder(playable.length, start, live.current.shuffle), cursor: -1, source };
       const cursor = live.current.shuffle ? 0 : start;
+      ensureGraph();
       goTo(next, cursor);
+    },
+    // Jump to a position in the current play order (the Playlist pane)
+    jumpTo: (cursor) => {
+      const q = live.current.queue;
+      if (cursor < 0 || cursor >= q.order.length) return;
+      ensureGraph();
+      goTo(q, cursor);
     },
     // Kept for callers written against the Spotify engines
     play: () => {},
@@ -283,7 +393,10 @@ export default function useAudioEngine({ enabled, library }) {
         setError('Pick a song from the Media Library to start playing.');
         return undefined;
       }
-      if (audio.paused) return audio.play().catch(() => setStatus((s) => ({ ...s, isPaused: true })));
+      if (audio.paused) {
+        ensureGraph();
+        return audio.play().catch(() => setStatus((s) => ({ ...s, isPaused: true })));
+      }
       audio.pause();
       return undefined;
     },
@@ -317,12 +430,12 @@ export default function useAudioEngine({ enabled, library }) {
     },
     setVolume: (value) => {
       if (value > 0) lastVolumeRef.current = value;
-      if (audioRef.current) audioRef.current.volume = value;
+      applyVolume(value);
       setVolumeState(value);
     },
     toggleMute: () => {
       const next = live.current.volume > 0 ? 0 : lastVolumeRef.current || 0.8;
-      if (audioRef.current) audioRef.current.volume = next;
+      applyVolume(next);
       setVolumeState(next);
     },
     toggleShuffle: () => {
@@ -350,7 +463,9 @@ export default function useAudioEngine({ enabled, library }) {
       setStatus({ isPaused: true, position: 0, updatedAt: 0, duration: 0, buffering: false });
       store.clear();
     }
-  }), [advance, currentTrack, goTo, persist]);
+  }), [advance, applyVolume, currentTrack, ensureGraph, goTo, persist]);
+
+  const upcoming = useMemo(() => queue.order.map((i) => queue.tracks[i]), [queue.order, queue.tracks]);
 
   const playback = useMemo(() => ({
     ready: enabled,
@@ -368,8 +483,10 @@ export default function useAudioEngine({ enabled, library }) {
     deviceId: 'local',
     deviceName: 'This browser',
     queueSource: queue.source,
-    queueLength: queue.tracks.length
-  }), [enabled, currentTrack, status, volume, canSetVolume, shuffle, repeat, queue.source, queue.tracks.length]);
+    queueLength: queue.tracks.length,
+    queueCursor: queue.cursor,
+    upcoming // the queue in play order (shuffled order when shuffle is on)
+  }), [enabled, currentTrack, status, volume, canSetVolume, shuffle, repeat, queue.source, queue.tracks.length, queue.cursor, upcoming]);
 
-  return { playback, controls, error, clearError: () => setError(null) };
+  return { playback, controls, audioGraph, equalizer, error, clearError: () => setError(null) };
 }

@@ -111,6 +111,7 @@ export default function SpotifyBackend({ children }) {
     playback,
     controls,
     audioGraph: null, // Spotify audio is DRM-protected; the visualizer uses a simulated signal
+    equalizer: null, // same reason: the audio can't be processed in the browser
     playerError: engine.error,
     clearPlayerError: engine.clearError,
     devices: mode === 'connect' ? connect.devices : [],

@@ -6,6 +6,7 @@ import LibraryView from './LibraryView';
 import PlaylistView from './PlaylistView';
 import NowPlayingPane from './NowPlayingPane';
 import ControlBar from './ControlBar';
+import EqualizerPanel from './EqualizerPanel';
 import DevicePicker from './DevicePicker';
 import useTrackList from './useTrackList';
 import { useLibraryCollections, useArtistDetail, useSearchExtras } from './useLibraryData';
@@ -109,6 +110,7 @@ const MediaPlayer = ({ request, onClose, active = true }) => {
   const { viewMode, source, navigate, canGoBack, canGoForward, back, forward } = useNavigation();
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [paneVisible, setPaneVisible] = useState(false);
+  const [eqVisible, setEqVisible] = useState(false);
   const [visualizerOn, setVisualizerOn] = useState(false);
   const [devicesOpen, setDevicesOpen] = useState(false);
 
@@ -188,7 +190,8 @@ const MediaPlayer = ({ request, onClose, active = true }) => {
         { label: 'Visualizations', checked: viewMode === 'nowPlaying' && visualizerOn, onSelect: () => toggleVisualizer(true) },
         'separator',
         { label: 'Toolbar', checked: toolbarVisible, onSelect: () => setToolbarVisible((v) => !v) },
-        { label: 'Now Playing Pane', checked: paneVisible, onSelect: () => setPaneVisible((v) => !v) }
+        { label: 'Now Playing Pane', checked: paneVisible, onSelect: () => setPaneVisible((v) => !v) },
+        { label: 'Graphic Equalizer', checked: eqVisible, onSelect: () => setEqVisible((v) => !v), disabled: !isAuthenticated }
       ]
     },
     {
@@ -240,7 +243,7 @@ const MediaPlayer = ({ request, onClose, active = true }) => {
         { label: 'Media Library Home', onSelect: () => navigate({ viewMode: 'mediaLibrary', source: null }) }
       ]
     }
-  ], [switchProvider, back, canGoBack, canGoForward, capabilities.star, controls, currentStarred, currentTrack, forward, isAuthenticated, mode, music, navigate, onClose, paneVisible, playback, providerName, selectView, toggleVisualizer, toolbarVisible, viewMode, visualizerOn]);
+  ], [switchProvider, back, canGoBack, canGoForward, capabilities.star, controls, currentStarred, currentTrack, forward, isAuthenticated, mode, music, navigate, onClose, paneVisible, playback, providerName, selectView, toggleVisualizer, toolbarVisible, viewMode, visualizerOn, eqVisible]);
 
   const body = !isAuthenticated ? (
     <SignInPanel music={music} onSwitchService={switchProvider} />
@@ -319,11 +322,14 @@ const MediaPlayer = ({ request, onClose, active = true }) => {
         </div>
       )}
       <div className="window-content">{body}</div>
+      {isAuthenticated && !isMobile && eqVisible && <EqualizerPanel onClose={() => setEqVisible(false)} />}
       {isAuthenticated && (
         <ControlBar
           isMobile={isMobile}
           paneVisible={paneVisible}
           onTogglePane={() => setPaneVisible((v) => !v)}
+          eqVisible={eqVisible}
+          onToggleEq={() => setEqVisible((v) => !v)}
           onOpenDevices={() => setDevicesOpen(true)}
         />
       )}

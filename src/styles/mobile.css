@@ -245,12 +245,12 @@
     gap: 3px;
     font-size: 12px;
     text-align: center;
-    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px grey, inset 2px 2px #dfdfdf !important;
+    box-shadow: var(--bevel-button) !important;
   }
 
   .mobile-view-tab.active {
-    box-shadow: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px grey !important;
-    background-image: repeating-conic-gradient(#ffffff 0 25%, transparent 0 50%);
+    box-shadow: var(--bevel-pressed) !important;
+    background-image: var(--dither);
     background-size: 2px 2px;
     font-weight: bold;
   }

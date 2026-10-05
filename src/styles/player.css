@@ -203,7 +203,7 @@
   max-height: 60vh;
   overflow-y: auto;
   background: var(--win-face);
-  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px grey, inset 2px 2px #fff, 2px 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--bevel-raised), 2px 2px 4px rgba(0, 0, 0, 0.3);
   padding: 3px;
   z-index: 1000;
 }
@@ -275,8 +275,8 @@
 
 .toolbar-nav-btn.active,
 .control-btn.active {
-  box-shadow: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px grey;
-  background-image: repeating-conic-gradient(#ffffff 0 25%, transparent 0 50%);
+  box-shadow: var(--bevel-pressed);
+  background-image: var(--dither);
   background-size: 2px 2px;
 }
 
@@ -437,7 +437,7 @@
 }
 
 .viz-btn.active {
-  box-shadow: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px grey;
+  box-shadow: var(--bevel-pressed);
   font-weight: bold;
 }
 
@@ -472,7 +472,7 @@
   overflow-y: auto;
   padding: 2px;
   background: var(--win-face);
-  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px grey, inset 2px 2px #fff;
+  box-shadow: var(--bevel-raised);
 }
 
 .viz-menu-heading,
@@ -573,8 +573,8 @@
 .wmp-album-art-placeholder {
   width: min(300px, 40vh);
   height: min(300px, 40vh);
-  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, 2px 2px 4px rgba(0, 0, 0, 0.3);
-  border: 2px outset var(--win-face);
+  box-shadow: var(--bevel-thin), 2px 2px 4px rgba(0, 0, 0, 0.3);
+  border: var(--panel-border);
 }
 
 .wmp-album-art-large {
@@ -701,7 +701,7 @@
   margin-left: -5px;
   transform: translateY(-50%);
   background: var(--win-face);
-  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px grey, inset 2px 2px #dfdfdf;
+  box-shadow: var(--bevel-button);
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.15s ease;
@@ -824,7 +824,7 @@
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border: 2px outset var(--win-face);
+  border: var(--panel-border);
   background-color: var(--win-face-light);
   display: block;
 }
@@ -1028,7 +1028,7 @@
   width: 250px;
   flex-shrink: 0;
   background: var(--win-face);
-  border-left: 2px outset var(--win-face);
+  border-left: var(--panel-border);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -1075,7 +1075,7 @@
   max-width: 220px;
   aspect-ratio: 1;
   object-fit: cover;
-  border: 2px outset var(--win-face);
+  border: var(--panel-border);
   box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 

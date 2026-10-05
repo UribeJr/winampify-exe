@@ -2,13 +2,18 @@ import React from 'react';
 import Dialog, { DialogButtons } from './Dialog';
 import ServicePicker from './ServicePicker';
 import { useService } from '../music/MusicContext';
+import { useTheme } from '../contexts/ThemeContext';
+import XpWelcome from './XpWelcome';
 
 // Win98 logon-style prompt shown after boot when there's no music session.
 // No service yet → "Select your music service"; otherwise sign in / reconnect to the chosen one.
 const LoginDialog = ({ music, onClose }) => {
   const { switchProvider } = useService();
+  const { skin } = useTheme();
   const { provider, providerName, serverLabel, status, statusMessage, login, mode } = music;
   const checking = status === 'checking';
+
+  if (skin === 'xp') return <XpWelcome music={music} onClose={onClose} />;
 
   if (!provider) {
     return (

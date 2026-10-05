@@ -31,6 +31,7 @@ Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic AP
   lock-screen and hardware media keys
 - **Scrobbling** to Navidrome, and the queue and position survive a page refresh
 - **WMP 7-style visualizations**: classic Bars and Waves, Scope and Dots plus the full MilkDrop library (butterchurn), with Random, Auto-change and full screen. On desktop with Navidrome they react to the actual music; elsewhere a simulated signal drives them
+- **Windows XP skin**: switch between Windows 98 Classic and an XP-style look (Blue, Olive Green or Silver) in Display Properties → Appearance, with an XP Start menu, WMP 9-style player, Welcome screen and its own wallpaper. Your choice is remembered in this browser
 - **Graphic Equalizer**: 10 bands (31 Hz–16 kHz, ±12 dB) with presets, from View → Graphic Equalizer or the EQ button (Navidrome on a computer)
 - **Phone layout** — full-screen player, view tabs, drill-down library and 44 px touch targets
 
@@ -136,6 +137,7 @@ and providing the same `MusicContext` value as `NavidromeBackend.jsx`.
 
 - [98.css](https://jdan.github.io/98.css/) for the Windows 98 widgets
 - [butterchurn](https://github.com/jberg/butterchurn) for the MilkDrop visualizer
+- [XP.css](https://github.com/botoxparty/XP.css) for the Windows XP skin's controls (loaded only when that skin is chosen)
 - [Navidrome](https://www.navidrome.org/) and the [OpenSubsonic API](https://opensubsonic.netlify.app/)
 
 ## License

@@ -7,8 +7,11 @@ export const WALLPAPERS = [
   // previewTile: tile size in the Display Properties monitor preview (~1/5 scale)
   { id: 'starfield', name: 'Starfield', url: '/assets/wallpapers/starfield.svg', defaultMode: 'tile', previewTile: '52px' },
   { id: 'bricks', name: 'Bricks', url: '/assets/wallpapers/bricks.svg', defaultMode: 'tile', previewTile: '13px' },
-  { id: 'hills', name: 'Rolling Hills', url: '/assets/wallpapers/hills.svg', defaultMode: 'stretch' }
+  { id: 'hills', name: 'Rolling Hills', url: '/assets/wallpapers/hills.svg', defaultMode: 'stretch' },
+  { id: 'xp-hills', name: 'Green Hills (XP)', url: '/assets/wallpapers/xp-hills.svg', defaultMode: 'stretch' }
 ];
+
+export const XP_WALLPAPER = { id: 'xp-hills', mode: 'stretch' };
 
 export const CUSTOM_WALLPAPER_ID = 'custom';
 export const DEFAULT_WALLPAPER = { id: 'clouds', mode: 'stretch' };

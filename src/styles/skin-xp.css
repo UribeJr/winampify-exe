@@ -540,3 +540,340 @@
 :root[data-skin="xp"] .start-menu-side {
   background: var(--xp-menu-head);
 }
+
+/* ---------- Welcome screen (service picker under XP) ---------- */
+:root[data-skin="xp"] .xp-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 25000;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(90deg, #4a77d6, #5a8ae0 50%, #4a77d6);
+  color: #ffffff;
+  font-family: var(--font-ui);
+}
+
+:root[data-skin="xp"] .xp-welcome-band {
+  height: calc(70px + var(--safe-top));
+  flex-shrink: 0;
+  background: #00309c;
+  box-shadow: 0 2px 0 #e5a35a;
+}
+
+:root[data-skin="xp"] .xp-welcome-foot {
+  height: auto;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px calc(24px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(24px + var(--safe-left));
+  box-shadow: 0 -2px 0 #5c8ce6;
+}
+
+:root[data-skin="xp"] .xp-welcome-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+:root[data-skin="xp"] .xp-welcome-brand {
+  flex: 0 1 320px;
+  text-align: right;
+}
+
+:root[data-skin="xp"] .xp-welcome-logo {
+  display: inline-block;
+  width: 64px;
+  height: 64px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+:root[data-skin="xp"] .xp-welcome-brand h1 {
+  margin: 6px 0 14px;
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
+  font-size: 34px;
+  font-style: italic;
+  text-shadow: 1px 2px 3px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-skin="xp"] .xp-welcome-brand p {
+  margin: 0;
+  font-size: 16px;
+}
+
+:root[data-skin="xp"] .xp-welcome-divider {
+  align-self: stretch;
+  width: 1px;
+  margin: 40px 0;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+}
+
+:root[data-skin="xp"] .xp-welcome-tiles {
+  flex: 0 1 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+:root[data-skin="xp"] .xp-tile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 74px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: #ffffff;
+  text-align: left;
+  cursor: pointer;
+}
+
+:root[data-skin="xp"] .xp-tile:not(:disabled):hover,
+:root[data-skin="xp"] .xp-tile:focus-visible,
+:root[data-skin="xp"] .xp-tile.is-chosen {
+  background: linear-gradient(90deg, #00309c, rgba(0, 48, 156, 0));
+  box-shadow: none;
+  outline: none;
+}
+
+:root[data-skin="xp"] .xp-tile:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+:root[data-skin="xp"] .xp-tile-icon {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border: 2px solid #ffffff;
+  border-radius: 6px;
+  background-color: #dbe7fb;
+  background-size: 36px;
+  background-position: center;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-skin="xp"] .xp-tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+:root[data-skin="xp"] .xp-tile-text b {
+  font-size: 17px;
+  font-weight: normal;
+}
+
+:root[data-skin="xp"] .xp-tile-actions {
+  margin-top: 6px;
+}
+
+:root[data-skin="xp"] .xp-go {
+  min-height: 26px;
+  padding: 0 14px;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #78c46b, #3a8a35);
+  color: #ffffff;
+  font-weight: bold;
+}
+
+:root[data-skin="xp"] .xp-go:not(:disabled):hover {
+  background: linear-gradient(180deg, #8fd682, #46a040);
+  box-shadow: none;
+}
+
+:root[data-skin="xp"] .xp-welcome-off {
+  min-height: 30px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #ffffff;
+  font-size: 13px;
+}
+
+:root[data-skin="xp"] .xp-welcome-off:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: none;
+}
+
+:root[data-skin="xp"] .xp-welcome-off span {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  margin-right: 6px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ef8a5c, #c84b1b);
+}
+
+:root[data-skin="xp"] .xp-welcome-hint {
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.85;
+  text-align: right;
+}
+
+@media (max-width: 767px) {
+  :root[data-skin="xp"] .xp-welcome-main {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 16px;
+  }
+
+  :root[data-skin="xp"] .xp-welcome-brand {
+    flex: none;
+    text-align: center;
+  }
+
+  :root[data-skin="xp"] .xp-welcome-divider {
+    width: auto;
+    height: 1px;
+    margin: 0 20px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  }
+
+  :root[data-skin="xp"] .xp-welcome-tiles {
+    flex: none;
+  }
+
+  :root[data-skin="xp"] .xp-welcome-band:first-child {
+    height: calc(36px + var(--safe-top));
+  }
+
+  :root[data-skin="xp"] .xp-welcome-foot {
+    flex-wrap: wrap;
+  }
+
+  :root[data-skin="xp"] .xp-welcome-hint {
+    margin-left: 0;
+    text-align: left;
+  }
+}
+
+/* ---------- Disky: XP notification balloons ---------- */
+:root[data-skin="xp"] .assistant-bubble {
+  border: 1px solid #5f5f5f;
+  border-radius: 8px;
+  padding: 10px 14px 12px;
+  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.3);
+  font-size: 12px;
+}
+
+:root[data-skin="xp"] .assistant-bubble::before {
+  border-color: #5f5f5f transparent transparent transparent;
+}
+
+:root[data-skin="xp"] .assistant-bubble-close {
+  top: 5px;
+  right: 5px;
+  width: 15px;
+  height: 15px;
+  border: 1px solid #b0b0b0;
+  border-radius: 3px;
+  background: #ffffff;
+  font-size: 10px;
+}
+
+:root[data-skin="xp"] .assistant-bubble-close:hover {
+  border-color: #c84b1b;
+  background: linear-gradient(180deg, #ef8a5c, #c84b1b);
+  color: #ffffff;
+}
+
+/* ---------- Boot screen ---------- */
+:root[data-skin="xp"] .loading-screen {
+  background: #000000;
+  color: #d8d8d8;
+  font-family: var(--font-ui);
+}
+
+:root[data-skin="xp"] .loading-content {
+  align-items: center;
+}
+
+:root[data-skin="xp"] .loading-content::before {
+  content: 'Winampify xp';
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
+  font-size: 34px;
+  font-style: italic;
+  font-weight: bold;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+:root[data-skin="xp"] .loading-logs {
+  align-self: stretch;
+  height: 96px;
+}
+
+:root[data-skin="xp"] .loading-log {
+  font-size: 12px;
+}
+
+:root[data-skin="xp"] .loading-progress-container {
+  width: 160px;
+}
+
+:root[data-skin="xp"] .loading-progress-bar {
+  position: relative;
+  height: 14px;
+  border: 1px solid #b2b2b2;
+  border-radius: 4px;
+  background: #000000;
+}
+
+:root[data-skin="xp"] .loading-progress-fill {
+  visibility: hidden;
+}
+
+/* Three blue blocks gliding across, XP-boot style */
+:root[data-skin="xp"] .loading-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 0;
+  width: 26px;
+  background: repeating-linear-gradient(90deg, #3a6cf0 0 7px, transparent 7px 9px);
+  border-radius: 1px;
+  animation: xp-boot-blocks 1.6s linear infinite;
+}
+
+@keyframes xp-boot-blocks {
+  from { transform: translateX(-30px); }
+  to { transform: translateX(160px); }
+}
+
+:root[data-skin="xp"] .loading-percentage {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-skin="xp"] .loading-progress-bar::after {
+    animation: none;
+    left: 64px;
+  }
+}

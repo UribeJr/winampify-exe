@@ -50,8 +50,11 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
   const fileRef = useRef(null);
   const { notify } = useAssistant();
 
-  // Disky's Browse… tip (he waits until this dialog closes)
-  useEffect(() => { notify('display-opened'); }, [notify]);
+  // Disky's Browse… and XP-look tips (he waits until this dialog closes; each is said once)
+  useEffect(() => {
+    notify('display-opened');
+    if (skin !== 'xp') notify('display-xp-hint');
+  }, [notify]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [tab, setTab] = useState(initialTab);
   const [draftWallpaper, setDraftWallpaper] = useState(wallpaper);

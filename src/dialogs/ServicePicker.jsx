@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useService } from '../music/MusicContext';
 import { API_BASE_URL } from '../spotify/config';
 
-const DETAILS = {
+export const SERVICE_DETAILS = {
   navidrome: {
     icon: 'cd',
     blurb: 'Your own library from a self-hosted Navidrome server. Plays right here, on desktop and phones.',
@@ -14,6 +14,15 @@ const DETAILS = {
     setup: 'Not set up on this server — add SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET to .env.'
   }
 };
+
+// "My Server (Navidrome)" when the server has its own display name
+export const serviceLabel = (svc) => `${svc.name}${svc.id === 'navidrome' && svc.name !== 'Navidrome' ? ' (Navidrome)' : ''}`;
+
+// Pick a service: Navidrome connects right away; Spotify goes to Spotify's sign-in page
+export function startService(chooseProvider, id) {
+  chooseProvider(id);
+  if (id === 'spotify') window.location.href = `${API_BASE_URL}/login`;
+}
 
 /**
  * "Select your music service" list (Win98 option rows + Continue).
@@ -28,15 +37,14 @@ const ServicePicker = ({ onCancel, continueLabel = 'Continue' }) => {
   const submit = (e) => {
     e.preventDefault();
     if (!selected) return;
-    chooseProvider(selected);
-    if (selected === 'spotify') window.location.href = `${API_BASE_URL}/login`;
+    startService(chooseProvider, selected);
   };
 
   return (
     <form className="service-picker" onSubmit={submit}>
       <div className="service-list" role="radiogroup" aria-label="Music service">
         {services.map((svc) => {
-          const details = DETAILS[svc.id];
+          const details = SERVICE_DETAILS[svc.id];
           return (
             <label
               key={svc.id}
@@ -52,7 +60,7 @@ const ServicePicker = ({ onCancel, continueLabel = 'Continue' }) => {
               />
               <span className={`service-icon icon-${details.icon}`} aria-hidden="true" />
               <span className="service-text">
-                <span className="service-name">{svc.name}{svc.id === 'navidrome' && svc.name !== 'Navidrome' ? ' (Navidrome)' : ''}</span>
+                <span className="service-name">{serviceLabel(svc)}</span>
                 <span className="service-blurb">{svc.configured ? details.blurb : details.setup}</span>
               </span>
             </label>

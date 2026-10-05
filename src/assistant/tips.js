@@ -29,6 +29,12 @@ export const TIPS = [
     text: "Nice choice! Next time, try Browse… in Display Properties to put your own photo on the desktop. I won't judge. Much."
   },
   {
+    id: 'xp-skin',
+    event: 'display-xp-hint',
+    mood: 'happy',
+    text: 'Feeling fancy? Appearance → "Windows and buttons" has an XP style. Same me, shinier buttons.'
+  },
+  {
     id: 'server-unreachable',
     event: 'server-unreachable',
     mood: 'confused',

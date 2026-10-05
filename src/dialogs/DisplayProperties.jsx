@@ -2,8 +2,8 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import Dialog, { DialogButtons } from './Dialog';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAssistant } from '../assistant/AssistantProvider';
-import { getThemeList } from '../data/themes';
-import { WALLPAPERS, MODES, CUSTOM_WALLPAPER_ID, DEFAULT_WALLPAPER, getWallpaper, wallpaperStyle } from '../data/wallpapers';
+import { SKINS, getSchemesForSkin, resolveScheme, XP_SCHEMES } from '../data/skins';
+import { WALLPAPERS, MODES, CUSTOM_WALLPAPER_ID, DEFAULT_WALLPAPER, XP_WALLPAPER, getWallpaper, wallpaperStyle } from '../data/wallpapers';
 
 const MAX_SIDE_PX = 1920;
 const TABS = [
@@ -41,13 +41,12 @@ const previewBackground = (selection, customUrl) => {
 
 /**
  * Win98-style Display Properties: Background (wallpaper + display mode + Browse…),
- * Appearance (color theme) and Settings (read-only info). OK / Cancel / Apply like the original.
+ * Appearance (Windows 98 / XP look + color scheme) and Settings (read-only info). OK / Cancel / Apply.
  */
 const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) => {
   const {
-    currentThemeId, setTheme, wallpaper, customWallpaper, setWallpaper, setCustomWallpaper, clearCustomWallpaper
+    skin, schemeId, setAppearance, wallpaper, customWallpaper, setWallpaper, setCustomWallpaper, clearCustomWallpaper
   } = useTheme();
-  const themes = getThemeList();
   const fileRef = useRef(null);
   const { notify } = useAssistant();
 
@@ -56,7 +55,10 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
 
   const [tab, setTab] = useState(initialTab);
   const [draftWallpaper, setDraftWallpaper] = useState(wallpaper);
-  const [draftTheme, setDraftTheme] = useState(currentThemeId);
+  const [draftSkin, setDraftSkin] = useState(skin);
+  const [draftScheme, setDraftScheme] = useState(schemeId);
+  const [useXpWallpaper, setUseXpWallpaper] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [pendingCustom, setPendingCustom] = useState(null); // picked via Browse…, not yet applied
   const [loadingImage, setLoadingImage] = useState(false);
   const [notice, setNotice] = useState(null);
@@ -70,9 +72,11 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
   const dirty = pendingCustom
     || draftWallpaper.id !== wallpaper.id
     || draftWallpaper.mode !== wallpaper.mode
-    || draftTheme !== currentThemeId;
+    || draftSkin !== skin
+    || draftScheme !== schemeId
+    || useXpWallpaper;
 
-  const apply = () => {
+  const apply = async () => {
     if (pendingCustom) {
       const remembered = setCustomWallpaper(pendingCustom);
       setPendingCustom(null);
@@ -81,9 +85,29 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
         return false;
       }
     }
-    setWallpaper(draftWallpaper.id, draftWallpaper.mode);
-    setTheme(draftTheme);
+    const nextWallpaper = useXpWallpaper ? XP_WALLPAPER : draftWallpaper;
+    setWallpaper(nextWallpaper.id, nextWallpaper.mode);
+    if (useXpWallpaper) {
+      setDraftWallpaper(XP_WALLPAPER);
+      setUseXpWallpaper(false);
+    }
+    if (draftSkin !== skin || draftScheme !== schemeId) {
+      setApplying(true);
+      const ok = await setAppearance(draftSkin, draftScheme);
+      setApplying(false);
+      if (!ok) {
+        setNotice('Winampify couldn\'t load the XP look. Check your connection and try again.');
+        return false;
+      }
+    }
+    setNotice(null);
     return true;
+  };
+
+  const chooseSkin = (next) => {
+    setDraftSkin(next);
+    setDraftScheme(resolveScheme(next, next === skin ? schemeId : null));
+    if (next !== 'xp') setUseXpWallpaper(false);
   };
 
   const pick = (item) => setDraftWallpaper({ id: item.id, mode: item.defaultMode });
@@ -111,7 +135,16 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
     if (draftWallpaper.id === CUSTOM_WALLPAPER_ID) setDraftWallpaper(DEFAULT_WALLPAPER);
   };
 
-  const preview = themes.find((t) => t.id === draftTheme) || themes[0];
+  const schemes = getSchemesForSkin(draftSkin);
+  const previewStyle = draftSkin === 'xp'
+    ? (() => {
+      const { preview } = XP_SCHEMES.find((x) => x.id === draftScheme) || XP_SCHEMES[0];
+      return { '--preview-title-start': preview.title, '--preview-title-end': preview.title, '--preview-taskbar': preview.taskbar };
+    })()
+    : (() => {
+      const { colors } = schemes.find((t) => t.id === draftScheme) || schemes[0];
+      return { '--preview-title-start': colors.titleBarActiveStart, '--preview-title-end': colors.titleBarActiveEnd, '--preview-taskbar': colors.taskbar };
+    })();
 
   return (
     <Dialog title="Display Properties" icon="themes" onClose={onClose} className="display-properties">
@@ -172,12 +205,8 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
             <div className="display-appearance">
               <div
                 className="theme-preview"
-                style={{
-                  '--preview-title-start': preview.colors.titleBarActiveStart,
-                  '--preview-title-end': preview.colors.titleBarActiveEnd,
-                  '--preview-taskbar': preview.colors.taskbar,
-                  ...previewBackground(draftWallpaper, customUrl)
-                }}
+                data-preview-skin={draftSkin}
+                style={{ ...previewStyle, ...previewBackground(useXpWallpaper ? XP_WALLPAPER : draftWallpaper, customUrl) }}
                 aria-hidden="true"
               >
                 <div className="theme-preview-window">
@@ -187,13 +216,25 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
                 <div className="theme-preview-taskbar"><span>Start</span></div>
               </div>
               <div className="field-row-stacked dialog-field">
-                <label htmlFor="theme-select">Scheme:</label>
-                <select id="theme-select" value={draftTheme} onChange={(e) => setDraftTheme(e.target.value)}>
-                  {themes.map((theme) => (
-                    <option key={theme.id} value={theme.id}>{theme.fileName}</option>
+                <label htmlFor="skin-select">Windows and buttons:</label>
+                <select id="skin-select" value={draftSkin} onChange={(e) => chooseSkin(e.target.value)}>
+                  {SKINS.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="field-row-stacked dialog-field">
+                <label htmlFor="theme-select">Color scheme:</label>
+                <select id="theme-select" value={draftScheme} onChange={(e) => setDraftScheme(e.target.value)}>
+                  {schemes.map((scheme) => (
+                    <option key={scheme.id} value={scheme.id}>{scheme.fileName || scheme.name}</option>
                   ))}
                 </select>
               </div>
+              {draftSkin === 'xp' && wallpaper.id !== XP_WALLPAPER.id && draftWallpaper.id !== XP_WALLPAPER.id && (
+                <div className="field-row dialog-field">
+                  <input id="xp-wallpaper" type="checkbox" checked={useXpWallpaper} onChange={(e) => setUseXpWallpaper(e.target.checked)} />
+                  <label htmlFor="xp-wallpaper">Also use the Green Hills wallpaper</label>
+                </div>
+              )}
             </div>
           )}
 
@@ -211,9 +252,9 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
       </div>
       {notice && <p className="display-notice" role="alert">{notice}</p>}
       <DialogButtons>
-        <button type="button" onClick={() => { if (apply()) onClose(); }}>OK</button>
+        <button type="button" onClick={async () => { if (await apply()) onClose(); }} disabled={applying}>OK</button>
         <button type="button" onClick={onClose}>Cancel</button>
-        <button type="button" onClick={apply} disabled={!dirty}>Apply</button>
+        <button type="button" onClick={apply} disabled={!dirty || applying}>Apply</button>
       </DialogButtons>
     </Dialog>
   );

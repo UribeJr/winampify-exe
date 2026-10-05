@@ -1,1 +1,332 @@
-/* Windows XP skin: shell (tokens, windows, taskbar, start, menus, dialogs). Every rule is under :root[data-skin="xp"]. */
+/* Windows XP skin: shell (tokens, windows, taskbar, start, menus, dialogs).
+   Every rule is under :root[data-skin="xp"]; xp.css itself is scoped the same way at build time.
+   Original styling in the spirit of XP's Luna look — no Microsoft artwork. */
+
+/* ---------- Tokens ---------- */
+:root[data-skin="xp"] {
+  --win-face: #ece9d8;
+  --win-face-light: #f6f5ee;
+  --win-shadow: #aca899;
+  --win-highlight: #ffffff;
+  --win-select: #316ac5;
+  --win-hover: #316ac5;
+  --font-ui: Tahoma, Verdana, 'Segoe UI', sans-serif;
+  --inset: inset 0 0 0 1px #7f9db9;
+  --bevel-raised: inset 0 0 0 1px #aca899;
+  --bevel-button: inset 0 0 0 1px #aca899;
+  --bevel-pressed: inset 0 0 0 1px #6d8bb5, inset 1px 2px 3px rgba(0, 0, 0, 0.2);
+  --bevel-sunken: inset 0 0 0 1px #7f9db9;
+  --bevel-thin: inset 0 0 0 1px #aca899;
+  --dither: none;
+  --panel-border: 1px solid #aca899;
+  --taskbar-height: 30px;
+}
+
+/* Color schemes (gradients can't be inline theme variables) */
+:root[data-skin="xp"],
+:root[data-skin="xp"][data-theme="xp-blue"] {
+  --xp-title: linear-gradient(180deg, #0997ff, #0053ee 8%, #0050ee 40%, #06f 88%, #06f 93%, #005bff 95%, #003dd7 96%, #003dd7);
+  --xp-title-inactive: linear-gradient(180deg, #7a9ef0, #6787e6 10%, #7795ea 80%, #6787e6);
+  --xp-title-text: #ffffff;
+  --xp-frame: #0831d9;
+  --xp-frame-dark: #001ea0;
+  --xp-frame-inactive: #7a96df;
+  --xp-taskbar: linear-gradient(180deg, #3168d5, #4993e6 3%, #2157d7 6%, #2663e0 10%, #245edb 92%, #1941a5);
+  --xp-taskbtn: linear-gradient(180deg, #5d9cff, #3c81f3 10%, #3c81f3 85%, #2e6ae0);
+  --xp-taskbtn-hover: linear-gradient(180deg, #7ab2ff, #53a0ff 10%, #53a0ff 85%, #3d7ff0);
+  --xp-taskbtn-active: linear-gradient(180deg, #164bb3, #1e52b7 15%, #1e52b7);
+  --xp-tray: linear-gradient(180deg, #0c59b9, #139ee9 5%, #18b5f2 10%, #139beb 15%, #1290e8 50%, #0d8dea 75%, #1192e3 92%, #1d6fd6);
+  --xp-tray-border: #092e51;
+  --xp-menu-head: linear-gradient(180deg, #1c63d6, #3e8ef0 8%, #2a6fe0 90%, #1b56c4);
+  --xp-menu-side: #d3e5fa;
+  --xp-menu-foot: linear-gradient(180deg, #3b7de8, #2a62d4 50%, #1d4fb8);
+  --xp-control-filter: none;
+  --xp-accent: #316ac5;
+}
+
+:root[data-skin="xp"][data-theme="xp-olive"] {
+  --xp-title: linear-gradient(180deg, #c9d8a4, #9cb46c 8%, #8ba169 45%, #879d5f 88%, #6f8a46);
+  --xp-title-inactive: linear-gradient(180deg, #dfe6c8, #c6d1a6 15%, #bcc89a);
+  --xp-frame: #8ba169;
+  --xp-frame-dark: #586a3c;
+  --xp-frame-inactive: #bcc89a;
+  --xp-taskbar: linear-gradient(180deg, #b4c88c, #9bb46d 6%, #8ca468 12%, #8ca468 90%, #6b7f4c);
+  --xp-taskbtn: linear-gradient(180deg, #c1d39b, #a8bf7d 12%, #a2b974 85%, #8aa060);
+  --xp-taskbtn-hover: linear-gradient(180deg, #d2e2ad, #b7cc8c 12%, #b1c683 85%, #98ad6b);
+  --xp-taskbtn-active: linear-gradient(180deg, #6e8448, #7b9152 15%, #7f9556);
+  --xp-tray: linear-gradient(180deg, #d9e4bd, #c5d6a2 10%, #b6c98f 90%, #9db37a);
+  --xp-tray-border: #6b7f4c;
+  --xp-menu-head: linear-gradient(180deg, #a3b97a, #b9cd8f 8%, #9db474 90%, #869c5c);
+  --xp-menu-side: #ecf0dc;
+  --xp-menu-foot: linear-gradient(180deg, #b2c58a, #96ac6b 50%, #7e9456);
+  --xp-control-filter: hue-rotate(-128deg) saturate(0.55) brightness(1.05);
+  --xp-accent: #93a070;
+}
+
+:root[data-skin="xp"][data-theme="xp-silver"] {
+  --xp-title: linear-gradient(180deg, #ffffff, #e3e3ec 8%, #cfd0dd 45%, #c3c4d4 88%, #a5a6b8);
+  --xp-title-inactive: linear-gradient(180deg, #f4f4f7, #e8e8ee 15%, #dedee6);
+  --xp-title-text: #18183a;
+  --xp-frame: #a8a8c0;
+  --xp-frame-dark: #75758c;
+  --xp-frame-inactive: #d0d0dc;
+  --xp-taskbar: linear-gradient(180deg, #f3f3f6, #dcdce5 6%, #c8c9d6 12%, #c4c5d3 90%, #9d9eb3);
+  --xp-taskbtn: linear-gradient(180deg, #ffffff, #ecedf2 12%, #e3e4eb 85%, #c9cad7);
+  --xp-taskbtn-hover: linear-gradient(180deg, #ffffff, #f6f6f9 12%, #eeeef3 85%, #d6d7e2);
+  --xp-taskbtn-active: linear-gradient(180deg, #a9aabd, #b9bacb 15%, #c3c4d3);
+  --xp-tray: linear-gradient(180deg, #fbfbfc, #ececf1 10%, #dfdfe7 90%, #c6c7d4);
+  --xp-tray-border: #9d9eb3;
+  --xp-menu-head: linear-gradient(180deg, #b8b9cc, #d6d7e3 8%, #c3c4d4 90%, #a5a6ba);
+  --xp-menu-side: #ededf3;
+  --xp-menu-foot: linear-gradient(180deg, #d0d1de, #b6b7c9 50%, #a0a1b6);
+  --xp-control-filter: grayscale(0.85) brightness(1.15);
+  --xp-accent: #8d8ea8;
+}
+
+/* Text on light (silver) taskbars and menus */
+:root[data-skin="xp"][data-theme="xp-silver"] .taskbar-app,
+:root[data-skin="xp"][data-theme="xp-silver"] .taskbar-tray,
+:root[data-skin="xp"][data-theme="xp-silver"] .xp-start-head,
+:root[data-skin="xp"][data-theme="xp-silver"] .xp-start-foot button {
+  color: #18183a;
+  text-shadow: none;
+}
+
+:root[data-skin="xp"] body,
+:root[data-skin="xp"] button,
+:root[data-skin="xp"] input,
+:root[data-skin="xp"] select,
+:root[data-skin="xp"] textarea {
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Our non-button buttons: keep xp.css button chrome off them ---------- */
+:root[data-skin="xp"] :is(.desktop-icon, .start-menu-row, .context-menu-item, .menu-bar-item, .menu-dropdown-item,
+  .track-table-row, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
+  .pane-close, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
+  .tray-disky, .xp-start-item, .xp-start-foot button),
+:root[data-skin="xp"] :is(.desktop-icon, .start-menu-row, .context-menu-item, .menu-bar-item, .menu-dropdown-item,
+  .track-table-row, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
+  .pane-close, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
+  .tray-disky, .xp-start-item, .xp-start-foot button):is(:hover, :focus, :active) {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* ---------- Windows ---------- */
+:root[data-skin="xp"] .window {
+  background: var(--win-face);
+  box-shadow: inset 0 0 0 1px var(--xp-frame-dark), inset 0 0 0 3px var(--xp-frame);
+}
+
+:root[data-skin="xp"] .window .title-bar {
+  background: var(--xp-title);
+  border-color: var(--xp-frame);
+  border-right-color: var(--xp-frame-dark);
+  color: var(--xp-title-text, #ffffff);
+  height: 25px;
+  box-sizing: border-box;
+}
+
+:root[data-skin="xp"] .title-bar-text {
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
+  font-weight: bold;
+  font-size: 13px;
+  color: var(--xp-title-text, #ffffff);
+}
+
+:root[data-skin="xp"][data-theme="xp-silver"] .title-bar {
+  text-shadow: none;
+}
+
+:root[data-skin="xp"] .title-bar-controls button:not([aria-label="Close"]) {
+  filter: var(--xp-control-filter);
+}
+
+:root[data-skin="xp"] .os-window.inactive {
+  box-shadow: inset 0 0 0 1px var(--xp-frame-inactive), inset 0 0 0 3px var(--xp-frame-inactive);
+}
+
+:root[data-skin="xp"] .os-window.inactive .title-bar {
+  background: var(--xp-title-inactive);
+  border-color: var(--xp-frame-inactive);
+}
+
+:root[data-skin="xp"] .os-window.inactive .title-bar-text {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+:root[data-skin="xp"][data-theme="xp-silver"] .os-window.inactive .title-bar-text {
+  color: #6a6a80;
+}
+
+:root[data-skin="xp"] .os-window.maximized,
+:root[data-skin="xp"] .os-window.maximized .title-bar {
+  border-radius: 0;
+}
+
+:root[data-skin="xp"] .os-window .window-body {
+  margin: 0 3px;
+}
+
+/* ---------- Taskbar ---------- */
+:root[data-skin="xp"] .win98-taskbar {
+  background: var(--xp-taskbar);
+  border-top: none;
+  box-shadow: none;
+}
+
+:root[data-skin="xp"] .taskbar-start {
+  height: 100%;
+  margin: 0 6px 0 0;
+  padding: 0 18px 0 8px;
+  gap: 5px;
+  border: none;
+  border-radius: 0 12px 12px 0;
+  background: linear-gradient(180deg, #5eac56, #3c873c 8%, #3f8e3f 50%, #378537 80%, #2c6d2c);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.45), inset -2px 0 3px rgba(0, 0, 0, 0.25), 2px 0 3px rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-skin="xp"] .taskbar-start:hover {
+  background: linear-gradient(180deg, #73c26a, #4b9c4b 8%, #4fa54f 50%, #469a46 80%, #377f37);
+}
+
+:root[data-skin="xp"] .taskbar-start.active {
+  background: linear-gradient(180deg, #2e6e2e, #357c35 15%, #3a843a);
+  box-shadow: inset 1px 2px 4px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-skin="xp"] .taskbar-start .start-logo {
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5));
+}
+
+:root[data-skin="xp"] .taskbar-start .start-text {
+  font-family: 'Trebuchet MS', Tahoma, sans-serif;
+  font-size: 17px;
+  font-style: italic;
+  font-weight: bold;
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+}
+
+:root[data-skin="xp"] .taskbar-app {
+  height: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 3px;
+  background: var(--xp-taskbtn);
+  box-shadow: inset 1px 1px rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  text-shadow: none;
+}
+
+:root[data-skin="xp"] .taskbar-app:hover {
+  background: var(--xp-taskbtn-hover);
+}
+
+:root[data-skin="xp"] .taskbar-app.active {
+  background: var(--xp-taskbtn-active);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-skin="xp"] .taskbar-tray {
+  height: 100%;
+  margin: 0;
+  padding: 0 10px;
+  background: var(--xp-tray);
+  border-left: 1px solid var(--xp-tray-border);
+  box-shadow: inset 1px 0 1px rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+}
+
+/* ---------- Menus (start submenus, context menu, player dropdowns) ---------- */
+:root[data-skin="xp"] .context-menu,
+:root[data-skin="xp"] .start-menu-submenu {
+  background: #ffffff;
+  border: 1px solid #aca899;
+  box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.3);
+  padding: 2px;
+}
+
+:root[data-skin="xp"] .context-menu-item:not(:disabled):hover,
+:root[data-skin="xp"] .start-menu-submenu .start-menu-row:not(:disabled):hover {
+  background: var(--win-select);
+  color: #ffffff;
+}
+
+:root[data-skin="xp"] .context-menu-item:disabled {
+  text-shadow: none;
+}
+
+/* ---------- Tabs (our markup is 98-style li[role=tab] > a) ---------- */
+:root[data-skin="xp"] menu[role="tablist"] {
+  display: flex;
+  margin: 0 0 -1px;
+  padding: 0 0 0 3px;
+  list-style: none;
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-skin="xp"] menu[role="tablist"] > li {
+  margin-right: 2px;
+  border: 1px solid #91a7b4;
+  border-bottom: none;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #ffffff, #fafaf9 26%, #f0f0ea 95%, #ecebe5);
+}
+
+:root[data-skin="xp"] menu[role="tablist"] > li:hover {
+  border-top: 1px solid #e68b2c;
+  box-shadow: inset 0 2px #ffc73c;
+}
+
+:root[data-skin="xp"] menu[role="tablist"] > li[aria-selected="true"] {
+  background: #fcfcfe;
+  border-color: #919b9c;
+  border-top: 1px solid #e68b2c;
+  box-shadow: inset 0 2px #ffc73c;
+  padding-bottom: 1px;
+  margin-top: -2px;
+}
+
+:root[data-skin="xp"] menu[role="tablist"] > li > a {
+  display: block;
+  padding: 3px 10px;
+  color: #000000;
+  text-decoration: none;
+}
+
+:root[data-skin="xp"] .display-panel {
+  border: 1px solid #919b9c;
+  box-shadow: 1px 2px 2px rgba(208, 206, 191, 0.75);
+  border-radius: 0;
+  background: linear-gradient(180deg, #fcfcfe, #f4f3ee);
+}
+
+:root[data-skin="xp"] .display-panel > .window-body {
+  background: transparent;
+}
+
+/* ---------- Dialog odds and ends ---------- */
+:root[data-skin="xp"] .wallpaper-list,
+:root[data-skin="xp"] .recycle-list,
+:root[data-skin="xp"] .device-list {
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px #7f9db9;
+}
+
+:root[data-skin="xp"] .wallpaper-option.selected,
+:root[data-skin="xp"] .recycle-item.selected {
+  background: var(--win-select);
+  color: #ffffff;
+}
+
+:root[data-skin="xp"] .monitor-screen {
+  border-radius: 4px;
+}

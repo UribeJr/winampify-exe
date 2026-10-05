@@ -24,7 +24,7 @@ const ControlButton = ({ icon, title, onClick, disabled, active, large }) => (
  * Transport controls. Desktop keeps WMP's single row (with rewind/fast-forward now seeking ±10s);
  * phones get a big centered transport row plus a Devices button and a tap-to-open volume slider.
  */
-const ControlBar = ({ isMobile, paneVisible, onTogglePane, eqVisible, onToggleEq, onOpenDevices }) => {
+const ControlBar = ({ isMobile, paneVisible, paneLabel = 'Now Playing Pane', onTogglePane, eqVisible, onToggleEq, onOpenDevices }) => {
   const { playback, controls, mode } = useMusic();
   const position = usePlaybackPosition(playback);
   const [volumeOpen, setVolumeOpen] = useState(false);
@@ -126,7 +126,7 @@ const ControlBar = ({ isMobile, paneVisible, onTogglePane, eqVisible, onToggleEq
             <ControlButton icon="devices" title={playback.deviceName ? `Playing on ${playback.deviceName}` : 'Devices'} onClick={onOpenDevices} />
           )}
           <ControlButton icon="equalizer" title={eqVisible ? 'Hide Graphic Equalizer' : 'Show Graphic Equalizer'} onClick={onToggleEq} active={eqVisible} />
-          <ControlButton icon="playlist" title={paneVisible ? 'Hide Now Playing pane' : 'Show Now Playing pane'} onClick={onTogglePane} active={paneVisible} />
+          <ControlButton icon="playlist" title={`${paneVisible ? 'Hide' : 'Show'} ${paneLabel}`} onClick={onTogglePane} active={paneVisible} />
           {volumeControls}
         </div>
       </div>

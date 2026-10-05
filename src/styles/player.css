@@ -1477,3 +1477,111 @@
   padding: 10px 12px;
   color: #404040;
 }
+
+/* ---------- Playlist pane (next to Now Playing / Visualizer) ---------- */
+.queue-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--win-shadow);
+  font-size: 11px;
+}
+
+.queue-summary b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-summary span {
+  color: #404040;
+}
+
+.queue-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  background: #ffffff;
+  box-shadow: var(--inset);
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 3px 4px;
+  border: none;
+  box-shadow: none;
+  background: none;
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.queue-item:hover {
+  background: var(--win-face-light);
+}
+
+.queue-item:focus-visible {
+  outline: 1px dotted #000000;
+  outline-offset: -1px;
+}
+
+.queue-item.current {
+  background: var(--win-select);
+  color: #ffffff;
+}
+
+.queue-item.played:not(:hover) {
+  color: #808080;
+}
+
+.queue-num {
+  width: 20px;
+  flex-shrink: 0;
+  text-align: right;
+  color: inherit;
+  opacity: 0.8;
+}
+
+.queue-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.queue-title,
+.queue-artist {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-title {
+  font-weight: bold;
+}
+
+.queue-artist {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.queue-time {
+  flex-shrink: 0;
+  font-size: 10px;
+}
+
+.queue-empty {
+  margin: 0;
+  padding: 12px;
+  font-size: 11px;
+  color: #404040;
+}

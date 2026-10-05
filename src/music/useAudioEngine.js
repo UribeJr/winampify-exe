@@ -378,6 +378,13 @@ export default function useAudioEngine({ enabled, library }) {
       ensureGraph();
       goTo(next, cursor);
     },
+    // Jump to a position in the current play order (the Playlist pane)
+    jumpTo: (cursor) => {
+      const q = live.current.queue;
+      if (cursor < 0 || cursor >= q.order.length) return;
+      ensureGraph();
+      goTo(q, cursor);
+    },
     // Kept for callers written against the Spotify engines
     play: () => {},
     togglePlay: () => {
@@ -458,6 +465,8 @@ export default function useAudioEngine({ enabled, library }) {
     }
   }), [advance, applyVolume, currentTrack, ensureGraph, goTo, persist]);
 
+  const upcoming = useMemo(() => queue.order.map((i) => queue.tracks[i]), [queue.order, queue.tracks]);
+
   const playback = useMemo(() => ({
     ready: enabled,
     isActive: Boolean(currentTrack),
@@ -474,8 +483,10 @@ export default function useAudioEngine({ enabled, library }) {
     deviceId: 'local',
     deviceName: 'This browser',
     queueSource: queue.source,
-    queueLength: queue.tracks.length
-  }), [enabled, currentTrack, status, volume, canSetVolume, shuffle, repeat, queue.source, queue.tracks.length]);
+    queueLength: queue.tracks.length,
+    queueCursor: queue.cursor,
+    upcoming // the queue in play order (shuffled order when shuffle is on)
+  }), [enabled, currentTrack, status, volume, canSetVolume, shuffle, repeat, queue.source, queue.tracks.length, queue.cursor, upcoming]);
 
   return { playback, controls, audioGraph, equalizer, error, clearError: () => setError(null) };
 }

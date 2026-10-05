@@ -1,0 +1,341 @@
+/* Disky the assistant: character animations, speech bubble, tray icon, tour highlight */
+
+.disky {
+  overflow: visible;
+  display: block;
+}
+
+.disky-brow,
+.disky-mouth {
+  fill: none;
+  stroke: #1d2230;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.disky-mouth-fill {
+  fill: #6b1f2e;
+  stroke: #1d2230;
+  stroke-width: 1.2;
+}
+
+.disky-eye-white {
+  fill: #ffffff;
+  stroke: #1d2230;
+  stroke-width: 1.2;
+}
+
+.disky-pupil {
+  fill: #1d2230;
+}
+
+.disky-lid {
+  fill: #d7dce4;
+  stroke: #1d2230;
+  stroke-width: 1.2;
+  transform-box: fill-box;
+  transform-origin: top;
+  transform: scaleY(0);
+  animation: disky-blink 4.6s infinite;
+}
+
+.disky-body,
+.disky-hand,
+.disky-talking,
+.disky-zzz text {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* idle bob */
+.disky .disky-body {
+  animation: disky-bob 2.8s ease-in-out infinite;
+}
+
+.disky.mood-happy .disky-body,
+.disky.mood-surprised .disky-body {
+  animation: disky-spin 0.7s ease-out 1, disky-bob 2.8s ease-in-out 0.7s infinite;
+}
+
+.disky.mood-confused .disky-body {
+  animation: disky-wobble 0.9s ease-in-out 2;
+}
+
+.disky.mood-dizzy .disky-body {
+  animation: disky-spin 0.45s linear 4;
+}
+
+.disky.mood-sleepy .disky-body {
+  animation: disky-bob 5s ease-in-out infinite;
+}
+
+.disky-talking {
+  animation: disky-talk 0.32s ease-in-out infinite alternate;
+}
+
+.disky-hand {
+  transform-origin: 0% 100%;
+  animation: disky-wave 0.5s ease-in-out 4 alternate;
+}
+
+.disky-zzz text {
+  animation: disky-zzz 2.4s ease-in-out infinite;
+  opacity: 0;
+}
+
+.disky-zzz text:nth-child(2) { animation-delay: 0.6s; }
+.disky-zzz text:nth-child(3) { animation-delay: 1.2s; }
+
+@keyframes disky-blink {
+  0%, 92%, 100% { transform: scaleY(0); }
+  95% { transform: scaleY(1); }
+}
+
+@keyframes disky-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes disky-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes disky-wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-12deg); }
+  75% { transform: rotate(12deg); }
+}
+
+@keyframes disky-talk {
+  from { transform: scaleY(0.35); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes disky-wave {
+  from { transform: rotate(-10deg); }
+  to { transform: rotate(18deg); }
+}
+
+@keyframes disky-zzz {
+  0% { opacity: 0; transform: translate(0, 2px); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: translate(3px, -6px); }
+}
+
+/* ---------- Disky on the desktop ---------- */
+.assistant {
+  position: fixed;
+  right: calc(16px + var(--safe-right));
+  bottom: calc(var(--taskbar-height) + var(--safe-bottom) + 12px);
+  z-index: 15000; /* above windows, below the taskbar (20000) and dialogs */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.assistant > * {
+  pointer-events: auto;
+}
+
+.assistant-character {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  min-width: 0;
+  min-height: 0;
+  cursor: pointer;
+  filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.28));
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.assistant-character:not(:disabled):hover,
+.assistant-character:not(:disabled):active {
+  box-shadow: none;
+}
+
+.assistant-character:focus-visible {
+  outline: 1px dotted #000000;
+  outline-offset: 2px;
+}
+
+.assistant.entering .assistant-character {
+  animation: disky-roll-in 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+@keyframes disky-roll-in {
+  from { transform: translateX(160px) rotate(540deg); }
+  to { transform: translateX(0) rotate(0deg); }
+}
+
+/* Win98 tooltip-style speech bubble */
+.assistant-bubble {
+  position: relative;
+  width: min(260px, calc(100vw - 32px));
+  padding: 10px 12px;
+  background: #ffffe1;
+  border: 1px solid #000000;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  line-height: 1.45;
+  color: #000000;
+  margin-right: 24px;
+}
+
+.assistant-bubble::after,
+.assistant-bubble::before {
+  content: '';
+  position: absolute;
+  right: 18px;
+  border-style: solid;
+}
+
+/* tail pointing down at Disky */
+.assistant-bubble::before {
+  bottom: -11px;
+  border-width: 11px 11px 0 0;
+  border-color: #000000 transparent transparent transparent;
+}
+
+.assistant-bubble::after {
+  bottom: -9px;
+  right: 19px;
+  border-width: 9px 9px 0 0;
+  border-color: #ffffe1 transparent transparent transparent;
+}
+
+.assistant-bubble-close {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 14px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1;
+  color: #000000;
+  text-shadow: none;
+}
+
+.assistant-bubble p {
+  margin-right: 14px;
+}
+
+.assistant-bubble-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.assistant-bubble-actions button {
+  min-width: 0;
+  padding: 0 10px;
+}
+
+.assistant-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.assistant-menu button {
+  text-align: left;
+  padding: 0 8px;
+}
+
+/* Docked: a tiny CD in the taskbar tray */
+.tray-disky {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  min-width: 0;
+  min-height: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tray-disky:not(:disabled):hover,
+.tray-disky:not(:disabled):active {
+  box-shadow: none;
+}
+
+.tray-disky.has-news .disky {
+  animation: disky-wobble 0.9s ease-in-out infinite;
+}
+
+.assistant.docked {
+  bottom: calc(var(--taskbar-height) + var(--safe-bottom) + 6px);
+  right: calc(6px + var(--safe-right));
+}
+
+.assistant.docked .assistant-bubble {
+  margin-right: 30px;
+}
+
+/* Tour highlight ring around the element being explained */
+.disky-highlight {
+  outline: 3px solid #ffcc00 !important;
+  outline-offset: 3px;
+  animation: disky-ring 1s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+.wmp-desktop-area.disky-highlight {
+  outline-offset: -6px;
+}
+
+@keyframes disky-ring {
+  0%, 100% { outline-color: #ffcc00; }
+  50% { outline-color: #ff7a00; }
+}
+
+@media (max-width: 767px), (max-height: 500px) and (pointer: coarse) {
+  .assistant-bubble {
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+
+  .assistant-bubble-actions button,
+  .assistant-menu button {
+    min-height: 40px;
+    font-size: 14px;
+  }
+
+  .assistant-bubble-close {
+    width: 32px;
+    height: 28px;
+    font-size: 16px;
+  }
+
+  .tray-disky {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disky *,
+  .disky,
+  .assistant-character,
+  .tray-disky .disky,
+  .disky-highlight {
+    animation: none !important;
+  }
+}
+
+.icon-disky::before { content: '💿'; }

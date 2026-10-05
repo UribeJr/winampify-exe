@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { isMobileDevice } from '../hooks/useMediaQuery';
+import { EQ_BANDS, loadEq, saveEq, withGain, withPreset, preampDb, dbToGain, filterGains } from './equalizer';
 
 const STORAGE_KEY = 'winampify_nd_queue';
 const MAX_SAVED_TRACKS = 500;
@@ -72,8 +73,11 @@ export default function useAudioEngine({ enabled, library }) {
   const [repeat, setRepeat] = useState('off');
   const [error, setError] = useState(null);
   const [canSetVolume] = useState(volumeIsSettable);
-  const graphRef = useRef(null); // { context, source, analyser, gain } once built
+  const graphRef = useRef(null); // { context, source, preamp, filters, analyser, gain } once built
   const [audioGraph, setAudioGraph] = useState(null);
+  const [eq, setEq] = useState(loadEq);
+  const eqRef = useRef(eq);
+  eqRef.current = eq;
 
   const lastVolumeRef = useRef(0.8);
   const playRef = useRef({ trackId: null, transcoded: false, restoreAt: null, autoplay: false });
@@ -292,8 +296,19 @@ export default function useAudioEngine({ enabled, library }) {
     }
   }, []);
 
-  // Route the <audio> element through an analyser so the visualizer reacts to the real music.
-  // Built on the first user-initiated play (so the AudioContext may start), at most once.
+  // Equalizer settings → filters (smoothly, so dragging a slider doesn't click)
+  const applyEq = useCallback((settings) => {
+    const graph = graphRef.current;
+    if (!graph) return;
+    const now = graph.context.currentTime;
+    filterGains(settings).forEach((db, i) => graph.filters[i].gain.setTargetAtTime(db, now, 0.02));
+    graph.preamp.gain.setTargetAtTime(dbToGain(preampDb(settings)), now, 0.02);
+  }, []);
+
+  // Route the <audio> element through the equalizer and an analyser (for the visualizer):
+  // source → preamp → 10 EQ filters → volume → speakers, with the analyser tapped before volume
+  // so visuals keep moving when muted. Built on the first user-initiated play (so the
+  // AudioContext may start), at most once.
   const ensureGraph = useCallback(() => {
     const audio = audioRef.current;
     if (graphRef.current) {
@@ -305,21 +320,47 @@ export default function useAudioEngine({ enabled, library }) {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       const context = new Ctx();
       const source = context.createMediaElementSource(audio);
+      const preamp = context.createGain();
+      const filters = EQ_BANDS.map((frequency, i) => {
+        const filter = context.createBiquadFilter();
+        filter.type = i === 0 ? 'lowshelf' : i === EQ_BANDS.length - 1 ? 'highshelf' : 'peaking';
+        filter.frequency.value = frequency;
+        filter.Q.value = 1.4;
+        filter.gain.value = 0;
+        return filter;
+      });
       const analyser = context.createAnalyser();
       analyser.fftSize = 2048;
       analyser.smoothingTimeConstant = 0.8;
       const gain = context.createGain();
-      source.connect(gain);
+      [source, preamp, ...filters, gain].reduce((from, to) => { from.connect(to); return to; });
       gain.connect(context.destination);
-      source.connect(analyser); // tap before volume, so visuals keep moving when muted
-      graphRef.current = { context, source, analyser, gain };
+      filters[filters.length - 1].connect(analyser);
+      graphRef.current = { context, source, preamp, filters, analyser, gain };
       applyVolume(live.current.volume);
+      applyEq(eqRef.current);
       context.resume().catch(() => {});
       setAudioGraph({ context, analyser });
     } catch (err) {
-      console.warn('Visualizer audio analysis unavailable', err);
+      console.warn('Web Audio unavailable (no visualizer analysis or equalizer)', err);
     }
-  }, [applyVolume]);
+  }, [applyVolume, applyEq]);
+
+  useEffect(() => {
+    applyEq(eq);
+    saveEq(eq);
+  }, [eq, applyEq]);
+
+  // Works wherever the graph can be built (Navidrome, same-origin stream, not a phone)
+  const eqSupported = useMemo(() => canAnalyse(library.getStreamUrl('probe')), [library]);
+  const equalizer = useMemo(() => ({
+    supported: eqSupported,
+    settings: eq,
+    setEnabled: (enabled) => setEq((e) => ({ ...e, enabled })),
+    setGain: (index, db) => setEq((e) => withGain(e, index, db)),
+    setPreset: (id) => setEq((e) => withPreset(e, id)),
+    reset: () => setEq((e) => withPreset(e, 'flat'))
+  }), [eq, eqSupported]);
 
   // Close the audio graph with the engine
   useEffect(() => () => {
@@ -336,6 +377,13 @@ export default function useAudioEngine({ enabled, library }) {
       const cursor = live.current.shuffle ? 0 : start;
       ensureGraph();
       goTo(next, cursor);
+    },
+    // Jump to a position in the current play order (the Playlist pane)
+    jumpTo: (cursor) => {
+      const q = live.current.queue;
+      if (cursor < 0 || cursor >= q.order.length) return;
+      ensureGraph();
+      goTo(q, cursor);
     },
     // Kept for callers written against the Spotify engines
     play: () => {},
@@ -417,6 +465,8 @@ export default function useAudioEngine({ enabled, library }) {
     }
   }), [advance, applyVolume, currentTrack, ensureGraph, goTo, persist]);
 
+  const upcoming = useMemo(() => queue.order.map((i) => queue.tracks[i]), [queue.order, queue.tracks]);
+
   const playback = useMemo(() => ({
     ready: enabled,
     isActive: Boolean(currentTrack),
@@ -433,8 +483,10 @@ export default function useAudioEngine({ enabled, library }) {
     deviceId: 'local',
     deviceName: 'This browser',
     queueSource: queue.source,
-    queueLength: queue.tracks.length
-  }), [enabled, currentTrack, status, volume, canSetVolume, shuffle, repeat, queue.source, queue.tracks.length]);
+    queueLength: queue.tracks.length,
+    queueCursor: queue.cursor,
+    upcoming // the queue in play order (shuffled order when shuffle is on)
+  }), [enabled, currentTrack, status, volume, canSetVolume, shuffle, repeat, queue.source, queue.tracks.length, queue.cursor, upcoming]);
 
-  return { playback, controls, audioGraph, error, clearError: () => setError(null) };
+  return { playback, controls, audioGraph, equalizer, error, clearError: () => setError(null) };
 }

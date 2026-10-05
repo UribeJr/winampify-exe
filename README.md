@@ -31,6 +31,7 @@ Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic AP
   lock-screen and hardware media keys
 - **Scrobbling** to Navidrome, and the queue and position survive a page refresh
 - **WMP 7-style visualizations**: classic Bars and Waves, Scope and Dots plus the full MilkDrop library (butterchurn), with Random, Auto-change and full screen. On desktop with Navidrome they react to the actual music; elsewhere a simulated signal drives them
+- **Graphic Equalizer**: 10 bands (31 Hz–16 kHz, ±12 dB) with presets, from View → Graphic Equalizer or the EQ button (Navidrome on a computer)
 - **Phone layout** — full-screen player, view tabs, drill-down library and 44 px touch targets
 
 ## Requirements

@@ -1,1 +1,208 @@
-/* Windows XP skin: media player (WMP 9 look). Every rule is under :root[data-skin="xp"]. */
+/* Windows XP skin: media player, in the spirit of WMP 9 (rounded transport, blue seek bar,
+   XP list headers). Every rule is under :root[data-skin="xp"]. */
+
+:root[data-skin="xp"] .window-content {
+  background: #f7f6f0;
+  box-shadow: inset 0 0 0 1px #aca899;
+}
+
+/* ---------- Menu bar + dropdowns ---------- */
+:root[data-skin="xp"] .menu-bar-item:hover,
+:root[data-skin="xp"] .menu-bar-item.open {
+  box-shadow: none !important;
+  background: var(--win-select);
+  color: #ffffff;
+}
+
+:root[data-skin="xp"] .menu-dropdown {
+  background: #ffffff;
+  border: 1px solid #aca899;
+  box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.3);
+  padding: 2px;
+}
+
+:root[data-skin="xp"] .menu-dropdown-item:disabled {
+  text-shadow: none;
+}
+
+/* ---------- Toolbar: flat buttons that light up on hover ---------- */
+:root[data-skin="xp"] .wmp-toolbar {
+  background: linear-gradient(180deg, #fdfdfb, #f0efe8 60%, #e6e4da);
+  border-top: none;
+  border-bottom: 1px solid #c5c2b2;
+}
+
+:root[data-skin="xp"] .toolbar-nav-btn,
+:root[data-skin="xp"] .wmp-toolbar .control-btn {
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: none;
+}
+
+:root[data-skin="xp"] .toolbar-nav-btn:not(:disabled):hover,
+:root[data-skin="xp"] .wmp-toolbar .control-btn:not(:disabled):hover {
+  border-color: #c5c2b2;
+  background: linear-gradient(180deg, #ffffff, #f2f1ea);
+  box-shadow: none;
+}
+
+:root[data-skin="xp"] .toolbar-nav-btn.active,
+:root[data-skin="xp"] .wmp-toolbar .control-btn.active {
+  border-color: #8ca5cf;
+  background: #dfe8f7;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+:root[data-skin="xp"] .wmp-search input[type='search'] {
+  border: 1px solid #7f9db9;
+  box-shadow: none;
+}
+
+/* ---------- Transport bar ---------- */
+:root[data-skin="xp"] .wmp-control-bar:not(.mobile) {
+  margin: 0 4px 4px;
+  padding: 7px 10px 6px;
+  border: 1px solid var(--xp-player-edge);
+  border-radius: 0 0 10px 10px;
+  background: var(--xp-player-bar);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.8);
+}
+
+:root[data-skin="xp"] .wmp-control-bar .control-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #7389ad;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #ffffff, #e3eaf6 55%, #c3d0e6);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+}
+
+:root[data-skin="xp"] .wmp-control-bar .control-btn:not(:disabled):hover {
+  background: radial-gradient(circle at 50% 30%, #ffffff, #fdf3d8 55%, #f5d38a);
+  box-shadow: 0 0 4px rgba(255, 190, 70, 0.8);
+}
+
+:root[data-skin="xp"] .wmp-control-bar .control-btn:not(:disabled):active,
+:root[data-skin="xp"] .wmp-control-bar .control-btn.active {
+  background: radial-gradient(circle at 50% 60%, #c7d6ee, #a9bfe3);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* The big round Play / Pause button */
+:root[data-skin="xp"] .wmp-control-bar:not(.mobile) .control-btn[aria-label="Play"],
+:root[data-skin="xp"] .wmp-control-bar:not(.mobile) .control-btn[aria-label="Pause"] {
+  width: 36px;
+  height: 36px;
+  margin: -6px 4px -6px 0;
+  border-color: #1d4a99;
+  background: radial-gradient(circle at 50% 28%, #9cc7ff, #3a7be6 50%, #1c4fb0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35), inset 0 1px rgba(255, 255, 255, 0.6);
+}
+
+:root[data-skin="xp"] .wmp-control-bar:not(.mobile) .control-btn[aria-label="Play"]:not(:disabled):hover,
+:root[data-skin="xp"] .wmp-control-bar:not(.mobile) .control-btn[aria-label="Pause"]:not(:disabled):hover {
+  background: radial-gradient(circle at 50% 28%, #c2ddff, #5592f2 50%, #2a5fc4);
+  box-shadow: 0 0 6px rgba(80, 150, 255, 0.9);
+}
+
+:root[data-skin="xp"] .wmp-control-bar .control-btn[aria-label="Play"] .toolbar-icon,
+:root[data-skin="xp"] .wmp-control-bar .control-btn[aria-label="Pause"] .toolbar-icon {
+  filter: invert(1) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
+}
+
+/* ---------- Seek bar ---------- */
+:root[data-skin="xp"] .seek-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px #7f9db9;
+}
+
+:root[data-skin="xp"] .seek-bar.disabled .seek-track {
+  background: #eeede5;
+}
+
+:root[data-skin="xp"] .seek-fill {
+  border-radius: 3px;
+  background: linear-gradient(180deg, #8fbaff, var(--xp-accent) 60%, #1d4fb0);
+}
+
+:root[data-skin="xp"] .seek-thumb {
+  width: 13px;
+  height: 13px;
+  margin-left: -6px;
+  border: 1px solid #1d4a99;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #ffffff, #c9dafa 60%, #8fb0e6);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-skin="xp"] .seek-bar-large .seek-track {
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* ---------- Library: tree + track list ---------- */
+:root[data-skin="xp"] .tree-view {
+  background: #ffffff;
+}
+
+:root[data-skin="xp"] .tree-view button.selected {
+  background: var(--win-select);
+}
+
+:root[data-skin="xp"] .track-table-header {
+  background: linear-gradient(180deg, #ffffff, #f4f3ee 70%, #ebeadb);
+  box-shadow: inset 0 -2px #d6d3ce, inset 0 -3px #e2e1d6;
+}
+
+:root[data-skin="xp"] .track-table-row:nth-child(even) {
+  background: #f6f8fc;
+}
+
+:root[data-skin="xp"] .track-table-row:not(:disabled):hover {
+  background: #dde8fa;
+  color: #000000;
+}
+
+:root[data-skin="xp"] .track-table-row.current {
+  color: var(--win-select);
+}
+
+:root[data-skin="xp"] .track-table-row.current:hover {
+  color: var(--win-select);
+}
+
+:root[data-skin="xp"] .library-tile:hover .library-tile-art {
+  outline: 2px solid #8fb4ef;
+}
+
+/* ---------- Panes, EQ, visualizer strip ---------- */
+:root[data-skin="xp"] .wmp-now-playing-pane {
+  border-left: 1px solid #aca899;
+  background: #f7f6f0;
+}
+
+:root[data-skin="xp"] .eq-panel,
+:root[data-skin="xp"] .viz-strip {
+  background: linear-gradient(180deg, #fbfbf8, #ecebe3);
+  border-top: 1px solid #c5c2b2;
+}
+
+:root[data-skin="xp"] .eq-bands {
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+:root[data-skin="xp"] .viz-menu {
+  background: #ffffff;
+  border: 1px solid #aca899;
+  box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-skin="xp"] .viz-btn.active {
+  border-color: #8ca5cf;
+  background: #dfe8f7;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
+}

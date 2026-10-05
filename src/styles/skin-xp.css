@@ -42,6 +42,10 @@
   --xp-menu-foot: linear-gradient(180deg, #3b7de8, #2a62d4 50%, #1d4fb8);
   --xp-control-filter: none;
   --xp-accent: #316ac5;
+  --xp-player-bar: linear-gradient(180deg, #f4f7fd, #d9e4f6 40%, #c3d4ef 55%, #dce6f7);
+  --xp-player-edge: #8ca5cf;
+  --theme-title-bar-active-start: #1c5fd8;
+  --theme-title-bar-active-end: #4a8cf0;
 }
 
 :root[data-skin="xp"][data-theme="xp-olive"] {
@@ -61,6 +65,10 @@
   --xp-menu-foot: linear-gradient(180deg, #b2c58a, #96ac6b 50%, #7e9456);
   --xp-control-filter: hue-rotate(-128deg) saturate(0.55) brightness(1.05);
   --xp-accent: #93a070;
+  --xp-player-bar: linear-gradient(180deg, #f8faf2, #e4ebd2 40%, #d3dfba 55%, #e6edd6);
+  --xp-player-edge: #a7b78a;
+  --theme-title-bar-active-start: #7f9a55;
+  --theme-title-bar-active-end: #a9bf80;
 }
 
 :root[data-skin="xp"][data-theme="xp-silver"] {
@@ -81,6 +89,10 @@
   --xp-menu-foot: linear-gradient(180deg, #d0d1de, #b6b7c9 50%, #a0a1b6);
   --xp-control-filter: grayscale(0.85) brightness(1.15);
   --xp-accent: #8d8ea8;
+  --xp-player-bar: linear-gradient(180deg, #ffffff, #ececf2 40%, #dcdce6 55%, #ededf2);
+  --xp-player-edge: #a8a8c0;
+  --theme-title-bar-active-start: #8c8da8;
+  --theme-title-bar-active-end: #b4b5ca;
 }
 
 /* Text on light (silver) taskbars and menus */

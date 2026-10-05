@@ -19,7 +19,6 @@
   --bevel-thin: inset 0 0 0 1px #aca899;
   --dither: none;
   --panel-border: 1px solid #aca899;
-  --taskbar-height: 30px;
 }
 
 /* Color schemes (gradients can't be inline theme variables) */
@@ -534,7 +533,6 @@
 :root[data-skin="xp"] .wmp-start-menu:not(.xp-start-menu) {
   border: 1px solid var(--xp-frame-dark);
   border-radius: 6px 6px 0 0;
-  overflow: hidden;
 }
 
 :root[data-skin="xp"] .start-menu-side {

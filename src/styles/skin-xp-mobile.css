@@ -1,1 +1,84 @@
-/* Windows XP skin: phone and touch sizes. */
+/* Windows XP skin: phone and touch sizes (same breakpoint as mobile.css). */
+
+@media (max-width: 767px), (max-height: 500px) and (pointer: coarse) {
+  /* Title bar buttons: XP's rounded blue buttons (red Close) at 44px touch size, white glyphs */
+  :root[data-skin="xp"] .title-bar-controls button {
+    width: 44px;
+    min-width: 44px;
+    height: 38px;
+    border: 1px solid #ffffff;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #6fa1ff, #2f6ef0 45%, #1f56d8) !important;
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.5);
+    filter: var(--xp-control-filter);
+  }
+
+  :root[data-skin="xp"] .title-bar-controls button[aria-label='Close'] {
+    background: linear-gradient(180deg, #f0997a, #e0532c 45%, #c7401b) !important;
+    filter: none;
+  }
+
+  :root[data-skin="xp"] .title-bar-controls button::before,
+  :root[data-skin="xp"] .title-bar-controls button::after {
+    background: #ffffff !important;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  }
+
+  :root[data-skin="xp"] .window .title-bar {
+    min-height: 44px;
+    border-radius: 0;
+  }
+
+  :root[data-skin="xp"] .os-window {
+    border-radius: 0;
+  }
+
+  /* Phone view tabs */
+  :root[data-skin="xp"] .mobile-view-tab {
+    border-radius: 4px;
+    background: linear-gradient(180deg, #ffffff, #f1efe6 70%, #e3e0d2);
+    box-shadow: inset 0 0 0 1px #aca899 !important;
+  }
+
+  :root[data-skin="xp"] .mobile-view-tab.active {
+    background: #dfe8f7;
+    box-shadow: inset 0 0 0 1px #8ca5cf, inset 1px 2px 3px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  :root[data-skin="xp"] .library-search input,
+  :root[data-skin="xp"] .wmp-search input[type='search'] {
+    border: 1px solid #7f9db9;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* Phone transport: rounded XP buttons, big blue Play */
+  :root[data-skin="xp"] .wmp-control-bar.mobile {
+    background: var(--xp-player-bar);
+    border-top: 1px solid var(--xp-player-edge);
+  }
+
+  :root[data-skin="xp"] .wmp-control-bar.mobile .control-btn {
+    border: 1px solid #7389ad;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #ffffff, #e3eaf6 55%, #c9d6ec);
+  }
+
+  :root[data-skin="xp"] .wmp-control-bar.mobile .control-btn[aria-label="Play"],
+  :root[data-skin="xp"] .wmp-control-bar.mobile .control-btn[aria-label="Pause"] {
+    border-color: #1d4a99;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 28%, #9cc7ff, #3a7be6 50%, #1c4fb0);
+  }
+
+  :root[data-skin="xp"] .wmp-control-bar.mobile .control-btn[aria-label="Play"] .toolbar-icon,
+  :root[data-skin="xp"] .wmp-control-bar.mobile .control-btn[aria-label="Pause"] .toolbar-icon {
+    filter: invert(1);
+  }
+
+  /* Start menu: classic single column, XP colors */
+  :root[data-skin="xp"] .wmp-start-menu .start-menu-row:not(:disabled):hover,
+  :root[data-skin="xp"] .wmp-start-menu .start-menu-item.open > .start-menu-row {
+    background: var(--win-select);
+  }
+}

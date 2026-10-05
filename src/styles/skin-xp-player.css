@@ -69,7 +69,7 @@
   box-shadow: inset 0 1px rgba(255, 255, 255, 0.8);
 }
 
-:root[data-skin="xp"] .wmp-control-bar .control-btn {
+:root[data-skin="xp"] .wmp-control-bar:not(.mobile) .control-btn {
   width: 26px;
   height: 26px;
   border: 1px solid #7389ad;
@@ -78,13 +78,13 @@
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
 }
 
-:root[data-skin="xp"] .wmp-control-bar .control-btn:not(:disabled):hover {
+:root[data-skin="xp"] .wmp-control-bar:not(.mobile) .control-btn:not(:disabled):hover {
   background: radial-gradient(circle at 50% 30%, #ffffff, #fdf3d8 55%, #f5d38a);
   box-shadow: 0 0 4px rgba(255, 190, 70, 0.8);
 }
 
-:root[data-skin="xp"] .wmp-control-bar .control-btn:not(:disabled):active,
-:root[data-skin="xp"] .wmp-control-bar .control-btn.active {
+:root[data-skin="xp"] .wmp-control-bar:not(.mobile) .control-btn:not(:disabled):active,
+:root[data-skin="xp"] .wmp-control-bar:not(.mobile) .control-btn.active {
   background: radial-gradient(circle at 50% 60%, #c7d6ee, #a9bfe3);
   box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.3);
 }

@@ -49,12 +49,19 @@ export function createApi({ getToken, refresh }) {
     // Library
     getMe: () => request('/api/me'),
     getPlaylists: (offset = 0, limit = 50) => request('/api/playlists', { query: { offset, limit } }),
-    getPlaylistTracks: (id, offset = 0, limit = 100) =>
-      request(`/api/playlists/${id}/tracks`, { query: { offset, limit } }),
+    getPlaylistItems: (id, offset = 0, limit = 100) =>
+      request(`/api/playlists/${id}/items`, { query: { offset, limit } }),
     getLikedTracks: (offset = 0, limit = 50) => request('/api/library/tracks', { query: { offset, limit } }),
     getSavedAlbums: (offset = 0, limit = 50) => request('/api/library/albums', { query: { offset, limit } }),
     getAlbum: (id) => request(`/api/albums/${id}`),
     getAudioAnalysis: (id) => request(`/api/audio-analysis/${id}`),
+    getRecentlyPlayed: (limit = 50) => request('/api/player/recently-played', { query: { limit } }),
+    getTop: (type, range = 'medium_term', limit = 20) => request(`/api/me/top/${type}`, { query: { time_range: range, limit } }),
+    getFollowedArtists: (after) => request('/api/me/following', { query: { limit: 50, after } }),
+    getArtist: (id) => request(`/api/artists/${id}`),
+    getArtistAlbums: (id, offset = 0) => request(`/api/artists/${id}/albums`, { query: { offset, limit: 50 } }),
+    search: (q, types, offset = 0) => request('/api/search', { query: { q, type: types.join(','), offset, limit: 10 } }),
+    getQueue: () => request('/api/player/queue'),
 
     // Playback
     getPlaybackState: () => request('/api/player'),

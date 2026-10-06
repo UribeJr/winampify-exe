@@ -10,7 +10,7 @@ import ControlBar from './ControlBar';
 import EqualizerPanel from './EqualizerPanel';
 import DevicePicker from './DevicePicker';
 import useTrackList from './useTrackList';
-import { useLibraryCollections, useArtistDetail, useSearchExtras } from './useLibraryData';
+import { useLibraryCollections, useLibraryHome, useArtistDetail, useSearchExtras } from './useLibraryData';
 import { LIKED_SOURCE, sourceKey } from './utils';
 import { playlistSource, searchSource } from '../music/models';
 import { useMusic, useService } from '../music/MusicContext';
@@ -117,6 +117,7 @@ const MediaPlayer = ({ request, onClose, active = true }) => {
 
   const trackList = useTrackList(library, source, music.libraryVersion);
   const collections = useLibraryCollections(library, isAuthenticated);
+  const home = useLibraryHome(library, isAuthenticated);
   const artistDetail = useArtistDetail(library, source);
   const searchExtras = useSearchExtras(library, source);
   const currentKey = playback.track?.key;
@@ -156,7 +157,8 @@ const MediaPlayer = ({ request, onClose, active = true }) => {
   }, [controls, source, trackList.tracks]);
 
   const playAll = useCallback(() => {
-    if (source && trackList.tracks.length) controls.playQueue(trackList.tracks, 0, source);
+    // Spotify playlists you only follow can't list their songs but still play as a whole (source.uri)
+    if (source && (trackList.tracks.length || source.uri)) controls.playQueue(trackList.tracks, 0, source);
   }, [controls, source, trackList.tracks]);
 
   const search = useCallback((query) => {
@@ -264,6 +266,7 @@ const MediaPlayer = ({ request, onClose, active = true }) => {
             onSearch={search}
             trackList={trackList}
             collections={collections}
+            home={home}
             artistDetail={artistDetail}
             searchExtras={searchExtras}
             currentKey={currentKey}

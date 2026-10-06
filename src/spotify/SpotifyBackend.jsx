@@ -84,7 +84,8 @@ export default function SpotifyBackend({ children }) {
     ...engineControls,
     playQueue: (tracks, index = 0, source) => {
       const start = tracks[index];
-      if (!start) return undefined;
+      // A followed playlist (songs not listable) plays as a whole
+      if (!start) return source?.uri ? engineControls.play({ contextUri: source.uri }) : undefined;
       if (source?.uri && source.type !== 'liked') {
         return engineControls.play({ contextUri: source.uri, offsetUri: start.key });
       }

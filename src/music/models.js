@@ -50,6 +50,9 @@
  */
 
 export const LIKED_SOURCE = { type: 'liked', id: 'liked', name: 'Liked Songs' };
+// Built from your listening (Spotify): played as plain track lists, so no `uri`
+export const TOP_SOURCE = { type: 'top', id: 'top', name: 'Your Top Tracks' };
+export const RECENT_SOURCE = { type: 'recent', id: 'recent', name: 'Recently Played' };
 
 export const playlistSource = (pl) => ({ type: 'playlist', id: pl.id, name: pl.name, uri: pl.uri, coverArt: pl.coverArt });
 export const albumSource = (al) => ({ type: 'album', id: al.id, name: al.name, uri: al.uri, coverArt: al.coverArt });

@@ -102,8 +102,14 @@ To offer Spotify on the sign-in picker, fill in the Spotify section of `.env.exa
 3. Set `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` and `SPOTIFY_REDIRECT_URI` in `.env`.
 
 Spotify playback requires **Spotify Premium**. Desktop browsers play through the Web Playback SDK; phones can't
-run the SDK, so Winampify acts as a **Spotify Connect remote** for the Spotify app or a speaker. Search, artists
-and favorites are Navidrome-only and are hidden while you're signed in to Spotify.
+run the SDK, so Winampify acts as a **Spotify Connect remote** for the Spotify app or a speaker. With Spotify you get your
+playlists, Liked Songs, saved albums, followed artists (with their albums), search, your top artists and tracks,
+Recently Played and the Up Next queue. Favorites (the heart) are Navidrome-only.
+
+Spotify's February 2026 rules for development-mode apps apply: Winampify can only list the songs of playlists
+you **own or collaborate on** (playlists you just follow still play as a whole), search returns 10 results per
+page, and some catalog features (new releases, artist top tracks) are no longer available. If you signed in
+before this update, sign in again once so Winampify can read your top artists and followed artists.
 
 ## Share it with friends (Vercel + Spotify)
 

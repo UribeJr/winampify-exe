@@ -101,7 +101,8 @@ export default function useSdkEngine({ enabled, token, api, refresh }) {
           setError('Spotify Premium is required to play music in the browser.');
         });
         player.addListener('playback_error', ({ message }) => {
-          setError(`Playback error: ${message}`);
+          console.warn('Spotify playback error:', message);
+          setError('Spotify\'s web player couldn\'t play this song in this browser. Make sure protected content (DRM) is allowed, or try Chrome or Edge.');
         });
         player.addListener('initialization_error', ({ message }) => {
           console.warn('Web Playback SDK unavailable:', message);

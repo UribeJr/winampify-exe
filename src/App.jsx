@@ -37,7 +37,8 @@ const AUTH_ERRORS = {
   state_mismatch: 'Spotify sign-in was interrupted. Please try again.',
   invalid_token: 'Spotify didn\'t accept the sign-in. Please try again.',
   server_error: 'The Winampify server couldn\'t reach Spotify. Please try again.',
-  access_denied: 'Spotify sign-in was cancelled.'
+  access_denied: 'Spotify sign-in was cancelled.',
+  not_invited: 'This Winampify is invite-only. Ask the person who shared it with you to add your Spotify account, then sign in again.'
 };
 
 const HELP_MESSAGE = {

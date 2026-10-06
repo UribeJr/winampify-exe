@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useService } from '../music/MusicContext';
+import { visibleServices } from '../music/services';
 import { SERVICE_DETAILS, startService, serviceLabel } from './ServicePicker';
 
 /**
@@ -48,7 +49,7 @@ const XpWelcome = ({ music, onClose }) => {
               </span>
             </div>
           ) : (
-            services.map((svc) => {
+            visibleServices(services).map((svc) => {
               const details = SERVICE_DETAILS[svc.id];
               return (
                 <button

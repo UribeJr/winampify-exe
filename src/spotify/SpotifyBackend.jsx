@@ -41,6 +41,8 @@ export default function SpotifyBackend({ children }) {
 
   // --- Library data shared by the player, start menu and desktop ---
   const [user, setUser] = useState(null);
+  // Spotify apps in development mode only serve allow-listed accounts; others get 403 on every call
+  const [accessError, setAccessError] = useState(null);
   const [playlists, setPlaylists] = useState([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(false);
 
@@ -51,7 +53,13 @@ export default function SpotifyBackend({ children }) {
       return undefined;
     }
     let cancelled = false;
-    api.getMe().then((me) => { if (!cancelled) setUser({ name: me.display_name }); }).catch(() => {});
+    api.getMe()
+      .then((me) => { if (!cancelled) setUser({ name: me.display_name }); })
+      .catch((err) => {
+        if (cancelled || err?.status !== 403) return;
+        setAccessError('not_invited');
+        auth.logout(); // drop the tokens: back to the sign-in screen with an explanation
+      });
     setPlaylistsLoading(true);
     library.getPlaylists()
       .then((list) => { if (!cancelled) setPlaylists(list); })
@@ -100,8 +108,8 @@ export default function SpotifyBackend({ children }) {
     status: auth.status,
     statusMessage: '',
     isAuthenticated,
-    authError: auth.authError,
-    clearAuthError: auth.clearAuthError,
+    authError: auth.authError || accessError,
+    clearAuthError: () => { auth.clearAuthError(); setAccessError(null); },
     login: auth.login,
     logout,
     user,

@@ -1,0 +1,7 @@
+# Never upload local secrets or server settings to Vercel.
+# The shared site gets only the Spotify variables set in Vercel's project settings.
+.env
+.env.*
+!.env.example
+dist
+node_modules

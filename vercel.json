@@ -1,0 +1,11 @@
+{
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/login", "destination": "/api" },
+    { "source": "/callback", "destination": "/api" },
+    { "source": "/refresh_token", "destination": "/api" }
+  ]
+}

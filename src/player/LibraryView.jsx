@@ -53,7 +53,25 @@ const ListRow = ({ item, label, sublabel, icon, onClick }) => (
 );
 
 const albumSub = (al) => [al.artist, al.year].filter(Boolean).join(' · ');
+const artistSub = (ar) => (ar.albumCount ? `${ar.albumCount} albums` : 'Artist');
+const EMPTY_HOME = { sections: [], needsReauth: false };
 const songs = (n) => `${n} song${n === 1 ? '' : 's'}`;
+
+const ArtistTiles = ({ artists, onSelectSource }) => (
+  <div className="library-tiles">
+    {artists.map((ar) => (
+      <Tile key={ar.id} item={ar} label={ar.name} sublabel={artistSub(ar)} icon="directory_closed-4" onClick={() => onSelectSource(artistSource(ar))} />
+    ))}
+  </div>
+);
+
+const PlaylistTiles = ({ playlists, onSelectSource }) => (
+  <div className="library-tiles">
+    {playlists.map((pl) => (
+      <Tile key={pl.id} item={pl} label={pl.name} sublabel={pl.owner || songs(pl.songCount)} icon="cd" onClick={() => onSelectSource(playlistSource(pl))} />
+    ))}
+  </div>
+);
 
 const AlbumTiles = ({ albums, onSelectSource }) => (
   <div className="library-tiles">
@@ -61,6 +79,14 @@ const AlbumTiles = ({ albums, onSelectSource }) => (
       <Tile key={al.id} item={al} label={al.name} sublabel={albumSub(al)} icon="cd" onClick={() => onSelectSource(albumSource(al))} />
     ))}
   </div>
+);
+
+const ReauthNotice = ({ onLogin }) => (
+  <p className="display-notice library-reauth" role="status">
+    Sign in again to see your top artists and tracks.
+    {' '}
+    <button type="button" onClick={onLogin}>Sign in again</button>
+  </p>
 );
 
 const TreeItem = ({ selected, onClick, children, title }) => (
@@ -75,16 +101,19 @@ const TreeItem = ({ selected, onClick, children, title }) => (
  * everything else → a track table.
  */
 const LibraryView = ({
-  source, onSelectSource, onSearch, trackList, collections, artistDetail, searchExtras,
+  source, onSelectSource, onSearch, trackList, collections, artistDetail, searchExtras, home = EMPTY_HOME,
   currentKey, onPlayTrack, onPlayAll, isMobile
 }) => {
-  const { playlists, playlistsLoading, capabilities, isStarred, providerName } = useMusic();
+  const { playlists, playlistsLoading, capabilities, isStarred, providerName, library, login } = useMusic();
+  const labels = { newest: 'Recently Added', recent: 'Recently Played', ...library?.labels };
+  const homeArtists = home.sections.filter((sec) => sec.kind === 'artists');
+  const homeSources = home.sections.filter((sec) => sec.kind === 'sources').flatMap((sec) => sec.items);
   const selectedKey = sourceKey(source);
   const { albums, artists, newest, recent } = collections;
   const back = isMobile ? () => onSelectSource(null) : undefined;
   const { notify } = useAssistant();
   const searchEmpty = source?.type === 'search' && !trackList.loading && !searchExtras.loading
-    && !trackList.tracks.length && !searchExtras.artists.length && !searchExtras.albums.length;
+    && !trackList.tracks.length && !searchExtras.artists.length && !searchExtras.albums.length && !searchExtras.playlists?.length;
   // Wait a beat: right after a new search starts the lists are briefly empty before loading begins
   useEffect(() => {
     if (!searchEmpty) return undefined;
@@ -122,10 +151,10 @@ const LibraryView = ({
     );
   } else if (source?.type === 'search') {
     const nothing = !trackList.loading && !searchExtras.loading
-      && !trackList.tracks.length && !searchExtras.artists.length && !searchExtras.albums.length;
+      && !trackList.tracks.length && !searchExtras.artists.length && !searchExtras.albums.length && !searchExtras.playlists?.length;
     content = (
       <div className="library-source">
-        <SourceHeader source={source} meta={`in your ${providerName} library`} onBack={back} onPlayAll={trackList.tracks.length ? onPlayAll : undefined} />
+        <SourceHeader source={source} meta={labels.searchMeta || `in your ${providerName} library`} onBack={back} onPlayAll={trackList.tracks.length ? onPlayAll : undefined} />
         <div className="library-scroll search-results">
           {nothing && <div className="wmp-library-placeholder">No matches for “{source.query}”.</div>}
           {searchExtras.artists.length > 0 && (
@@ -133,9 +162,15 @@ const LibraryView = ({
               <h4 className="library-section-heading">Artists</h4>
               <div className="search-artists">
                 {searchExtras.artists.map((ar) => (
-                  <ListRow key={ar.id} item={ar} label={ar.name} sublabel={`${ar.albumCount} albums`} icon="directory_closed-4" onClick={() => onSelectSource(artistSource(ar))} />
+                  <ListRow key={ar.id} item={ar} label={ar.name} sublabel={artistSub(ar)} icon="directory_closed-4" onClick={() => onSelectSource(artistSource(ar))} />
                 ))}
               </div>
+            </section>
+          )}
+          {searchExtras.playlists?.length > 0 && (
+            <section>
+              <h4 className="library-section-heading">Playlists</h4>
+              <PlaylistTiles playlists={searchExtras.playlists} onSelectSource={onSelectSource} />
             </section>
           )}
           {searchExtras.albums.length > 0 && (
@@ -157,7 +192,12 @@ const LibraryView = ({
     content = (
       <div className="library-source">
         <SourceHeader source={source} meta={trackList.total ? songs(trackList.total) : ''} onPlayAll={onPlayAll} onBack={back} />
-        {trackTable(source.type !== 'album')}
+        {trackList.notice === 'not_listable' ? (
+          <div className="wmp-library-placeholder library-notice">
+            Spotify only lets Winampify list the songs in playlists you own or collaborate on.
+            You can still play the whole playlist with <b>▶ Play all</b>.
+          </div>
+        ) : trackTable(source.type !== 'album')}
       </div>
     );
   }
@@ -172,10 +212,14 @@ const LibraryView = ({
         {content || (
           <div className="library-list">
             {searchBox}
+            {home.needsReauth && <ReauthNotice onLogin={login} />}
             <ListRow item={null} label="Liked Songs" sublabel="Your favorites" icon="heart" onClick={() => onSelectSource(LIKED_SOURCE)} />
+            {homeSources.map((src) => (
+              <ListRow key={src.id} item={null} label={src.name} sublabel="From your listening" icon="cd" onClick={() => onSelectSource(src)} />
+            ))}
             {artists.length > 0 && <h4 className="library-list-heading">Artists</h4>}
             {artists.map((ar) => (
-              <ListRow key={ar.id} item={ar} label={ar.name} sublabel={`${ar.albumCount} albums`} icon="directory_closed-4" onClick={() => onSelectSource(artistSource(ar))} />
+              <ListRow key={ar.id} item={ar} label={ar.name} sublabel={artistSub(ar)} icon="directory_closed-4" onClick={() => onSelectSource(artistSource(ar))} />
             ))}
             {playlists.length > 0 && <h4 className="library-list-heading">My Playlists</h4>}
             {playlistsLoading && <div className="wmp-library-placeholder">Loading playlists…</div>}
@@ -257,28 +301,44 @@ const LibraryView = ({
               <h2>Media Library</h2>
               <p className="dashboard-subtitle">Welcome to your music collection</p>
             </div>
-            {newest.length > 0 && (
-              <section>
-                <h4 className="library-section-heading">Recently Added</h4>
-                <AlbumTiles albums={newest} onSelectSource={onSelectSource} />
-              </section>
-            )}
+            {home.needsReauth && <ReauthNotice onLogin={login} />}
             {recent.length > 0 && (
               <section>
-                <h4 className="library-section-heading">Recently Played</h4>
+                <h4 className="library-section-heading">{labels.recent}</h4>
                 <AlbumTiles albums={recent} onSelectSource={onSelectSource} />
+              </section>
+            )}
+            {homeArtists.map((sec) => (
+              <section key={sec.title}>
+                <h4 className="library-section-heading">{sec.title}</h4>
+                <ArtistTiles artists={sec.items} onSelectSource={onSelectSource} />
+              </section>
+            ))}
+            {newest.length > 0 && (
+              <section>
+                <h4 className="library-section-heading">{labels.newest}</h4>
+                <AlbumTiles albums={newest} onSelectSource={onSelectSource} />
               </section>
             )}
             <section>
               <h4 className="library-section-heading">Playlists</h4>
               <div className="library-tiles">
                 <Tile item={null} label="Liked Songs" icon="heart" onClick={() => onSelectSource(LIKED_SOURCE)} />
+                {homeSources.map((src) => (
+                  <Tile key={src.id} item={null} label={src.name} sublabel="From your listening" icon="cd" onClick={() => onSelectSource(src)} />
+                ))}
                 {playlists.map((pl) => (
                   <Tile key={pl.id} item={pl} label={pl.name} sublabel={songs(pl.songCount)} icon="cd" onClick={() => onSelectSource(playlistSource(pl))} />
                 ))}
               </div>
             </section>
             {playlistsLoading && <div className="wmp-library-placeholder">Loading playlists…</div>}
+            {albums.length > 0 && (
+              <section>
+                <h4 className="library-section-heading">Your Albums</h4>
+                <AlbumTiles albums={albums.slice(0, 12)} onSelectSource={onSelectSource} />
+              </section>
+            )}
           </div>
         )}
       </div>

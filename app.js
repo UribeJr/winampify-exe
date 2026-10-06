@@ -89,7 +89,9 @@ app.get('/login', (req, res) => {
     'playlist-read-collaborative',
     'user-library-read',
     'user-read-recently-played',
-    'user-library-modify'
+    'user-library-modify',
+    'user-top-read',
+    'user-follow-read'
   ].join(' ');
 
   const authQueryParameters = new URLSearchParams({
@@ -216,6 +218,27 @@ app.post('/refresh_token', async (req, res) => {
 /**
  * Helpers
  */
+const clampInt = (value, min, max, fallback) => {
+  const n = Number.parseInt(value, 10);
+  return Number.isNaN(n) ? fallback : Math.min(max, Math.max(min, n));
+};
+
+// Read-only Spotify GET proxy: `buildUrl(req)` returns the Spotify URL (or null for a bad request)
+const spotifyGet = (buildUrl) => async (req, res) => {
+  const token = getBearer(req);
+  if (!token) return res.status(401).json({ error: 'missing_token' });
+  const url = buildUrl(req);
+  if (!url) return res.status(400).json({ error: 'bad_request' });
+  try {
+    res.json(await spotifyFetch(token, url));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+  }
+};
+
+const SPOTIFY_ID = /^[A-Za-z0-9]{1,40}$/;
+const SEARCH_TYPES = ['track', 'album', 'artist', 'playlist'];
+
 const getBearer = (req) => {
   const auth = req.headers.authorization || '';
   if (auth.toLowerCase().startsWith('bearer ')) {
@@ -272,9 +295,7 @@ app.get('/api/playlists/:id', async (req, res) => {
   }
   
   try {
-    console.log(`Fetching playlist ${id} from Spotify API`);
     const data = await spotifyFetch(token, `${SPOTIFY_API}/playlists/${id}`);
-    console.log(`Successfully fetched playlist: ${data.name} (${data.id})`);
     res.json(data);
   } catch (err) {
     console.error(`Playlist details error for ID: "${id}" (length: ${id.length})`, err);
@@ -282,20 +303,23 @@ app.get('/api/playlists/:id', async (req, res) => {
   }
 });
 
-app.get('/api/playlists/:id/tracks', async (req, res) => {
+// Spotify (Feb 2026): /playlists/{id}/tracks became /items, and contents are only returned for playlists
+// the user owns or collaborates on. Other playlists answer 403; they can still be played as a whole.
+const playlistItems = async (req, res) => {
   const token = getBearer(req);
   if (!token) return res.status(401).json({ error: 'missing_token' });
-  const { id } = req.params;
   try {
-    const limit = Math.min(Number(req.query.limit) || 50, 100);
-    const offset = Number(req.query.offset) || 0;
-    const data = await spotifyFetch(token, `${SPOTIFY_API}/playlists/${id}/tracks?limit=${limit}&offset=${offset}`);
+    const limit = clampInt(req.query.limit, 1, 100, 100);
+    const offset = clampInt(req.query.offset, 0, 100000, 0);
+    const data = await spotifyFetch(token, `${SPOTIFY_API}/playlists/${encodeURIComponent(req.params.id)}/items?limit=${limit}&offset=${offset}`);
     res.json(data);
   } catch (err) {
-    console.error('Playlist tracks error', err);
+    if (err.status === 403) return res.status(403).json({ error: 'playlist_not_listable' });
     res.status(err.status || 500).json({ error: err.message || 'server_error' });
   }
-});
+};
+app.get('/api/playlists/:id/items', playlistItems);
+app.get('/api/playlists/:id/tracks', playlistItems); // older clients
 
 /**
  * Library (saved) content
@@ -375,6 +399,46 @@ app.get('/api/audio-analysis/:id', async (req, res) => {
 });
 
 /**
+ * Browse: top items, followed artists, artists, search, queue (all read-only)
+ */
+app.get('/api/me/top/:type', spotifyGet((req) => {
+  if (!['artists', 'tracks'].includes(req.params.type)) return null;
+  const range = ['short_term', 'medium_term', 'long_term'].includes(req.query.time_range) ? req.query.time_range : 'medium_term';
+  return `${SPOTIFY_API}/me/top/${req.params.type}?time_range=${range}&limit=${clampInt(req.query.limit, 1, 50, 20)}`;
+}));
+
+app.get('/api/me/following', spotifyGet((req) => {
+  const after = SPOTIFY_ID.test(req.query.after || '') ? `&after=${req.query.after}` : '';
+  return `${SPOTIFY_API}/me/following?type=artist&limit=${clampInt(req.query.limit, 1, 50, 50)}${after}`;
+}));
+
+app.get('/api/artists/:id', spotifyGet((req) => (
+  SPOTIFY_ID.test(req.params.id) ? `${SPOTIFY_API}/artists/${req.params.id}` : null
+)));
+
+app.get('/api/artists/:id/albums', spotifyGet((req) => (
+  SPOTIFY_ID.test(req.params.id)
+    ? `${SPOTIFY_API}/artists/${req.params.id}/albums?include_groups=album,single&limit=${clampInt(req.query.limit, 1, 50, 50)}&offset=${clampInt(req.query.offset, 0, 10000, 0)}`
+    : null
+)));
+
+// Spotify caps search at 10 results per type per request (Feb 2026); page with offset
+app.get('/api/search', spotifyGet((req) => {
+  const q = String(req.query.q || '').trim().slice(0, 200);
+  const types = String(req.query.type || 'track').split(',').filter((t) => SEARCH_TYPES.includes(t));
+  if (!q || !types.length) return null;
+  const params = new URLSearchParams({
+    q,
+    type: [...new Set(types)].join(','),
+    limit: String(clampInt(req.query.limit, 1, 10, 10)),
+    offset: String(clampInt(req.query.offset, 0, 1000, 0))
+  });
+  return `${SPOTIFY_API}/search?${params}`;
+}));
+
+app.get('/api/player/queue', spotifyGet(() => `${SPOTIFY_API}/me/player/queue`));
+
+/**
  * Recently played tracks
  */
 app.get('/api/player/recently-played', async (req, res) => {
@@ -390,7 +454,6 @@ app.get('/api/player/recently-played', async (req, res) => {
     if (before) url += `&before=${before}`;
     if (after) url += `&after=${after}`;
     
-    console.log('Fetching recently played from:', url);
     const data = await spotifyFetch(token, url);
     res.json(data);
   } catch (err) {
@@ -483,7 +546,7 @@ app.get('/api/me', async (req, res) => {
   if (!token) return res.status(401).json({ error: 'missing_token' });
   try {
     const data = await spotifyFetch(token, `${SPOTIFY_API}/me`);
-    res.json({ id: data.id, display_name: data.display_name, product: data.product });
+    res.json({ id: data.id, display_name: data.display_name });
   } catch (err) {
     res.status(err.status || 500).json({ error: err.message || 'server_error' });
   }

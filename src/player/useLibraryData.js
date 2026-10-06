@@ -25,7 +25,8 @@ function useLoader(load, deps, initial) {
 }
 
 const EMPTY_LIST = [];
-const EMPTY_SEARCH = { artists: [], albums: [] };
+const EMPTY_SEARCH = { artists: [], albums: [], playlists: [] };
+const EMPTY_HOME = { sections: [], needsReauth: false };
 
 /**
  * Library collections for the Media Library views: albums, artists, and the dashboard's
@@ -62,5 +63,16 @@ export function useSearchExtras(library, source) {
     [library, query],
     EMPTY_SEARCH
   );
-  return { artists: state.data.artists || EMPTY_LIST, albums: state.data.albums || EMPTY_LIST, loading: state.loading };
+  return {
+    artists: state.data.artists || EMPTY_LIST,
+    albums: state.data.albums || EMPTY_LIST,
+    playlists: state.data.playlists || EMPTY_LIST,
+    loading: state.loading
+  };
+}
+
+// Provider-specific dashboard rows (Spotify: top artists, "made from your listening")
+export function useLibraryHome(library, enabled) {
+  const state = useLoader(enabled && library.getHome ? () => library.getHome() : null, [library, enabled], EMPTY_HOME);
+  return state.data || EMPTY_HOME;
 }

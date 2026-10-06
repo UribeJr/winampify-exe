@@ -125,8 +125,9 @@ hidden there and nothing can reach your music server.
    **Never add `NAVIDROME_*` variables to a hosted site** — that would put your library on the internet,
    and the app has no login of its own.
 3. **In the Spotify Developer Dashboard**, add `https://<your-site>/callback` as a Redirect URI, then add each
-   friend (name + Spotify email) under **User Management**. Apps in development mode allow up to 25 people;
-   anyone else who signs in is told the site is invite-only.
+   friend (name + Spotify email) under **User Management**. Since Spotify's February 2026 changes, apps in
+   development mode allow up to **5 people** and the app's owner needs Spotify Premium; anyone else who signs
+   in is told the site is invite-only.
 
 Friends need Spotify Premium to play in the browser (on phones, Winampify controls their Spotify app instead).
 The equalizer and real-audio visualizer need audio the browser can process, so they're Navidrome-only.

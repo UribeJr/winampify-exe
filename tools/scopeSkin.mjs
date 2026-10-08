@@ -1,11 +1,13 @@
 // Build-time PostCSS plugin: scopes the two UI libraries to the active skin so only one applies.
-//   98.css            → only when <html> has no data-skin="xp"
+//   98.css            → only when <html> has no data-skin (the classic look)
 //   xp.css (XP.css)   → only when <html data-skin="xp">
+//   7.css             → only when <html data-skin="7">
 // The scope is wrapped in :where(), which adds zero specificity, so our own stylesheets keep
 // overriding the libraries exactly as they did when 98.css was global.
 
-export const SCOPE_98 = ':where(:root:not([data-skin="xp"]))';
+export const SCOPE_98 = ':where(:root:not([data-skin]))';
 export const SCOPE_XP = ':where(:root[data-skin="xp"])';
+export const SCOPE_7 = ':where(:root[data-skin="7"])';
 
 // Split a selector list on top-level commas (not inside :not(...), [attr="a,b"], or strings)
 export function splitSelectors(list) {
@@ -54,6 +56,7 @@ export function scopeForFile(file = '') {
   const path = file.replace(/\\/g, '/');
   if (/\/98\.css\/dist\/98\.css$/.test(path)) return SCOPE_98;
   if (/\/xp\.css\/dist\/XP\.css$/i.test(path)) return SCOPE_XP;
+  if (/\/7\.css\/dist\/7\.css$/.test(path)) return SCOPE_7;
   return null;
 }
 

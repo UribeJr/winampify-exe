@@ -174,9 +174,9 @@
 }
 
 /* Theme-driven title bars (same rule as the portfolio: active and inactive share the theme gradient).
-   98 skin only: the XP skin draws its own (skin-xp.css). */
-:root:not([data-skin="xp"]) .window .title-bar,
-:root:not([data-skin="xp"]) .window .title-bar.inactive {
+   98 skin only: the XP and 7 skins draw their own. */
+:root:not([data-skin]) .window .title-bar,
+:root:not([data-skin]) .window .title-bar.inactive {
   background: linear-gradient(
     to right,
     var(--theme-title-bar-active-start, #000080),

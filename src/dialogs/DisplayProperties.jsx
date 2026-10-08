@@ -2,8 +2,8 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import Dialog, { DialogButtons } from './Dialog';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAssistant } from '../assistant/AssistantProvider';
-import { SKINS, getSchemesForSkin, resolveScheme, XP_SCHEMES } from '../data/skins';
-import { WALLPAPERS, MODES, CUSTOM_WALLPAPER_ID, DEFAULT_WALLPAPER, XP_WALLPAPER, getWallpaper, wallpaperStyle } from '../data/wallpapers';
+import { SKINS, getSchemesForSkin, resolveScheme, isStyledSkin, skinWallpaper } from '../data/skins';
+import { WALLPAPERS, MODES, CUSTOM_WALLPAPER_ID, DEFAULT_WALLPAPER, getWallpaper, wallpaperStyle } from '../data/wallpapers';
 
 const MAX_SIDE_PX = 1920;
 const TABS = [
@@ -41,11 +41,11 @@ const previewBackground = (selection, customUrl) => {
 
 /**
  * Win98-style Display Properties: Background (wallpaper + display mode + Browse…),
- * Appearance (Windows 98 / XP look + color scheme) and Settings (read-only info). OK / Cancel / Apply.
+ * Appearance (Windows 98 / XP / 7 look, color scheme, 7's transparency) and Settings (read-only info). OK / Cancel / Apply.
  */
 const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) => {
   const {
-    skin, schemeId, setAppearance, wallpaper, customWallpaper, setWallpaper, setCustomWallpaper, clearCustomWallpaper
+    skin, schemeId, transparency, setAppearance, wallpaper, customWallpaper, setWallpaper, setCustomWallpaper, clearCustomWallpaper
   } = useTheme();
   const fileRef = useRef(null);
   const { notify } = useAssistant();
@@ -53,14 +53,15 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
   // Disky's Browse… and XP-look tips (he waits until this dialog closes; each is said once)
   useEffect(() => {
     notify('display-opened');
-    if (skin !== 'xp') notify('display-xp-hint');
+    if (!isStyledSkin(skin)) notify('display-xp-hint');
   }, [notify]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [tab, setTab] = useState(initialTab);
   const [draftWallpaper, setDraftWallpaper] = useState(wallpaper);
   const [draftSkin, setDraftSkin] = useState(skin);
   const [draftScheme, setDraftScheme] = useState(schemeId);
-  const [useXpWallpaper, setUseXpWallpaper] = useState(false);
+  const [draftGlass, setDraftGlass] = useState(transparency);
+  const [useSkinWallpaper, setUseSkinWallpaper] = useState(false);
   const [applying, setApplying] = useState(false);
   const [pendingCustom, setPendingCustom] = useState(null); // picked via Browse…, not yet applied
   const [loadingImage, setLoadingImage] = useState(false);
@@ -77,7 +78,8 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
     || draftWallpaper.mode !== wallpaper.mode
     || draftSkin !== skin
     || draftScheme !== schemeId
-    || useXpWallpaper;
+    || draftGlass !== transparency
+    || useSkinWallpaper;
 
   const apply = async () => {
     if (pendingCustom) {
@@ -88,18 +90,18 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
         return false;
       }
     }
-    const nextWallpaper = useXpWallpaper ? XP_WALLPAPER : draftWallpaper;
+    const nextWallpaper = useSkinWallpaper ? skinWallpaperChoice : draftWallpaper;
     setWallpaper(nextWallpaper.id, nextWallpaper.mode);
-    if (useXpWallpaper) {
-      setDraftWallpaper(XP_WALLPAPER);
-      setUseXpWallpaper(false);
+    if (useSkinWallpaper) {
+      setDraftWallpaper(skinWallpaperChoice);
+      setUseSkinWallpaper(false);
     }
-    if (draftSkin !== skin || draftScheme !== schemeId) {
+    if (draftSkin !== skin || draftScheme !== schemeId || draftGlass !== transparency) {
       setApplying(true);
-      const ok = await setAppearance(draftSkin, draftScheme);
+      const ok = await setAppearance(draftSkin, draftScheme, { transparency: draftGlass });
       setApplying(false);
       if (!ok) {
-        setNotice('Winampify couldn\'t load the XP look. Check your connection and try again.');
+        setNotice(`Winampify couldn't load the ${SKINS.find((x) => x.id === draftSkin)?.name || 'new'} look. Check your connection and try again.`);
         return false;
       }
     }
@@ -110,7 +112,7 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
   const chooseSkin = (next) => {
     setDraftSkin(next);
     setDraftScheme(resolveScheme(next, next === skin ? schemeId : null));
-    if (next !== 'xp') setUseXpWallpaper(false);
+    setUseSkinWallpaper(false);
   };
 
   const pick = (item) => setDraftWallpaper({ id: item.id, mode: item.defaultMode });
@@ -139,15 +141,14 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
   };
 
   const schemes = getSchemesForSkin(draftSkin);
-  const previewStyle = draftSkin === 'xp'
-    ? (() => {
-      const { preview } = XP_SCHEMES.find((x) => x.id === draftScheme) || XP_SCHEMES[0];
-      return { '--preview-title-start': preview.title, '--preview-title-end': preview.title, '--preview-taskbar': preview.taskbar };
-    })()
-    : (() => {
-      const { colors } = schemes.find((t) => t.id === draftScheme) || schemes[0];
-      return { '--preview-title-start': colors.titleBarActiveStart, '--preview-title-end': colors.titleBarActiveEnd, '--preview-taskbar': colors.taskbar };
-    })();
+  const scheme = schemes.find((x) => x.id === draftScheme) || schemes[0];
+  const previewStyle = scheme.preview
+    ? { '--preview-title-start': scheme.preview.title, '--preview-title-end': scheme.preview.title, '--preview-taskbar': scheme.preview.taskbar }
+    : { '--preview-title-start': scheme.colors.titleBarActiveStart, '--preview-title-end': scheme.colors.titleBarActiveEnd, '--preview-taskbar': scheme.colors.taskbar };
+  // The original wallpaper that goes with the chosen skin (offered, never forced)
+  const skinWallpaperId = skinWallpaper(draftSkin);
+  const skinWallpaperChoice = skinWallpaperId ? { id: skinWallpaperId, mode: 'stretch' } : null;
+  const offerSkinWallpaper = skinWallpaperChoice && wallpaper.id !== skinWallpaperId && draftWallpaper.id !== skinWallpaperId;
 
   return (
     <Dialog title="Display Properties" icon="themes" onClose={onClose} className="display-properties">
@@ -209,7 +210,8 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
               <div
                 className="theme-preview"
                 data-preview-skin={draftSkin}
-                style={{ ...previewStyle, ...previewBackground(useXpWallpaper ? XP_WALLPAPER : draftWallpaper, customUrl) }}
+                data-preview-glass={draftSkin === '7' && draftGlass ? 'on' : undefined}
+                style={{ ...previewStyle, ...previewBackground(useSkinWallpaper ? skinWallpaperChoice : draftWallpaper, customUrl) }}
                 aria-hidden="true"
               >
                 <div className="theme-preview-window">
@@ -232,10 +234,16 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
                   ))}
                 </select>
               </div>
-              {draftSkin === 'xp' && wallpaper.id !== XP_WALLPAPER.id && draftWallpaper.id !== XP_WALLPAPER.id && (
+              {draftSkin === '7' && (
                 <div className="field-row dialog-field">
-                  <input id="xp-wallpaper" type="checkbox" checked={useXpWallpaper} onChange={(e) => setUseXpWallpaper(e.target.checked)} />
-                  <label htmlFor="xp-wallpaper">Also use the Green Hills wallpaper</label>
+                  <input id="skin-glass" type="checkbox" checked={draftGlass} onChange={(e) => setDraftGlass(e.target.checked)} />
+                  <label htmlFor="skin-glass">Enable transparency</label>
+                </div>
+              )}
+              {offerSkinWallpaper && (
+                <div className="field-row dialog-field">
+                  <input id="skin-wallpaper" type="checkbox" checked={useSkinWallpaper} onChange={(e) => setUseSkinWallpaper(e.target.checked)} />
+                  <label htmlFor="skin-wallpaper">Also use the {getWallpaper(skinWallpaperId).name.replace(/ \(.*\)$/, '')} wallpaper</label>
                 </div>
               )}
             </div>

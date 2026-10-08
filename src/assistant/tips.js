@@ -32,7 +32,7 @@ export const TIPS = [
     id: 'xp-skin',
     event: 'display-xp-hint',
     mood: 'happy',
-    text: 'Feeling fancy? Appearance → "Windows and buttons" has an XP style. Same me, shinier buttons.'
+    text: 'Feeling fancy? Appearance → "Windows and buttons" has XP and Windows 7 styles. Same me, shinier buttons.'
   },
   {
     id: 'server-unreachable',

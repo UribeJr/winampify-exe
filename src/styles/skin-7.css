@@ -683,3 +683,278 @@
   box-shadow: none;
   transition: none;
 }
+
+/* ---------- Logon screen (service picker under 7) ---------- */
+:root[data-skin="7"] .xp-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 25000;
+  display: flex;
+  flex-direction: column;
+  color: #ffffff;
+  font-family: var(--font-ui);
+  background:
+    radial-gradient(ellipse at 50% 120%, rgba(120, 220, 255, 0.45), rgba(120, 220, 255, 0) 55%),
+    radial-gradient(ellipse at 20% 0%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 45%),
+    linear-gradient(160deg, #0f4c8f, #1a6fbd 45%, #0b3a73);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-skin="7"] .xp-welcome-band {
+  display: none;
+}
+
+:root[data-skin="7"] .xp-welcome-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px calc(24px + var(--safe-right)) calc(14px + var(--safe-bottom)) calc(24px + var(--safe-left));
+}
+
+:root[data-skin="7"] .xp-welcome-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+:root[data-skin="7"] .xp-welcome-brand {
+  text-align: center;
+}
+
+:root[data-skin="7"] .xp-welcome-logo {
+  display: none;
+}
+
+:root[data-skin="7"] .xp-welcome-brand h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+}
+
+:root[data-skin="7"] .xp-welcome-brand p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+:root[data-skin="7"] .xp-welcome-divider {
+  display: none;
+}
+
+:root[data-skin="7"] .xp-welcome-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+}
+
+:root[data-skin="7"] .xp-tile {
+  width: 200px;
+  min-height: 0;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #ffffff;
+  text-align: center;
+  cursor: pointer;
+}
+
+:root[data-skin="7"] .xp-tile:not(:disabled):hover,
+:root[data-skin="7"] .xp-tile:focus-visible,
+:root[data-skin="7"] .xp-tile.is-chosen {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.06));
+  outline: none;
+}
+
+:root[data-skin="7"] .xp-tile:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* Glass picture frame around the service icon */
+:root[data-skin="7"] .xp-tile-icon {
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  border-radius: 8px;
+  background-color: #eaf3fc;
+  background-size: 56px;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.75), 0 3px 10px rgba(0, 0, 0, 0.45);
+  image-rendering: pixelated;
+  font-size: 40px;
+}
+
+:root[data-skin="7"] .xp-tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+:root[data-skin="7"] .xp-tile-text b {
+  font-size: 18px;
+  font-weight: normal;
+}
+
+:root[data-skin="7"] .xp-tile-actions {
+  margin-top: 6px;
+}
+
+/* Round arrow "go" button */
+:root[data-skin="7"] .xp-go {
+  min-height: 28px;
+  padding: 0 14px;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(180deg, #3d9be8, #1556a8);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-skin="7"] .xp-go:not(:disabled):hover {
+  background:
+    radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(180deg, #67b6f5, #1f6ac2);
+}
+
+:root[data-skin="7"] .xp-welcome-off {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #ffffff;
+  font-size: 13px;
+}
+
+:root[data-skin="7"] .xp-welcome-off:not(:disabled):hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+:root[data-skin="7"] .xp-welcome-off span {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ef8a5c, #b83a12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+:root[data-skin="7"] .xp-welcome-hint {
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+@media (max-width: 767px) {
+  :root[data-skin="7"] .xp-welcome-hint {
+    margin-left: 0;
+  }
+}
+
+/* ---------- Disky: Windows 7 tooltip balloons ---------- */
+:root[data-skin="7"] .assistant-bubble {
+  border: 1px solid #767676;
+  border-radius: 4px;
+  padding: 10px 14px 12px;
+  background: linear-gradient(180deg, #ffffff, #e4e5f0);
+  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.3);
+  font-size: 12px;
+}
+
+:root[data-skin="7"] .assistant-bubble::before {
+  border-color: #767676 transparent transparent transparent;
+}
+
+:root[data-skin="7"] .assistant-bubble::after {
+  border-color: #e4e5f0 transparent transparent transparent;
+}
+
+/* ---------- Boot screen: "Starting Winampify" with a spinning glow ring (original, disc-like) ---------- */
+:root[data-skin="7"] .loading-screen {
+  background: #000000;
+  color: #d8d8d8;
+  font-family: var(--font-ui);
+}
+
+:root[data-skin="7"] .loading-content {
+  align-items: center;
+}
+
+:root[data-skin="7"] .loading-content::before {
+  content: '';
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #000000 0 22%, transparent 23% 60%, #000000 61%),
+    conic-gradient(from 0deg, rgba(60, 170, 255, 0) 0deg, rgba(60, 170, 255, 0.95) 90deg, rgba(160, 230, 255, 1) 120deg, rgba(60, 170, 255, 0) 200deg, rgba(60, 170, 255, 0) 360deg);
+  box-shadow: 0 0 24px rgba(60, 170, 255, 0.45);
+  animation: s7-boot-spin 1.4s linear infinite;
+}
+
+:root[data-skin="7"] .loading-content::after {
+  content: 'Starting Winampify';
+  order: -1;
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 300;
+  color: #ffffff;
+}
+
+@keyframes s7-boot-spin {
+  to { transform: rotate(360deg); }
+}
+
+:root[data-skin="7"] .loading-logs {
+  align-self: stretch;
+  height: 72px;
+}
+
+:root[data-skin="7"] .loading-log {
+  font-size: 12px;
+}
+
+:root[data-skin="7"] .loading-progress-container {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-skin="7"] .loading-content::before {
+    animation: none;
+  }
+}
+
+/* Softer title glow than 7.css's 8x text-shadow (it reads as a box on our title bars) */
+:root[data-skin="7"] .title-bar-text {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.95), 0 0 3px #ffffff;
+}

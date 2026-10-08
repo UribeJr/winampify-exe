@@ -4,11 +4,11 @@ import { visibleServices } from '../music/services';
 import { SERVICE_DETAILS, startService, serviceLabel } from './ServicePicker';
 
 /**
- * XP-style "Welcome" screen (XP skin only): same choices as LoginDialog, shown as a full-screen
+ * XP / Windows 7-style logon screen (those skins only): same choices as LoginDialog, shown as a full-screen
  * logon with one tile per music service. Click a tile to start; the chosen service's tile then
  * offers Connect/Retry, with Other Service and Cancel at the bottom.
  */
-const XpWelcome = ({ music, onClose }) => {
+const XpWelcome = ({ music, onClose, variant = 'xp' }) => {
   const { services, switchProvider, chooseProvider } = useService();
   const { provider, providerName, serverLabel, status, statusMessage, login } = music;
   const checking = status === 'checking';
@@ -21,7 +21,7 @@ const XpWelcome = ({ music, onClose }) => {
   const chosen = provider ? services.find((svc) => svc.id === provider) : null;
 
   return (
-    <div className="xp-welcome" ref={rootRef} role="dialog" aria-modal="true" aria-labelledby="xp-welcome-title">
+    <div className={`xp-welcome welcome-${variant}`} ref={rootRef} role="dialog" aria-modal="true" aria-labelledby="xp-welcome-title">
       <div className="xp-welcome-band" />
       <div className="xp-welcome-main">
         <div className="xp-welcome-brand">

@@ -89,7 +89,11 @@ const Taskbar = ({ windows, activeId, onToggleWindow, onMenuAction, assistantDoc
               onClick={() => setVolumeOpen((open) => !open)}
             />
           )}
-          <div className="tray-time">{time}</div>
+          <div className="tray-time">
+            <span className="tray-clock">{time}</span>
+            {/* Only the Windows 7 skin shows the date (two-line clock) */}
+            <span className="tray-date">{new Date().toLocaleDateString()}</span>
+          </div>
         </div>
       </div>
       {volumeOpen && <VolumePopup onClose={() => setVolumeOpen(false)} />}

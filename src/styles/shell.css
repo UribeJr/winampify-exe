@@ -345,6 +345,10 @@
   white-space: nowrap;
 }
 
+.tray-date {
+  display: none;
+}
+
 .tray-volume-popup {
   position: fixed;
   right: calc(8px + var(--safe-right));
@@ -681,6 +685,51 @@
   border-radius: 0 8px 8px 0;
   background: linear-gradient(180deg, #5eac56, #3c873c);
   font-style: italic;
+}
+
+.theme-preview[data-preview-skin="7"] .theme-preview-window {
+  padding: 0 4px 4px;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-radius: 5px;
+  background: var(--preview-title-start);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 1px 2px 5px rgba(0, 0, 0, 0.45);
+}
+
+.theme-preview[data-preview-skin="7"][data-preview-glass="on"] .theme-preview-window {
+  background: color-mix(in srgb, var(--preview-title-start) 65%, transparent);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.theme-preview[data-preview-skin="7"] .theme-preview-title {
+  margin: 0 -4px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 60%);
+  color: #000000;
+  font-family: 'Segoe UI', 'Noto Sans', sans-serif;
+  font-weight: normal;
+  text-shadow: 0 0 4px #ffffff, 0 0 4px #ffffff;
+}
+
+.theme-preview[data-preview-skin="7"] .theme-preview-body {
+  height: calc(100% - 18px);
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  background: #f0f0f0;
+}
+
+.theme-preview[data-preview-skin="7"] .theme-preview-taskbar {
+  height: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.35);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.15)), var(--preview-taskbar);
+  font-size: 0;
+}
+
+.theme-preview[data-preview-skin="7"] .theme-preview-taskbar span {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin: 1px 0 0 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #ffffff, rgba(255, 255, 255, 0) 45%), radial-gradient(circle at 50% 100%, #6fd4ff, #1d6fd1 55%, #0b2f6b);
 }
 
 .theme-preview-taskbar {

@@ -1,1 +1,21 @@
-/* Windows 7 skin: phone and touch sizes. */
+/* Windows 7 skin: phone and touch sizes (same breakpoint as mobile.css). */
+
+@media (max-width: 767px), (max-height: 500px) and (pointer: coarse) {
+  /* Phones keep their 44px taskbar (skin-7.css sets 40px for desktop) and never blur */
+  :root[data-skin="7"] {
+    --taskbar-height: 44px;
+    --w7-w-bg: var(--s7-solid);
+  }
+
+  :root[data-skin="7"][data-glass="on"] .os-window,
+  :root[data-skin="7"][data-glass="on"] .win98-taskbar {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  :root[data-skin="7"][data-glass="on"] .win98-taskbar {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.06) 45%, rgba(0, 0, 0, 0.12) 50%, rgba(0, 0, 0, 0.18)),
+      var(--s7-taskbar);
+  }
+}

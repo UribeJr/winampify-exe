@@ -45,7 +45,7 @@ const previewBackground = (selection, customUrl) => {
  */
 const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) => {
   const {
-    skin, schemeId, transparency, setAppearance, wallpaper, customWallpaper, setWallpaper, setCustomWallpaper, clearCustomWallpaper
+    skin, schemeId, schemeFor, transparency, setAppearance, wallpaper, customWallpaper, setWallpaper, setCustomWallpaper, clearCustomWallpaper
   } = useTheme();
   const fileRef = useRef(null);
   const { notify } = useAssistant();
@@ -111,7 +111,7 @@ const DisplayProperties = ({ initialTab = 'background', info = [], onClose }) =>
 
   const chooseSkin = (next) => {
     setDraftSkin(next);
-    setDraftScheme(resolveScheme(next, next === skin ? schemeId : null));
+    setDraftScheme(resolveScheme(next, schemeFor(next)));
     setUseSkinWallpaper(false);
   };
 

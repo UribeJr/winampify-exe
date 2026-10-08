@@ -161,6 +161,8 @@ export const ThemeProvider = ({ children }) => {
     setTheme,
     skin,
     schemeId: isStyledSkin(skin) ? skinSchemes[skin] : currentThemeId,
+    // The saved scheme of any skin (Display Properties pre-selects it when you pick that skin)
+    schemeFor: (id) => (isStyledSkin(id) ? skinSchemes[normalizeSkin(id)] : currentThemeId),
     transparency,
     setAppearance,
     wallpaper,

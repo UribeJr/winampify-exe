@@ -18,4 +18,136 @@
       linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.06) 45%, rgba(0, 0, 0, 0.12) 50%, rgba(0, 0, 0, 0.18)),
       var(--s7-taskbar);
   }
+
+  /* Title bar buttons: glass, red Close, white glyphs (beats 7.css's glyph rules) */
+  :root[data-skin="7"] .window .title-bar .title-bar-controls button {
+    width: 44px;
+    min-width: 44px;
+    height: 38px;
+    border: 1px solid rgba(0, 0, 0, 0.55);
+    border-radius: 5px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.25) 45%, rgba(0, 0, 0, 0.12) 50%, rgba(255, 255, 255, 0.35)) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  }
+
+  :root[data-skin="7"] .window .title-bar .title-bar-controls button[aria-label='Close'] {
+    background: linear-gradient(180deg, #e8a593, #d0715d 45%, #c4402a 50%, #d65f47) !important;
+  }
+
+  :root[data-skin="7"] .window .title-bar .title-bar-controls button[aria-label='Minimize']::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 16px;
+    height: 3px;
+    margin: 4px 0 0 -8px;
+    border: none;
+    background: #ffffff !important;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+    opacity: 1;
+    transform: none;
+  }
+
+  :root[data-skin="7"] .window .title-bar .title-bar-controls button[aria-label='Close']::before,
+  :root[data-skin="7"] .window .title-bar .title-bar-controls button[aria-label='Close']::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 3px;
+    height: 18px;
+    margin: -9px 0 0 -1.5px;
+    border: none;
+    background: #ffffff !important;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+    opacity: 1;
+    transform: rotate(45deg);
+  }
+
+  :root[data-skin="7"] .window .title-bar .title-bar-controls button[aria-label='Close']::after {
+    transform: rotate(-45deg);
+  }
+
+  :root[data-skin="7"] .window .title-bar {
+    min-height: 44px;
+    border-radius: 0;
+  }
+
+  :root[data-skin="7"] .os-window,
+  :root[data-skin="7"] .os-window::before {
+    border-radius: 0;
+  }
+
+  /* Phone view tabs */
+  :root[data-skin="7"] .mobile-view-tab {
+    border: 1px solid #a0afc3 !important;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #f5f9fd, #dee8f5 50%, #d3dfef 51%, #dbe6f4);
+    box-shadow: none !important;
+  }
+
+  :root[data-skin="7"] .mobile-view-tab.active {
+    border-color: var(--s7-sel-border) !important;
+    background: var(--s7-sel);
+    box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  /* Phone transport: the dark WMP 12 bar, white icons, round glass Play */
+  :root[data-skin="7"] .wmp-control-bar.mobile {
+    border-top: 1px solid #000000;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.03) 48%, rgba(0, 0, 0, 0) 52%),
+      linear-gradient(180deg, #3d4450, #1a1e25);
+    color: #e8eef5;
+  }
+
+  :root[data-skin="7"] .wmp-control-bar.mobile .seek-times,
+  :root[data-skin="7"] .wmp-control-bar.mobile .control-status {
+    color: #e8eef5;
+  }
+
+  :root[data-skin="7"] .wmp-control-bar.mobile .control-btn {
+    border: 1px solid rgba(0, 0, 0, 0.7);
+    border-radius: 12px;
+    background: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.05) 60%), #2a2f38;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  }
+
+  :root[data-skin="7"] .wmp-control-bar.mobile .control-btn .toolbar-icon {
+    filter: invert(1);
+  }
+
+  :root[data-skin="7"] .wmp-control-bar.mobile .control-btn[aria-label="Play"],
+  :root[data-skin="7"] .wmp-control-bar.mobile .control-btn[aria-label="Pause"] {
+    border-radius: 50%;
+    border-color: #000000;
+    background:
+      radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0) 45%),
+      radial-gradient(circle at 50% 100%, #46b4ff, #135ab3 55%, #0a2550);
+  }
+
+  :root[data-skin="7"] .library-search input,
+  :root[data-skin="7"] .wmp-search input[type='search'] {
+    border: 1px solid #abadb3;
+    border-radius: 2px;
+  }
+
+  /* Taskbar: bigger orb for thumbs */
+  :root[data-skin="7"] .taskbar-start {
+    width: 44px;
+    height: 40px;
+  }
+
+  :root[data-skin="7"] .taskbar-start .start-logo {
+    width: 22px;
+    height: 22px;
+  }
+
+  :root[data-skin="7"] .wmp-start-menu .start-menu-row:not(:disabled):hover,
+  :root[data-skin="7"] .wmp-start-menu .start-menu-item.open > .start-menu-row {
+    border-color: var(--s7-hl-border);
+    background: var(--s7-hl);
+    color: #000000;
+  }
 }

@@ -293,3 +293,9 @@
   border-color: #5f87b7;
   background: linear-gradient(180deg, #d9e8f9, #c2d9f3);
 }
+
+/* Solid content panes (the window's glass color must not tint the library) */
+:root[data-skin="7"] .wmp-library-content,
+:root[data-skin="7"] .wmp-main-content {
+  background: #ffffff;
+}

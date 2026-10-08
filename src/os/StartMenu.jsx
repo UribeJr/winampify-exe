@@ -17,13 +17,15 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
   const closeTimerRef = useRef(null);
   const pointerTypeRef = useRef('mouse');
   const [openSubmenu, setOpenSubmenu] = useState(null);
-  const { isAuthenticated, playlists, user, providerName } = useMusic();
+  const { isAuthenticated, playlists, user, providerName, capabilities } = useMusic();
+  const [query, setQuery] = useState('');
   const { skin } = useTheme();
   const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!isOpen) {
       setOpenSubmenu(null);
+      setQuery('');
       return undefined;
     }
     const onDown = (e) => {
@@ -151,6 +153,85 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
     </button>
   );
 
+  // Windows 7: white programs column with a search box, dark glass places column, Shut down
+  if (skin === '7' && !isMobile) {
+    const canSearch = isAuthenticated && capabilities?.search;
+    const powerOpen = openSubmenu === 'power';
+    return (
+      <div className="wmp-start-menu s7-start-menu" ref={menuRef} role="menu">
+        <div className="s7-start-left">
+          <div className="s7-start-pinned">
+            {XpItem({ icon: 'media', label: 'Media Player', detail: providerName, action: 'open-app', data: 'media-player' })}
+            {XpItem({ icon: 'heart', label: 'Liked Songs', detail: 'Your favorites', action: 'open-source', data: { type: 'liked' } })}
+            {XpItem({ icon: 'note', label: 'Sticky Note', detail: 'Jot something down', action: 'new-note' })}
+          </div>
+          <div className="xp-start-spacer" />
+          <div className="start-menu-separator" />
+          <div className="xp-start-all s7-start-all">
+            {SubmenuItem({ id: 'programs', icon: 'programs', label: 'All Programs' })}
+          </div>
+          {canSearch && (
+            <form
+              className="s7-start-search"
+              role="search"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (query.trim()) select('search-music', query.trim());
+              }}
+            >
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search programs and music"
+                aria-label="Search programs and music"
+                autoFocus
+              />
+            </form>
+          )}
+        </div>
+        <div className="s7-start-right">
+          <span className="s7-start-avatar icon-disky" aria-hidden="true" />
+          {Item({ icon: 'media', label: 'Music', action: 'open-app', data: 'media-player' })}
+          {SubmenuItem({ id: 'playlists', icon: 'documents', label: 'My Playlists' })}
+          <div className="start-menu-separator" />
+          {Item({ icon: 'themes', label: 'Display Properties', action: 'themes' })}
+          {Item({ icon: 'settings', label: 'Wallpaper', action: 'wallpaper' })}
+          {Item({ icon: 'cd', label: 'Music Service', action: 'switch-service' })}
+          <div className="start-menu-separator" />
+          {SubmenuItem({ id: 'help', icon: 'help', label: 'Help and Support' })}
+          {Item({ icon: 'run', label: 'Run…', action: 'run' })}
+          <div className="xp-start-spacer" />
+          <div className="s7-power">
+            <button type="button" className="s7-shutdown" onClick={() => select('shutdown')}>Shut down</button>
+            <button
+              type="button"
+              className="s7-shutdown-more"
+              aria-label="More shut down options"
+              aria-haspopup="menu"
+              aria-expanded={powerOpen}
+              onClick={() => setOpenSubmenu(powerOpen ? null : 'power')}
+            >
+              ▸
+            </button>
+            {powerOpen && (
+              <div className="start-menu-submenu s7-power-menu" role="menu">
+                <button type="button" className="start-menu-item start-menu-row" onClick={() => select(accountItem.action)}>
+                  <span className="start-menu-icon icon-logoff" aria-hidden="true" />
+                  <span className="start-menu-text">{accountItem.label}</span>
+                </button>
+                <button type="button" className="start-menu-item start-menu-row" onClick={() => select('switch-service')}>
+                  <span className="start-menu-icon icon-cd" aria-hidden="true" />
+                  <span className="start-menu-text">Switch Music Service…</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (skin === 'xp' && !isMobile) {
     return (
       <div className="wmp-start-menu xp-start-menu" ref={menuRef} role="menu">
@@ -197,7 +278,7 @@ const StartMenu = ({ isOpen, onClose, onMenuAction }) => {
     <div className="wmp-start-menu" ref={menuRef} role="menu">
       <div className="start-menu-side">
         <span className="start-menu-brand">
-          <b>Winampify</b><span className="start-menu-brand-version">{skin === 'xp' ? 'xp' : '98'}</span>
+          <b>Winampify</b><span className="start-menu-brand-version">{skin === '98' ? '98' : skin}</span>
         </span>
       </div>
       <div className="start-menu-list">

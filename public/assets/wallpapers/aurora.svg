@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <!-- Original artwork for Winampify: soft light ribbons over a deep blue sky -->
+  <defs>
+    <radialGradient id="sky" cx="0.55" cy="0.42" r="0.9">
+      <stop offset="0" stop-color="#2f8bd8"/>
+      <stop offset="0.45" stop-color="#1257a6"/>
+      <stop offset="1" stop-color="#06204a"/>
+    </radialGradient>
+    <linearGradient id="ribbonA" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7fe3ff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#bff4ff" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#7fe3ff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ribbonB" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7bffcf" stop-opacity="0"/>
+      <stop offset="0.55" stop-color="#9dffd8" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#7bffcf" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-10%" y="-50%" width="120%" height="200%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <filter id="softer" x="-10%" y="-50%" width="120%" height="200%">
+      <feGaussianBlur stdDeviation="5"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+  <g filter="url(#soft)">
+    <path d="M-100 640 C 300 420, 650 760, 1000 560 S 1550 380, 1750 520 L 1750 600 C 1500 470, 1250 700, 950 650 S 300 520, -100 720 Z" fill="url(#ribbonA)"/>
+    <path d="M-100 760 C 350 600, 700 880, 1100 700 S 1500 600, 1750 680 L 1750 720 C 1450 660, 1200 820, 1000 790 S 350 680, -100 820 Z" fill="url(#ribbonB)"/>
+  </g>
+  <g filter="url(#softer)" opacity="0.8">
+    <path d="M-100 600 C 300 430, 650 740, 1000 545 S 1550 395, 1750 505" fill="none" stroke="#e8fbff" stroke-width="3"/>
+    <path d="M-100 735 C 350 600, 700 860, 1100 690 S 1500 610, 1750 670" fill="none" stroke="#d9fff0" stroke-width="2"/>
+  </g>
+  <ellipse cx="1040" cy="560" rx="260" ry="120" fill="url(#glow)"/>
+</svg>

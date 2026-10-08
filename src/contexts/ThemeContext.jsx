@@ -1,15 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getThemeById } from '../data/themes';
 import { DEFAULT_WALLPAPER, CUSTOM_WALLPAPER_ID, MODES, getWallpaper, wallpaperStyle } from '../data/wallpapers';
-import { normalizeSkin, resolveScheme } from '../data/skins';
-import { loadXpSkin } from '../styles/loadSkin';
+import { normalizeSkin, resolveScheme, isStyledSkin } from '../data/skins';
+import { loadSkinStyles } from '../styles/loadSkin';
 
 const STORAGE_KEY = 'winampify-theme';
 const DEFAULT_THEME = 'default';
 const WALLPAPER_KEY = 'winampify-wallpaper';
 const CUSTOM_WALLPAPER_KEY = 'winampify-wallpaper-custom';
 const SKIN_KEY = 'winampify-skin'; // read before first paint by index.html
-const XP_SCHEME_KEY = 'winampify-xp-scheme';
+// Each styled skin remembers its own color scheme (98 keeps using STORAGE_KEY)
+const SCHEME_KEYS = { xp: 'winampify-xp-scheme', 7: 'winampify-7-scheme' };
+const GLASS_KEY = 'winampify-7-glass'; // also read before first paint by index.html
 const THEME_VARS = [
   '--theme-title-bar-active-start', '--theme-title-bar-active-end', '--theme-title-bar-inactive', '--theme-taskbar',
   '--theme-taskbar-button', '--theme-taskbar-button-hover', '--theme-taskbar-button-active', '--theme-window-border'
@@ -50,10 +52,14 @@ export const ThemeProvider = ({ children }) => {
 
   const currentTheme = getThemeById(currentThemeId);
 
-  // Skin: index.html sets data-skin="xp" before paint and index.jsx loads the XP stylesheets
+  // Skin: index.html sets data-skin before paint and index.jsx loads that skin's stylesheets
   // (removing the attribute if that fails), so the attribute is the source of truth at startup
   const [skin, setSkinState] = useState(() => normalizeSkin(document.documentElement.getAttribute('data-skin')));
-  const [xpScheme, setXpScheme] = useState(() => resolveScheme('xp', readStorage(XP_SCHEME_KEY)));
+  const [skinSchemes, setSkinSchemes] = useState(() => Object.fromEntries(
+    Object.entries(SCHEME_KEYS).map(([id, key]) => [id, resolveScheme(id, readStorage(key))])
+  ));
+  // Windows 7 Aero glass (phones always get solid colors, in CSS)
+  const [transparency, setTransparencyState] = useState(() => readStorage(GLASS_KEY) !== 'off');
 
   // Desktop wallpaper: a built-in or the user's own picture (a data URL kept only in this browser)
   const [customWallpaper, setCustomWallpaperState] = useState(() => readStorage(CUSTOM_WALLPAPER_KEY));
@@ -98,10 +104,12 @@ export const ThemeProvider = ({ children }) => {
   // Apply skin + color scheme to the document
   useEffect(() => {
     const root = document.documentElement;
-    if (skin === 'xp') {
-      root.setAttribute('data-skin', 'xp');
-      root.setAttribute('data-theme', xpScheme);
-      THEME_VARS.forEach((name) => root.style.removeProperty(name)); // XP schemes live in skin-xp.css
+    if (transparency) root.setAttribute('data-glass', 'on');
+    else root.removeAttribute('data-glass');
+    if (isStyledSkin(skin)) {
+      root.setAttribute('data-skin', skin);
+      root.setAttribute('data-theme', skinSchemes[skin]);
+      THEME_VARS.forEach((name) => root.style.removeProperty(name)); // these schemes live in the skin's CSS
       return;
     }
     root.removeAttribute('data-skin');
@@ -115,7 +123,7 @@ export const ThemeProvider = ({ children }) => {
     root.style.setProperty('--theme-taskbar-button-hover', colors.taskbarButtonHover);
     root.style.setProperty('--theme-taskbar-button-active', colors.taskbarButtonActive);
     root.style.setProperty('--theme-window-border', colors.windowBorder);
-  }, [skin, xpScheme, currentThemeId, currentTheme]);
+  }, [skin, skinSchemes, transparency, currentThemeId, currentTheme]);
 
   const setTheme = (themeId) => {
     setCurrentThemeId(themeId);
@@ -126,15 +134,19 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
-  // Switch skin and/or scheme. XP's stylesheets load first, so nothing flashes unstyled.
-  // Resolves false (and keeps the current look) if they can't be fetched.
-  const setAppearance = useCallback(async (nextSkin, schemeId) => {
+  // Switch skin, scheme and (7) transparency. The skin's stylesheets load first, so nothing
+  // flashes unstyled. Resolves false (and keeps the current look) if they can't be fetched.
+  const setAppearance = useCallback(async (nextSkin, schemeId, options = {}) => {
     const target = normalizeSkin(nextSkin);
-    if (target === 'xp') {
-      try { await loadXpSkin(); } catch { return false; }
-      const scheme = resolveScheme('xp', schemeId);
-      setXpScheme(scheme);
-      try { localStorage.setItem(XP_SCHEME_KEY, scheme); } catch { /* this visit only */ }
+    if (typeof options.transparency === 'boolean') {
+      setTransparencyState(options.transparency);
+      try { localStorage.setItem(GLASS_KEY, options.transparency ? 'on' : 'off'); } catch { /* this visit only */ }
+    }
+    if (isStyledSkin(target)) {
+      try { await loadSkinStyles(target); } catch { return false; }
+      const scheme = resolveScheme(target, schemeId);
+      setSkinSchemes((all) => ({ ...all, [target]: scheme }));
+      try { localStorage.setItem(SCHEME_KEYS[target], scheme); } catch { /* this visit only */ }
     } else {
       setTheme(resolveScheme('98', schemeId));
     }
@@ -148,7 +160,10 @@ export const ThemeProvider = ({ children }) => {
     currentThemeId,
     setTheme,
     skin,
-    schemeId: skin === 'xp' ? xpScheme : currentThemeId,
+    schemeId: isStyledSkin(skin) ? skinSchemes[skin] : currentThemeId,
+    // The saved scheme of any skin (Display Properties pre-selects it when you pick that skin)
+    schemeFor: (id) => (isStyledSkin(id) ? skinSchemes[normalizeSkin(id)] : currentThemeId),
+    transparency,
     setAppearance,
     wallpaper,
     customWallpaper,

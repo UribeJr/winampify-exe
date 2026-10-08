@@ -13,7 +13,7 @@ const LoginDialog = ({ music, onClose }) => {
   const { provider, providerName, serverLabel, status, statusMessage, login, mode } = music;
   const checking = status === 'checking';
 
-  if (skin === 'xp') return <XpWelcome music={music} onClose={onClose} />;
+  if (skin === 'xp' || skin === '7') return <XpWelcome music={music} onClose={onClose} variant={skin} />;
 
   if (!provider) {
     return (

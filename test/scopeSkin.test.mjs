@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SCOPE_98, SCOPE_XP, splitSelectors, scopeSelectorList, scopeForFile } from '../tools/scopeSkin.mjs';
+import { SCOPE_98, SCOPE_XP, SCOPE_7, splitSelectors, scopeSelectorList, scopeForFile } from '../tools/scopeSkin.mjs';
 
 test('selector lists split only on top-level commas', () => {
   assert.deepEqual(splitSelectors('a, b > c'), ['a', 'b > c']);
@@ -24,7 +24,14 @@ test('bare pseudo-elements cover the root and its descendants', () => {
   assert.equal(scopeSelectorList('::-webkit-scrollbar', SCOPE_XP), `${SCOPE_XP}::-webkit-scrollbar,${SCOPE_XP} ::-webkit-scrollbar`);
 });
 
-test('only the two library files are scoped', () => {
+test('98 applies whenever no skin attribute is set; 7.css gets its own scope', () => {
+  assert.equal(SCOPE_98, ':where(:root:not([data-skin]))');
+  assert.equal(scopeForFile('/x/node_modules/7.css/dist/7.css'), SCOPE_7);
+  assert.equal(scopeForFile('/x/node_modules/7.css/dist/7.scoped.css'), null);
+  assert.equal(scopeSelectorList(':root', SCOPE_7), SCOPE_7);
+});
+
+test('only the library files are scoped', () => {
   assert.equal(scopeForFile('/x/node_modules/98.css/dist/98.css'), SCOPE_98);
   assert.equal(scopeForFile('C:\\x\\node_modules\\xp.css\\dist\\XP.css'), SCOPE_XP);
   assert.equal(scopeForFile('/x/node_modules/xp.css/dist/98.css'), null);

@@ -1,0 +1,301 @@
+/* Windows 7 skin: media player, in the spirit of WMP 12 (Explorer-style toolbar and lists,
+   dark glossy transport with a big round glass Play button). Every rule is under :root[data-skin="7"]. */
+
+:root[data-skin="7"] .window-content {
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px #b6bcc6;
+}
+
+/* ---------- Menu bar + dropdowns ---------- */
+:root[data-skin="7"] .menu-bar {
+  background: linear-gradient(180deg, #ffffff, #eef3fa);
+}
+
+:root[data-skin="7"] .menu-bar-item {
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+:root[data-skin="7"] .menu-bar-item:hover,
+:root[data-skin="7"] .menu-bar-item.open {
+  box-shadow: none !important;
+  border-color: #aeceed;
+  background: linear-gradient(180deg, #f2f7fd, #dce9f9);
+  color: #000000;
+}
+
+:root[data-skin="7"] .menu-dropdown {
+  padding: 2px;
+  border: 1px solid #979797;
+  background: linear-gradient(90deg, #f1f1f1 26px, #e2e3e3 26px, #e2e3e3 27px, #ffffff 27px, #f5f5f5);
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-skin="7"] .menu-dropdown-item {
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+:root[data-skin="7"] .menu-dropdown-item:not(:disabled):hover {
+  border-color: #aeceed;
+  background: linear-gradient(180deg, #f2f7fd, #e2ecfa);
+  color: #000000;
+}
+
+:root[data-skin="7"] .menu-dropdown-item:disabled {
+  text-shadow: none;
+}
+
+/* ---------- Toolbar: Explorer-style, buttons light up on hover ---------- */
+:root[data-skin="7"] .wmp-toolbar {
+  border-top: none;
+  border-bottom: 1px solid #a0afc3;
+  background: linear-gradient(180deg, #f5f9fd, #dee8f5 50%, #d3dfef 51%, #dbe6f4);
+}
+
+:root[data-skin="7"] .toolbar-nav-btn,
+:root[data-skin="7"] .wmp-toolbar .control-btn {
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: none;
+}
+
+:root[data-skin="7"] .toolbar-nav-btn:not(:disabled):hover,
+:root[data-skin="7"] .wmp-toolbar .control-btn:not(:disabled):hover {
+  border-color: #7da2ce;
+  background: linear-gradient(180deg, #fafdff, #e0ecfb 50%, #cfe2f8 51%, #e3eefb);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+
+:root[data-skin="7"] .toolbar-nav-btn.active,
+:root[data-skin="7"] .wmp-toolbar .control-btn.active {
+  border-color: #5f87b7;
+  background: linear-gradient(180deg, #d9e8f9, #c2d9f3);
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* ---------- Library: navigation pane, list view ---------- */
+:root[data-skin="7"] .wmp-library-sidebar {
+  background: linear-gradient(90deg, #f1f5fb, #ffffff 60%);
+  border-right: 1px solid #d5dfe5;
+}
+
+:root[data-skin="7"] .tree-view {
+  background: transparent;
+  border: none;
+}
+
+:root[data-skin="7"] .tree-view button {
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+:root[data-skin="7"] .tree-view button:hover {
+  text-decoration: none;
+  border-color: #b8d6fb;
+  background: var(--s7-hl);
+}
+
+:root[data-skin="7"] .tree-view button.selected {
+  border-color: var(--s7-sel-border);
+  background: var(--s7-sel);
+  color: #000000;
+}
+
+:root[data-skin="7"] .track-table-header {
+  background: linear-gradient(180deg, #ffffff 45%, #f7f8fa 45%, #f1f2f4);
+  box-shadow: inset 0 -1px #d5d5d5;
+  color: #4c607a;
+}
+
+:root[data-skin="7"] .track-table-row {
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+:root[data-skin="7"] .track-table-row:nth-child(even) {
+  background: transparent;
+}
+
+:root[data-skin="7"] .track-table-row:not(:disabled):hover {
+  border-color: #b8d6fb;
+  background: var(--s7-hl);
+  color: #000000;
+}
+
+:root[data-skin="7"] .track-table-row.current {
+  border-color: var(--s7-sel-border);
+  background: var(--s7-sel);
+  color: #1c3f73;
+}
+
+:root[data-skin="7"] .track-table-row.current:hover {
+  color: #1c3f73;
+}
+
+:root[data-skin="7"] .library-tile {
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+:root[data-skin="7"] .library-tile:hover {
+  border-color: #b8d6fb;
+  background: var(--s7-hl);
+}
+
+:root[data-skin="7"] .library-section-heading {
+  color: #1e3287;
+  border-bottom-color: #d9e2ee;
+}
+
+/* ---------- Transport: the dark glossy WMP 12 bar ---------- */
+:root[data-skin="7"] .wmp-control-bar:not(.mobile) {
+  padding: 6px 10px 6px;
+  border-top: 1px solid #000000;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.04) 48%, rgba(0, 0, 0, 0) 52%),
+    linear-gradient(180deg, #3d4450, #1a1e25);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.25);
+  color: #e8eef5;
+}
+
+:root[data-skin="7"] .wmp-control-bar:not(.mobile) .control-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.05) 60%), #2a2f38;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+:root[data-skin="7"] .wmp-control-bar:not(.mobile) .control-btn .toolbar-icon {
+  filter: invert(1) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+}
+
+:root[data-skin="7"] .wmp-control-bar:not(.mobile) .control-btn:not(:disabled):hover {
+  background: radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08) 60%), #3a5a80;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3), 0 0 6px rgba(110, 190, 255, 0.8);
+}
+
+:root[data-skin="7"] .wmp-control-bar:not(.mobile) .control-btn.active,
+:root[data-skin="7"] .wmp-control-bar:not(.mobile) .control-btn:not(:disabled):active {
+  background: radial-gradient(circle at 50% 70%, rgba(110, 190, 255, 0.55), rgba(255, 255, 255, 0) 70%), #1f2c3d;
+}
+
+/* The big round glass Play / Pause */
+:root[data-skin="7"] .wmp-control-bar:not(.mobile) .control-btn[aria-label="Play"],
+:root[data-skin="7"] .wmp-control-bar:not(.mobile) .control-btn[aria-label="Pause"] {
+  width: 40px;
+  height: 40px;
+  margin: -8px 6px -8px 0;
+  border-color: #000000;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0) 45%),
+    radial-gradient(circle at 50% 100%, #46b4ff, #135ab3 55%, #0a2550);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4), 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-skin="7"] .wmp-control-bar:not(.mobile) .control-btn[aria-label="Play"]:not(:disabled):hover,
+:root[data-skin="7"] .wmp-control-bar:not(.mobile) .control-btn[aria-label="Pause"]:not(:disabled):hover {
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 45%),
+    radial-gradient(circle at 50% 100%, #8fd6ff, #2a7fdc 55%, #0d3470);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 0 10px rgba(110, 190, 255, 0.9);
+}
+
+:root[data-skin="7"] .wmp-control-bar:not(.mobile) .control-status,
+:root[data-skin="7"] .wmp-control-bar:not(.mobile) .seek-times {
+  color: #e8eef5;
+}
+
+/* Seek bar: thin, glowing blue fill */
+:root[data-skin="7"] .wmp-control-bar .seek-track {
+  height: 5px;
+  border-radius: 3px;
+  background: #0d0f13;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+:root[data-skin="7"] .wmp-control-bar .seek-bar.disabled .seek-track {
+  background: #262a31;
+}
+
+:root[data-skin="7"] .seek-fill {
+  border-radius: 3px;
+  background: linear-gradient(180deg, #a6dcff, #3399ff 55%, #1c6fd0);
+  box-shadow: 0 0 4px rgba(80, 170, 255, 0.8);
+}
+
+:root[data-skin="7"] .seek-thumb {
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border: 1px solid #0a2550;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #ffffff, #bfe3ff 60%, #6fb2ee);
+  box-shadow: 0 0 4px rgba(80, 170, 255, 0.9);
+}
+
+/* Large seek bar on the Now Playing view sits on white */
+:root[data-skin="7"] .seek-bar-large .seek-track {
+  height: 7px;
+  background: #e3e8ef;
+  box-shadow: inset 0 0 0 1px #b3c1d3;
+}
+
+/* ---------- Panes, EQ, visualizer strip ---------- */
+:root[data-skin="7"] .wmp-now-playing-pane {
+  border-left: 1px solid #b6bcc6;
+  background: #ffffff;
+}
+
+:root[data-skin="7"] .wmp-now-playing-pane-header {
+  background: linear-gradient(180deg, #f5f9fd, #dee8f5 50%, #d3dfef 51%, #dbe6f4);
+  color: #1e3287;
+  border-bottom: 1px solid #a0afc3;
+}
+
+:root[data-skin="7"] .pane-close {
+  color: #1e3287;
+}
+
+:root[data-skin="7"] .queue-item.current {
+  border: 1px solid var(--s7-sel-border);
+  border-radius: 3px;
+  background: var(--s7-sel);
+  color: #1c3f73;
+}
+
+:root[data-skin="7"] .queue-item:not(.current):hover {
+  background: var(--s7-hl);
+}
+
+:root[data-skin="7"] .eq-panel,
+:root[data-skin="7"] .viz-strip {
+  background: linear-gradient(180deg, #f5f9fd, #e1eaf6);
+  border-top: 1px solid #a0afc3;
+}
+
+:root[data-skin="7"] .eq-bands {
+  border-radius: 3px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px #b6bcc6;
+}
+
+:root[data-skin="7"] .viz-menu {
+  border: 1px solid #979797;
+  background: #ffffff;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-skin="7"] .viz-btn.active {
+  border-color: #5f87b7;
+  background: linear-gradient(180deg, #d9e8f9, #c2d9f3);
+}
+
+/* Solid content panes (the window's glass color must not tint the library) */
+:root[data-skin="7"] .wmp-library-content,
+:root[data-skin="7"] .wmp-main-content {
+  background: #ffffff;
+}

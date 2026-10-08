@@ -1,0 +1,960 @@
+/* Windows 7 skin: shell (tokens, schemes, glass, windows, taskbar, start, menus, dialogs).
+   Every rule is under :root[data-skin="7"]; 7.css itself is scoped the same way at build time.
+   Original styling in the spirit of Windows 7's Aero look — no Microsoft artwork. */
+
+/* ---------- Tokens ---------- */
+:root[data-skin="7"] {
+  --win-face: #f0f0f0;
+  --win-face-light: #f7f7f7;
+  --win-shadow: #a0a0a0;
+  --win-highlight: #ffffff;
+  --win-select: #3399ff;
+  --win-hover: #3399ff;
+  --font-ui: "Segoe UI", "SegoeUI", "Noto Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --inset: inset 0 0 0 1px #abadb3;
+  --bevel-raised: inset 0 0 0 1px #a0a0a0;
+  --bevel-button: inset 0 0 0 1px #8e8f8f;
+  --bevel-pressed: inset 0 0 0 1px #6d91ab, inset 1px 2px 3px rgba(0, 0, 0, 0.18);
+  --bevel-sunken: inset 0 0 0 1px #abadb3;
+  --bevel-thin: inset 0 0 0 1px #a0a0a0;
+  --dither: none;
+  --panel-border: 1px solid #979797;
+  --taskbar-height: 40px;
+  --s7-hl: linear-gradient(180deg, #f2f8fe, #dceafc);
+  --s7-hl-border: #7da2ce;
+  --s7-sel: linear-gradient(180deg, #dcebfc, #c1dbfc);
+  --s7-sel-border: #84acdd;
+}
+
+/* ---------- Window colors (schemes): solid, and see-through when transparency is on ---------- */
+:root[data-skin="7"],
+:root[data-skin="7"][data-theme="7-sky"] {
+  --s7-solid: #6f9fd2;
+  --s7-glass: #4580c4b3;
+  --s7-taskbar: #1b2f4a;
+  --s7-accent: #3399ff;
+}
+
+:root[data-skin="7"][data-theme="7-twilight"] {
+  --s7-solid: #3b6fb6;
+  --s7-glass: #1f4f9acc;
+  --s7-taskbar: #14223a;
+}
+
+:root[data-skin="7"][data-theme="7-sea"] {
+  --s7-solid: #4fa8a0;
+  --s7-glass: #2a8c84b3;
+  --s7-taskbar: #173634;
+}
+
+:root[data-skin="7"][data-theme="7-leaf"] {
+  --s7-solid: #74b356;
+  --s7-glass: #4f9a2fb3;
+  --s7-taskbar: #23381a;
+}
+
+:root[data-skin="7"][data-theme="7-violet"] {
+  --s7-solid: #957ccc;
+  --s7-glass: #6d4fb8b3;
+  --s7-taskbar: #2c2242;
+}
+
+:root[data-skin="7"][data-theme="7-chocolate"] {
+  --s7-solid: #9c785c;
+  --s7-glass: #7a5236b3;
+  --s7-taskbar: #2e2118;
+}
+
+:root[data-skin="7"][data-theme="7-frost"] {
+  --s7-solid: #d3dde7;
+  --s7-glass: #e8eef4cc;
+  --s7-taskbar: #4c5a67;
+}
+
+:root[data-skin="7"] {
+  --w7-w-bg: var(--s7-solid);
+}
+
+:root[data-skin="7"][data-glass="on"] {
+  --w7-w-bg: var(--s7-glass);
+}
+
+:root[data-skin="7"] body,
+:root[data-skin="7"] button,
+:root[data-skin="7"] input,
+:root[data-skin="7"] select,
+:root[data-skin="7"] textarea {
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Our non-button buttons: keep 7.css button chrome off them ---------- */
+:root[data-skin="7"] :is(.desktop-icon, .start-menu-row, .context-menu-item, .menu-bar-item, .menu-dropdown-item,
+  .track-table-row, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
+  .pane-close, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
+  .tray-disky, .xp-start-item, .xp-start-foot button, .s7-shutdown, .s7-shutdown-more),
+:root[data-skin="7"] :is(.desktop-icon, .start-menu-row, .context-menu-item, .menu-bar-item, .menu-dropdown-item,
+  .track-table-row, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
+  .pane-close, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
+  .tray-disky, .xp-start-item, .xp-start-foot button, .s7-shutdown, .s7-shutdown-more):is(:hover, :focus, :active) {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background-image: none;
+}
+
+/* ---------- Windows ---------- */
+:root[data-skin="7"][data-glass="on"] .os-window {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+:root[data-skin="7"] .os-window .window-body {
+  margin: 0 var(--w7-w-space) var(--w7-w-space);
+}
+
+:root[data-skin="7"] .os-window .title-bar {
+  min-height: 30px;
+}
+
+:root[data-skin="7"] .os-window.inactive::before {
+  filter: saturate(0.45) brightness(1.12);
+}
+
+:root[data-skin="7"] .os-window.inactive .title-bar-text {
+  color: #3c3c3c;
+}
+
+:root[data-skin="7"] .os-window.maximized,
+:root[data-skin="7"] .os-window.maximized::before,
+:root[data-skin="7"] .os-window.maximized .title-bar {
+  border-radius: 0;
+}
+
+:root[data-skin="7"] .title-bar-text {
+  font-size: 12px;
+}
+
+/* ---------- Taskbar: smoked glass, round Start orb, icon-only buttons ---------- */
+:root[data-skin="7"] .win98-taskbar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.06) 45%, rgba(0, 0, 0, 0.12) 50%, rgba(0, 0, 0, 0.18)),
+    var(--s7-taskbar);
+  border-top: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.45);
+  gap: 4px;
+}
+
+:root[data-skin="7"][data-glass="on"] .win98-taskbar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.06) 45%, rgba(0, 0, 0, 0.12) 50%, rgba(0, 0, 0, 0.18)),
+    color-mix(in srgb, var(--s7-taskbar) 72%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  backdrop-filter: blur(10px) saturate(1.2);
+}
+
+:root[data-skin="7"] .taskbar-start {
+  position: relative;
+  width: 40px;
+  height: 36px;
+  margin: 0 6px 0 8px;
+  padding: 0;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 45%),
+    radial-gradient(circle at 50% 100%, #6fd4ff, #1d6fd1 55%, #0b2f6b);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.45), 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-skin="7"] .taskbar-start:hover {
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 45%),
+    radial-gradient(circle at 50% 100%, #b5f0ff, #3ea0f0 55%, #10479b);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 0 10px 2px rgba(120, 210, 255, 0.85);
+}
+
+/* keep the orb round in every state (7.css styles button :focus / :active / .active) */
+:root[data-skin="7"] .taskbar-start:is(:focus, :focus-visible, :active, .active) {
+  border: none;
+  border-radius: 50%;
+  outline: none;
+}
+
+:root[data-skin="7"] .taskbar-start.active,
+:root[data-skin="7"] .taskbar-start:not(:disabled):active {
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 45%),
+    radial-gradient(circle at 50% 100%, #4bb4f0, #155ab4 55%, #08254f);
+}
+
+:root[data-skin="7"] .taskbar-start .start-logo {
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+}
+
+:root[data-skin="7"] .taskbar-start .start-text,
+:root[data-skin="7"] .taskbar-app .app-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+:root[data-skin="7"] .taskbar-apps {
+  gap: 3px;
+}
+
+:root[data-skin="7"] .taskbar-app {
+  position: relative;
+  width: 56px;
+  max-width: 56px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: none;
+}
+
+:root[data-skin="7"] .taskbar-app .app-icon {
+  width: 24px;
+  height: 24px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Open windows get a faint glass tile; the focused one is brighter */
+:root[data-skin="7"] .taskbar-app,
+:root[data-skin="7"] .taskbar-app:not(:disabled):hover {
+  border-color: rgba(0, 0, 0, 0.45);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.02));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+:root[data-skin="7"] .taskbar-app:not(:disabled):hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0.06));
+}
+
+:root[data-skin="7"] .taskbar-app.active {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(140, 220, 255, 0.55), rgba(140, 220, 255, 0) 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.1));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+:root[data-skin="7"] .taskbar-tray {
+  height: 100%;
+  margin: 0;
+  padding: 0 10px;
+  background: transparent;
+  box-shadow: none;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+:root[data-skin="7"] .tray-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.25;
+  font-size: 12px;
+}
+
+:root[data-skin="7"] .tray-date {
+  display: block;
+}
+
+:root[data-skin="7"][data-theme="7-frost"] .taskbar-tray {
+  color: #ffffff;
+}
+
+/* ---------- Menus ---------- */
+:root[data-skin="7"] .context-menu,
+:root[data-skin="7"] .start-menu-submenu {
+  padding: 2px;
+  border: 1px solid #979797;
+  border-radius: 0;
+  background: linear-gradient(90deg, #f1f1f1 26px, #e2e3e3 26px, #e2e3e3 27px, #ffffff 27px, #f5f5f5);
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-skin="7"] .context-menu-item,
+:root[data-skin="7"] .start-menu-submenu .start-menu-row {
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: #000000;
+}
+
+:root[data-skin="7"] .context-menu-item:not(:disabled):hover,
+:root[data-skin="7"] .start-menu-submenu .start-menu-row:not(:disabled):hover {
+  border-color: #aeceed;
+  background: linear-gradient(180deg, #f2f7fd, #e2ecfa);
+  color: #000000;
+}
+
+:root[data-skin="7"] .context-menu-item:disabled {
+  color: #8d8d8d;
+  text-shadow: none;
+}
+
+/* ---------- Tabs (our markup is 98-style li[role=tab] > a) ---------- */
+:root[data-skin="7"] menu[role="tablist"] {
+  display: flex;
+  margin: 0 0 -1px;
+  padding: 0 0 0 3px;
+  list-style: none;
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-skin="7"] menu[role="tablist"] > li {
+  margin-right: -1px;
+  border: 1px solid #8e8f8f;
+  border-bottom: none;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #f2f2f2 45%, #ebebeb 45%, #dddddd);
+}
+
+:root[data-skin="7"] menu[role="tablist"] > li:hover {
+  background: linear-gradient(180deg, #eaf6fd 45%, #d9f0fc 45%, #bee6fd);
+  border-color: #3c7fb1;
+}
+
+:root[data-skin="7"] menu[role="tablist"] > li[aria-selected="true"] {
+  margin-top: -2px;
+  padding-bottom: 2px;
+  background: #ffffff;
+  border-color: #898c95;
+  position: relative;
+  z-index: 2;
+}
+
+:root[data-skin="7"] menu[role="tablist"] > li > a {
+  display: block;
+  padding: 3px 10px;
+  color: #000000;
+  text-decoration: none;
+}
+
+:root[data-skin="7"] .display-panel {
+  border: 1px solid #898c95;
+  border-radius: 0;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+:root[data-skin="7"] .display-panel::before {
+  content: none;
+}
+
+:root[data-skin="7"] .display-panel > .window-body {
+  margin: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+/* ---------- Dialog lists ---------- */
+:root[data-skin="7"] .wallpaper-list,
+:root[data-skin="7"] .recycle-list,
+:root[data-skin="7"] .device-list {
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px #828790;
+}
+
+:root[data-skin="7"] .wallpaper-option,
+:root[data-skin="7"] .recycle-item {
+  border: 1px solid transparent;
+  border-radius: 2px;
+}
+
+:root[data-skin="7"] .wallpaper-option:not(:disabled):hover,
+:root[data-skin="7"] .recycle-item:not(:disabled):hover {
+  border-color: #b8d6fb;
+  background: var(--s7-hl);
+}
+
+:root[data-skin="7"] .wallpaper-option.selected,
+:root[data-skin="7"] .recycle-item.selected {
+  border-color: var(--s7-sel-border);
+  background: var(--s7-sel);
+  color: #000000;
+}
+
+:root[data-skin="7"] .monitor-screen {
+  border-radius: 3px;
+}
+
+/* 7.css hides .window[role=dialog] until it's a URL :target (its CSS-only modal);
+   our dialogs are rendered only while open and positioned by .dialog-backdrop */
+:root[data-skin="7"] .window[role="dialog"] {
+  position: relative;
+  left: auto;
+  top: auto;
+  z-index: auto;
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 7.css has no field-row helpers (98.css / XP.css do) */
+:root[data-skin="7"] .field-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:root[data-skin="7"] .field-row-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+:root[data-skin="7"] .field-row + .field-row,
+:root[data-skin="7"] .field-row-stacked + .field-row-stacked {
+  margin-top: 8px;
+}
+
+/* ---------- Start menu: Windows 7 layout (desktop) ---------- */
+:root[data-skin="7"] .s7-start-menu {
+  width: 400px;
+  height: 450px;
+  max-height: calc(100dvh - var(--taskbar-height) - 8px);
+  padding: 8px;
+  gap: 8px;
+  flex-direction: row;
+  border: 1px solid rgba(0, 0, 0, 0.7);
+  border-radius: 6px 6px 0 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 30%),
+    var(--s7-taskbar);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35), 2px 3px 10px rgba(0, 0, 0, 0.5);
+  overflow: visible;
+  font-size: 12px;
+}
+
+:root[data-skin="7"][data-glass="on"] .s7-start-menu {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 30%),
+    color-mix(in srgb, var(--s7-taskbar) 75%, transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  backdrop-filter: blur(12px) saturate(1.2);
+}
+
+:root[data-skin="7"] .s7-start-left {
+  flex: 0 0 236px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  border-radius: 4px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+
+:root[data-skin="7"] .s7-start-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+:root[data-skin="7"] .xp-start-spacer {
+  flex: 1;
+}
+
+:root[data-skin="7"] .s7-start-menu .start-menu-row {
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+:root[data-skin="7"] .s7-start-left .start-menu-row:not(:disabled):hover,
+:root[data-skin="7"] .s7-start-left .start-menu-item.open > .start-menu-row {
+  border-color: var(--s7-hl-border);
+  background: var(--s7-hl);
+  color: #000000;
+}
+
+:root[data-skin="7"] .s7-start-menu .xp-start-item .start-menu-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 24px;
+}
+
+:root[data-skin="7"] .s7-start-menu .xp-start-item .start-menu-text {
+  display: flex;
+  flex-direction: column;
+}
+
+:root[data-skin="7"] .s7-start-menu .xp-start-item b {
+  font-weight: normal;
+}
+
+:root[data-skin="7"] .s7-start-menu .xp-start-item small {
+  color: #6d6d6d;
+  font-size: 11px;
+}
+
+:root[data-skin="7"] .s7-start-menu .start-menu-separator {
+  height: 1px;
+  margin: 4px 6px;
+  border: none;
+  background: linear-gradient(90deg, transparent, rgba(128, 128, 128, 0.45) 15%, rgba(128, 128, 128, 0.45) 85%, transparent);
+}
+
+:root[data-skin="7"] .s7-start-all > .start-menu-item > .start-menu-row .start-menu-icon {
+  display: none;
+}
+
+:root[data-skin="7"] .s7-start-all > .start-menu-item > .start-menu-row .start-menu-arrow {
+  margin-left: auto;
+}
+
+:root[data-skin="7"] .s7-start-search {
+  margin-top: 6px;
+}
+
+:root[data-skin="7"] .s7-start-search input {
+  width: 100%;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid #a8b8cc;
+  border-radius: 3px;
+  background: #ffffff;
+  font-style: italic;
+}
+
+:root[data-skin="7"] .s7-start-search input:focus {
+  border-color: #5c9ce3;
+  font-style: normal;
+  outline: none;
+}
+
+/* Right column: light text on the dark glass, glowing highlight */
+:root[data-skin="7"] .s7-start-avatar {
+  align-self: center;
+  width: 52px;
+  height: 52px;
+  margin: -30px 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #ffffff, #dfe9f5);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9), 0 2px 6px rgba(0, 0, 0, 0.45);
+  font-size: 30px;
+}
+
+:root[data-skin="7"] .s7-start-right > .start-menu-row,
+:root[data-skin="7"] .s7-start-right > .start-menu-item > .start-menu-row {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+:root[data-skin="7"] .s7-start-right > .start-menu-row .start-menu-icon,
+:root[data-skin="7"] .s7-start-right > .start-menu-item > .start-menu-row .start-menu-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 14px;
+  text-shadow: none;
+}
+
+:root[data-skin="7"] .s7-start-right > .start-menu-row:not(:disabled):hover,
+:root[data-skin="7"] .s7-start-right > .start-menu-item > .start-menu-row:not(:disabled):hover,
+:root[data-skin="7"] .s7-start-right > .start-menu-item.open > .start-menu-row {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.15));
+  color: #ffffff;
+}
+
+:root[data-skin="7"][data-theme="7-frost"] .s7-start-right > .start-menu-row,
+:root[data-skin="7"][data-theme="7-frost"] .s7-start-right > .start-menu-item > .start-menu-row {
+  color: #ffffff;
+}
+
+:root[data-skin="7"] .s7-start-menu .start-menu-submenu {
+  bottom: auto;
+  top: -4px;
+}
+
+:root[data-skin="7"] .s7-start-all .start-menu-submenu {
+  top: auto;
+  bottom: -4px;
+}
+
+:root[data-skin="7"] .s7-power {
+  position: relative;
+  display: flex;
+  align-self: flex-end;
+  margin: 6px 4px 2px 0;
+}
+
+:root[data-skin="7"] .s7-shutdown,
+:root[data-skin="7"] .s7-shutdown-more {
+  min-width: 0;
+  min-height: 24px;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.1) 50%, rgba(0, 0, 0, 0.1) 51%, rgba(255, 255, 255, 0.12));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+:root[data-skin="7"] .s7-shutdown {
+  border-radius: 3px 0 0 3px;
+}
+
+:root[data-skin="7"] .s7-shutdown-more {
+  padding: 0 6px;
+  border-left: none;
+  border-radius: 0 3px 3px 0;
+  font-size: 9px;
+}
+
+:root[data-skin="7"] .s7-shutdown:hover,
+:root[data-skin="7"] .s7-shutdown-more:hover,
+:root[data-skin="7"] .s7-shutdown-more[aria-expanded="true"] {
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-radius: 3px;
+  background: radial-gradient(ellipse at 50% 100%, rgba(140, 220, 255, 0.6), rgba(140, 220, 255, 0) 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.1));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+:root[data-skin="7"] .s7-shutdown-more:hover,
+:root[data-skin="7"] .s7-shutdown-more[aria-expanded="true"] {
+  border-left: none;
+  border-radius: 0 3px 3px 0;
+}
+
+:root[data-skin="7"] .s7-power-menu {
+  left: auto;
+  right: 0;
+  top: auto;
+  bottom: calc(100% + 4px);
+  min-width: 200px;
+}
+
+/* Phones keep the single-column menu, in the scheme colors */
+:root[data-skin="7"] .wmp-start-menu:not(.s7-start-menu) {
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-radius: 6px 6px 0 0;
+}
+
+:root[data-skin="7"] .start-menu-side {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 40%), var(--s7-taskbar);
+}
+
+/* 7.css paints button hover/press glows on ::before / ::after layers. Our custom-shaped buttons
+   (orb, taskbar, menu rows, transport…) draw their own states, so those layers are switched off.
+   Checkmarks (.checked::before) are ours and keep their pseudo-element. */
+:root[data-skin="7"] :is(.desktop-icon, .start-menu-row, .context-menu-item, .menu-bar-item, .menu-dropdown-item,
+  .track-table-row, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
+  .pane-close, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
+  .tray-disky, .xp-start-item, .taskbar-start, .taskbar-app, .s7-shutdown, .s7-shutdown-more,
+  .control-btn, .toolbar-nav-btn, .xp-tile, .xp-go, .xp-welcome-off)::after,
+:root[data-skin="7"] :is(.desktop-icon, .start-menu-row, .context-menu-item, .menu-bar-item, .menu-dropdown-item,
+  .track-table-row, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
+  .pane-close, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
+  .tray-disky, .xp-start-item, .taskbar-start, .taskbar-app, .s7-shutdown, .s7-shutdown-more,
+  .control-btn, .toolbar-nav-btn, .xp-tile, .xp-go, .xp-welcome-off):not(.checked)::before {
+  content: none;
+}
+
+:root[data-skin="7"] :is(.menu-dropdown-item, .viz-menu-item).checked::before {
+  width: auto;
+  height: auto;
+  top: auto;
+  z-index: auto;
+  opacity: 1;
+  background: none;
+  box-shadow: none;
+  transition: none;
+}
+
+/* ---------- Logon screen (service picker under 7) ---------- */
+:root[data-skin="7"] .xp-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 25000;
+  display: flex;
+  flex-direction: column;
+  color: #ffffff;
+  font-family: var(--font-ui);
+  background:
+    radial-gradient(ellipse at 50% 120%, rgba(120, 220, 255, 0.45), rgba(120, 220, 255, 0) 55%),
+    radial-gradient(ellipse at 20% 0%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 45%),
+    linear-gradient(160deg, #0f4c8f, #1a6fbd 45%, #0b3a73);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-skin="7"] .xp-welcome-band {
+  display: none;
+}
+
+:root[data-skin="7"] .xp-welcome-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px calc(24px + var(--safe-right)) calc(14px + var(--safe-bottom)) calc(24px + var(--safe-left));
+}
+
+:root[data-skin="7"] .xp-welcome-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+:root[data-skin="7"] .xp-welcome-brand {
+  text-align: center;
+}
+
+:root[data-skin="7"] .xp-welcome-logo {
+  display: none;
+}
+
+:root[data-skin="7"] .xp-welcome-brand h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+}
+
+:root[data-skin="7"] .xp-welcome-brand p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+:root[data-skin="7"] .xp-welcome-divider {
+  display: none;
+}
+
+:root[data-skin="7"] .xp-welcome-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+}
+
+:root[data-skin="7"] .xp-tile {
+  width: 200px;
+  min-height: 0;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #ffffff;
+  text-align: center;
+  cursor: pointer;
+}
+
+:root[data-skin="7"] .xp-tile:not(:disabled):hover,
+:root[data-skin="7"] .xp-tile:focus-visible,
+:root[data-skin="7"] .xp-tile.is-chosen {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.06));
+  outline: none;
+}
+
+:root[data-skin="7"] .xp-tile:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* Glass picture frame around the service icon */
+:root[data-skin="7"] .xp-tile-icon {
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  border-radius: 8px;
+  background-color: #eaf3fc;
+  background-size: 56px;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.75), 0 3px 10px rgba(0, 0, 0, 0.45);
+  image-rendering: pixelated;
+  font-size: 40px;
+}
+
+:root[data-skin="7"] .xp-tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+:root[data-skin="7"] .xp-tile-text b {
+  font-size: 18px;
+  font-weight: normal;
+}
+
+:root[data-skin="7"] .xp-tile-actions {
+  margin-top: 6px;
+}
+
+/* Round arrow "go" button */
+:root[data-skin="7"] .xp-go {
+  min-height: 28px;
+  padding: 0 14px;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(180deg, #3d9be8, #1556a8);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-skin="7"] .xp-go:not(:disabled):hover {
+  background:
+    radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(180deg, #67b6f5, #1f6ac2);
+}
+
+:root[data-skin="7"] .xp-welcome-off {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #ffffff;
+  font-size: 13px;
+}
+
+:root[data-skin="7"] .xp-welcome-off:not(:disabled):hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+:root[data-skin="7"] .xp-welcome-off span {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ef8a5c, #b83a12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+:root[data-skin="7"] .xp-welcome-hint {
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+@media (max-width: 767px) {
+  :root[data-skin="7"] .xp-welcome-hint {
+    margin-left: 0;
+  }
+}
+
+/* ---------- Disky: Windows 7 tooltip balloons ---------- */
+:root[data-skin="7"] .assistant-bubble {
+  border: 1px solid #767676;
+  border-radius: 4px;
+  padding: 10px 14px 12px;
+  background: linear-gradient(180deg, #ffffff, #e4e5f0);
+  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.3);
+  font-size: 12px;
+}
+
+:root[data-skin="7"] .assistant-bubble::before {
+  border-color: #767676 transparent transparent transparent;
+}
+
+:root[data-skin="7"] .assistant-bubble::after {
+  border-color: #e4e5f0 transparent transparent transparent;
+}
+
+/* ---------- Boot screen: "Starting Winampify" with a spinning glow ring (original, disc-like) ---------- */
+:root[data-skin="7"] .loading-screen {
+  background: #000000;
+  color: #d8d8d8;
+  font-family: var(--font-ui);
+}
+
+:root[data-skin="7"] .loading-content {
+  align-items: center;
+}
+
+:root[data-skin="7"] .loading-content::before {
+  content: '';
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #000000 0 22%, transparent 23% 60%, #000000 61%),
+    conic-gradient(from 0deg, rgba(60, 170, 255, 0) 0deg, rgba(60, 170, 255, 0.95) 90deg, rgba(160, 230, 255, 1) 120deg, rgba(60, 170, 255, 0) 200deg, rgba(60, 170, 255, 0) 360deg);
+  box-shadow: 0 0 24px rgba(60, 170, 255, 0.45);
+  animation: s7-boot-spin 1.4s linear infinite;
+}
+
+:root[data-skin="7"] .loading-content::after {
+  content: 'Starting Winampify';
+  order: -1;
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 300;
+  color: #ffffff;
+}
+
+@keyframes s7-boot-spin {
+  to { transform: rotate(360deg); }
+}
+
+:root[data-skin="7"] .loading-logs {
+  align-self: stretch;
+  height: 72px;
+}
+
+:root[data-skin="7"] .loading-log {
+  font-size: 12px;
+}
+
+:root[data-skin="7"] .loading-progress-container {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-skin="7"] .loading-content::before {
+    animation: none;
+  }
+}
+
+/* Softer title glow than 7.css's 8x text-shadow (it reads as a box on our title bars) */
+:root[data-skin="7"] .title-bar-text {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.95), 0 0 3px #ffffff;
+}

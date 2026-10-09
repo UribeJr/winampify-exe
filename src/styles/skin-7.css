@@ -104,6 +104,11 @@
 }
 
 /* ---------- Windows ---------- */
+/* 7.css makes every .window position: relative (it loads after our CSS); desktop windows float */
+:root[data-skin="7"] .os-window {
+  position: absolute;
+}
+
 :root[data-skin="7"][data-glass="on"] .os-window {
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);

@@ -1,8 +1,11 @@
 # winampify.exe
 
-A Windows 98 desktop with a Windows Media Player–style music player — for **your own music library**.
-Pick your service when you sign in: a self-hosted [Navidrome](https://www.navidrome.org/) server
-(through the OpenSubsonic API) or Spotify.
+A retro Windows desktop — **Windows 98**, with optional **XP** and **Windows 7** looks — with a Windows Media
+Player–style music player for **your own music**. Pick your service when you sign in: a self-hosted
+[Navidrome](https://www.navidrome.org/) server (through the OpenSubsonic API) or Spotify. You only need one of them.
+
+> There's a hosted, Spotify-only copy for a few invited friends. Spotify only lets apps in development mode serve
+> people the owner has added (up to 5), so it isn't open to the public — run your own copy with the steps below.
 
 ```
 Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic API ──► Navidrome ──► your library
@@ -10,21 +13,23 @@ Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic AP
 
 ## Features
 
-- **Select your music service** — a Win98 logon-style picker for Navidrome or Spotify, remembered per browser
-  (switch any time from Start → Log Off or Start → Settings → Music Service…)
+- **Select your music service** — a logon-style picker for Navidrome or Spotify (only the services you've set up
+  are shown), remembered per browser. Switch any time from Start → Log Off or Start → Settings → Music Service…
 - **Windows 98 desktop** — draggable, maximizable windows, taskbar with a working clock and volume tray,
   Start menu, desktop icons, right-click / long-press menus, Run… and Shut Down… dialogs
-- **Display Properties** — pick a wallpaper (5 built-in pixel-art wallpapers or your own picture, shown
-  centered, tiled or stretched) and a color scheme. Right-click the desktop → Properties, or Start → Settings
+- **Display Properties** — pick a wallpaper (7 built-in original wallpapers or your own picture, shown
+  centered, tiled or stretched), the Windows look and a color scheme. Right-click the desktop → Properties,
+  or Start → Settings
 - **Disky, your (mostly) helpful assistant** — an original CD mascot with a first-visit tour, one-time tips,
   naps when you're idle, and a few easter eggs. He also reads your sticky notes (locally): write "dentist 3pm"
   and he'll offer a reminder, and he cheers when every `[ ]` on a checklist becomes `[x]`. Reminders pop up
   while Winampify is open. Hide him from his menu; Start → Help → Show Disky brings him back
 - **Sticky notes** on the desktop — four colors, collapse to the title bar, and a Recycle Bin to restore
   deleted notes (right-click or long-press the desktop → New Sticky Note)
-- **Media Library** — artists, albums, playlists, Liked Songs (Navidrome favorites),
-  Recently Added and Recently Played
-- **Search** across songs, albums and artists
+- **Media Library** — artists, albums, playlists, Liked Songs and Recently Played (plus Recently Added for
+  Navidrome, and your top artists and tracks for Spotify)
+- **Search** across songs, albums and artists (and playlists on Spotify)
+- **Playlist pane** — next to Now Playing and the visualizations, the queue with what's playing and up next
 - **Playback in the browser** — original files are streamed as-is (M4A/AAC, MP3, FLAC… whatever your browser
   supports); anything it can't decode automatically falls back to an MP3 transcode
 - **Queue controls** — play/pause, stop, previous/next, ±10 s, seek, volume, mute, shuffle, repeat all/one,
@@ -38,7 +43,9 @@ Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic AP
 ## Requirements
 
 - Node.js 18 or newer
-- A Navidrome server (tested with 0.64) that the machine running Winampify can reach
+- At least one music service:
+  - a Navidrome server (tested with 0.64) that the machine running Winampify can reach, and/or
+  - a Spotify account (Premium to play) and a free Spotify developer app — see [Spotify](#spotify-optional)
 
 ## Quick start
 
@@ -46,13 +53,13 @@ Win98 player (React) ──► Express proxy (/api/nd) ──► OpenSubsonic AP
 git clone https://github.com/UribeJr/winampify-exe.git
 cd winampify-exe
 npm install
-cp .env.example .env    # then fill in your Navidrome URL, username and password
+cp .env.example .env    # then fill in your Navidrome and/or Spotify settings
 npm run dev
 ```
 
-Open <http://localhost:3000>. After the boot screen, choose your music service; Navidrome connects and
-opens the player, Spotify sends you to Spotify to sign in. Services that aren't configured in `.env` are
-shown greyed out.
+Open <http://127.0.0.1:3000> (use this address rather than `localhost`: Spotify's sign-in only returns to
+it). After the boot screen, choose your music service; Navidrome connects and opens the player, Spotify sends
+you to Spotify to sign in. Only the services configured in `.env` are offered.
 
 ## Configuration
 
@@ -61,14 +68,20 @@ the browser. See [`.env.example`](.env.example).
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `NAVIDROME_URL` | yes | Base URL of your Navidrome server, e.g. `http://your-navidrome-host:4533` |
-| `NAVIDROME_USERNAME` | yes | Navidrome user |
-| `NAVIDROME_PASSWORD` | yes | Navidrome password |
+| `NAVIDROME_URL` | for Navidrome | Base URL of your Navidrome server, e.g. `http://your-navidrome-host:4533` |
+| `NAVIDROME_USERNAME` | for Navidrome | Navidrome user |
+| `NAVIDROME_PASSWORD` | for Navidrome | Navidrome password |
 | `NAVIDROME_NAME` | no | Server name shown in the UI ("Connect to …"). Default `Navidrome` |
 | `NAVIDROME_CLIENT_ID` | no | Player name Navidrome shows under Players. Default `winampify` |
 | `MUSIC_PROVIDER` | no | Service pre-selected on the sign-in picker: `navidrome` (default) or `spotify` |
+| `SPOTIFY_CLIENT_ID` | for Spotify | From your Spotify developer app |
+| `SPOTIFY_CLIENT_SECRET` | for Spotify | From your Spotify developer app |
+| `SPOTIFY_REDIRECT_URI` | for Spotify | Default `http://127.0.0.1:3000/callback`; must match the app's Redirect URI |
+| `FRONTEND_URL`, `CLIENT_ORIGIN` | hosted only | The site's address, e.g. `https://your-site.example` (see [Share it with friends](#share-it-with-friends-vercel--spotify)) |
 | `PORT` | no | API server port. Default `3001` |
 | `HOST` | no | Interface the API server listens on. Default: this computer only (localhost) in development |
+
+The Navidrome variables are only needed if you use Navidrome; leave them empty for a Spotify-only setup.
 
 ## Security model
 
@@ -143,7 +156,7 @@ The equalizer and real-audio visualizer need audio the browser can process, so t
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | API server (port 3001) + Vite dev server (port 3000) |
-| `npm test` | Proxy and normalizer tests (Node's built-in test runner, no extra dependencies) |
+| `npm test` | Unit tests: proxies, libraries, skins, equalizer, visualizer, Disky and more (Node's built-in test runner, no extra dependencies) |
 | `npm run build` | Production build into `dist/` |
 | `npm start` | Serve `dist/` and the API from Express (`NODE_ENV=production`) |
 
@@ -154,15 +167,19 @@ app.js                 Express app: /api/config, Spotify OAuth + proxy, Navidrom
 server.js              Local / self-hosted entry point (app.listen)
 api/index.js           Vercel function wrapping app.js (see vercel.json)
 server/navidrome.js    Allowlisted Navidrome / OpenSubsonic proxy (token auth, streaming, cover art)
+tools/scopeSkin.mjs    Build step that scopes 98.css / XP.css / 7.css to their skin
 src/
   App.jsx              Boot screen, desktop shell wiring, dialogs
-  os/                  Window manager, Window, Taskbar, Start menu, Desktop, context menu, app registry
-  player/              Media player: views, track table, search, control bar, seek bar, visualizer
-  music/               Provider layer: app models, MusicContext, Navidrome library + <audio> engine
+  os/                  Window manager, Window, Taskbar, Start menu, Desktop, context menu, sticky notes, app registry
+  player/              Media player: views, track table, search, control bar, panes, equalizer, visualizer
+  music/               Provider layer: app models, MusicContext, Navidrome + Spotify libraries, <audio> engine
   spotify/             Spotify backend: OAuth, API client, Web Playback SDK and Connect engines
-  dialogs/             Run, Shut Down, Themes, sign-in and message dialogs
-  styles/              base, shell, player and mobile CSS
-test/                  Normalizer tests
+  assistant/           Disky: tips, mood, note companion and placement
+  dialogs/             Run, Shut Down, Display Properties, sign-in / logon screens, Recycle Bin, messages
+  contexts/, data/     Skin, color scheme and wallpaper state and catalogs
+  hooks/               Shared React hooks (media queries, clock, long-press…)
+  styles/              base, shell, player, mobile and assistant CSS, plus the lazy XP and Windows 7 skin layers
+test/                  Unit tests (npm test)
 ```
 
 Adding another music backend means implementing the library surface in `src/music/navidrome/library.js`

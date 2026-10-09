@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { MusicProvider, useMusic, useService } from './music/MusicContext';
+import { searchSource } from './music/models';
 import NoServiceBackend from './music/NoServiceBackend';
 import LoadingScreen from './os/LoadingScreen';
 import Desktop from './os/Desktop';
@@ -215,6 +216,9 @@ function Shell() {
         break;
       case 'open-source':
         openApp('media-player', { type: 'source', source: data });
+        break;
+      case 'search-music':
+        if (data) openApp('media-player', { type: 'source', source: searchSource(data) });
         break;
       case 'themes':
         setDialog({ type: 'display', props: { initialTab: 'appearance' } });

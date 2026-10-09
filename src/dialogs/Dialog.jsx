@@ -20,7 +20,7 @@ const Dialog = ({ title, icon, onClose, className = '', children, closeOnBackdro
         if (closeOnBackdrop && e.target === e.currentTarget) onClose();
       }}
     >
-      <div className={`window os-dialog ${className}`} role="dialog" aria-modal="true" aria-label={title}>
+      <div className={`window os-dialog active ${className}`} role="dialog" aria-modal="true" aria-label={title}>
         <div className="title-bar">
           <div className="title-bar-text">
             {icon && <span className={`wmp-icon icon-${icon}`} aria-hidden="true" />}

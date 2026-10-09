@@ -14,7 +14,11 @@
     <title>winampify.exe</title>
     <script>
       // Pick the saved skin before anything paints (see src/contexts/ThemeContext.jsx)
-      try { if (localStorage.getItem('winampify-skin') === 'xp') document.documentElement.setAttribute('data-skin', 'xp'); } catch (e) {}
+      try {
+        var skin = localStorage.getItem('winampify-skin');
+        if (skin === 'xp' || skin === '7') document.documentElement.setAttribute('data-skin', skin);
+        if (localStorage.getItem('winampify-7-glass') !== 'off') document.documentElement.setAttribute('data-glass', 'on');
+      } catch (e) {}
     </script>
   </head>
   <body>

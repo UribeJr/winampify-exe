@@ -1586,9 +1586,15 @@
   color: #404040;
 }
 
-/* Spotify: read-only queue rows and the "Up Next" label */
+/* Spotify: the now-playing row is read-only; "Up Next" rows are buttons that skip ahead */
 div.queue-item {
   cursor: default;
+}
+
+button.queue-item:disabled {
+  cursor: progress;
+  color: inherit;
+  text-shadow: none;
 }
 
 .queue-heading {

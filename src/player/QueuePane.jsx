@@ -13,6 +13,19 @@ const QueuePane = ({ onClose }) => {
   // Spotify: the queue lives on Spotify's side; fetch it (read-only) when the pane opens and per track
   const remote = !Array.isArray(upcoming) && typeof library?.getQueue === 'function';
   const [remoteQueue, setRemoteQueue] = useState(null);
+  const [skipping, setSkipping] = useState(false);
+  const canSkip = remote && typeof controls.skipAhead === 'function';
+  const skipTo = async (count) => {
+    if (skipping) return;
+    setSkipping(true);
+    try {
+      await controls.skipAhead(count);
+    } catch (err) {
+      console.error('Skip failed', err);
+    } finally {
+      setSkipping(false);
+    }
+  };
   useEffect(() => {
     if (!remote) return undefined;
     let cancelled = false;
@@ -49,18 +62,27 @@ const QueuePane = ({ onClose }) => {
           </li>
         )}
         {remoteQueue.upcoming.length > 0 && <li className="queue-heading">Up Next</li>}
-        {remoteQueue.upcoming.map((t, i) => (
-          <li key={`${t.key}-${i}`}>
-            <div className="queue-item">
+        {remoteQueue.upcoming.map((t, i) => {
+          const inner = (
+            <>
               <span className="queue-num">{i + 1}</span>
               <span className="queue-text">
                 <span className="queue-title">{t.title}</span>
                 <span className="queue-artist">{artistNames(t)}</span>
               </span>
               <span className="queue-time">{t.durationMs ? formatTime(t.durationMs) : ''}</span>
-            </div>
-          </li>
-        ))}
+            </>
+          );
+          return (
+            <li key={`${t.key}-${i}`}>
+              {canSkip ? (
+                <button type="button" className="queue-item" onClick={() => skipTo(i + 1)} disabled={skipping} title={`Play ${t.title}`}>
+                  {inner}
+                </button>
+              ) : <div className="queue-item">{inner}</div>}
+            </li>
+          );
+        })}
       </ol>
     );
   } else if (!Array.isArray(upcoming)) {

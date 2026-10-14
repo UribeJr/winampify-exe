@@ -1762,3 +1762,103 @@ button.queue-item:disabled {
   color: #0000c0;
   text-decoration: underline;
 }
+
+/* Playlist pane: List / Art + List switch, current cover, row thumbnails */
+.pane-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pane-view-switch {
+  display: flex;
+}
+
+.pane-view {
+  width: 18px;
+  height: 16px;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.pane-view[aria-pressed='true'] {
+  opacity: 1;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.pane-view:focus-visible {
+  outline: 1px dotted currentColor;
+}
+
+.queue-cover {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 8px 6px;
+  border-bottom: 1px solid var(--win-shadow);
+  font-size: 11px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.queue-cover img,
+.queue-cover-placeholder {
+  width: 100%;
+  max-width: 200px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+  margin-bottom: 4px;
+  border: 1px solid var(--win-shadow);
+}
+
+.queue-cover-placeholder {
+  background-color: var(--win-face-light);
+  background-position: center;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.queue-cover-title,
+.queue-cover-artist {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-cover-title {
+  font-weight: bold;
+}
+
+.queue-cover-artist {
+  color: #404040;
+}
+
+/* Short windows: a smaller cover so the list keeps room */
+@media (max-height: 700px) {
+  .queue-cover img,
+  .queue-cover-placeholder {
+    max-width: 120px;
+  }
+}
+
+.queue-thumb {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border: 1px solid #c0c0c0;
+}
+
+.queue-thumb.placeholder {
+  background-color: var(--win-face-light);
+  background-position: center;
+  background-size: 16px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}

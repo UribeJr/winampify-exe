@@ -8,8 +8,8 @@ let reply = () => ({ status: 200, body: { ok: true } });
 globalThis.fetch = async (url, opts) => {
   if (String(url).startsWith('https://api.spotify.com/')) {
     calls.push(String(url));
-    const { status, body } = reply(String(url));
-    return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+    const { status, body, headers = {} } = reply(String(url), opts);
+    return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...headers } });
   }
   return realFetch(url, opts);
 };
@@ -68,4 +68,31 @@ test('ids and types are validated before calling Spotify', async () => {
   assert.equal(calls.length, 0);
   await get('/api/me/top/tracks?time_range=forever&limit=999');
   assert.match(calls[0], /\/me\/top\/tracks\?time_range=medium_term&limit=50$/);
+});
+
+test('a Spotify 429 reaches the client with its Retry-After', async () => {
+  reply = () => ({ status: 429, body: { error: { status: 429, message: 'API rate limit exceeded' } }, headers: { 'retry-after': '7' } });
+  const res = await get('/api/me/top/artists');
+  assert.equal(res.status, 429);
+  assert.equal(res.headers.get('retry-after'), '7');
+  reply = () => ({ status: 200, body: { ok: true } });
+});
+
+test('library save/remove/check accept up to 40 song or album URIs and nothing else', async () => {
+  calls.length = 0;
+  const methods = [];
+  reply = (url, opts) => { methods.push(opts?.method || 'GET'); return { status: 200, body: [true] }; };
+  const send = (method, uris) => realFetch(`${base}/api/me/library?uris=${encodeURIComponent(uris)}`, { method, headers: { Authorization: 'Bearer t' } });
+  assert.equal((await send('PUT', 'spotify:track:abc,spotify:album:def')).status, 200);
+  assert.equal((await send('DELETE', 'spotify:track:abc')).status, 200);
+  assert.equal((await get('/api/me/library/contains?uris=spotify:track:abc')).status, 200);
+  assert.deepEqual(methods, ['PUT', 'DELETE', 'GET']);
+  assert.match(calls[0], /\/me\/library\?uris=spotify%3Atrack%3Aabc%2Cspotify%3Aalbum%3Adef$/);
+  calls.length = 0;
+  const tooMany = Array.from({ length: 41 }, (_, i) => `spotify:track:t${i}`).join(',');
+  for (const bad of ['', 'spotify:playlist:abc', 'spotify:track:../me', tooMany]) {
+    assert.equal((await send('PUT', bad)).status, 400, bad.slice(0, 30));
+  }
+  assert.equal(calls.length, 0, 'invalid requests never reach Spotify');
+  reply = () => ({ status: 200, body: { ok: true } });
 });

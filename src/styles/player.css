@@ -985,7 +985,7 @@
   background: #f4f4f4;
 }
 
-.track-table-row:not(:disabled):hover {
+.track-table-row:not(.unplayable):hover {
   background: var(--win-hover);
   color: #ffffff;
 }
@@ -999,7 +999,7 @@
   color: #ffffff;
 }
 
-.track-table-row:disabled {
+.track-table-row.unplayable {
   color: #a0a0a0;
   cursor: default;
 }
@@ -1608,4 +1608,151 @@ div.queue-item {
 
 .library-reauth {
   margin: 0 0 12px;
+}
+
+/* ---------- Media Library 2.0: sortable columns, hearts, filter, album shelf ---------- */
+.track-table.has-dates .track-table-header,
+.track-table.has-dates .track-table-row {
+  grid-template-columns: 36px minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1.4fr) 40px 84px 56px;
+}
+
+.track-table.has-dates.no-album .track-table-header,
+.track-table.has-dates.no-album .track-table-row {
+  grid-template-columns: 36px minmax(0, 2fr) minmax(0, 1.4fr) 40px 84px 56px;
+}
+
+.track-table-row:focus-visible {
+  outline: 1px dotted currentColor;
+  outline-offset: -2px;
+}
+
+.track-table-header .col-length {
+  text-align: right;
+}
+
+.track-sort {
+  width: 100%;
+  font: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-table-header .col-length .track-sort {
+  text-align: right;
+}
+
+.track-sort:focus-visible,
+.track-heart-btn:focus-visible,
+.library-see-all:focus-visible {
+  outline: 1px dotted currentColor;
+}
+
+.track-heart-btn {
+  width: 14px;
+  margin-right: 4px;
+  font: inherit;
+  text-align: center;
+  color: #c00000;
+  opacity: 0;
+}
+
+.track-heart-btn.on,
+.track-table-row:hover .track-heart-btn,
+.track-table-row:focus-within .track-heart-btn,
+.track-table.compact .track-heart-btn {
+  opacity: 1;
+}
+
+/* 98 highlights rows in dark blue, so the heart follows the row's white text; XP/7 keep it red */
+:root:not([data-skin]) .track-table-row:not(.current):hover .track-heart-btn {
+  color: inherit;
+}
+
+.library-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  flex-shrink: 0;
+}
+
+.library-filter {
+  flex: 0 1 260px;
+  min-width: 0;
+}
+
+.library-filter-count {
+  font-size: 11px;
+  color: var(--win-shadow);
+  white-space: nowrap;
+}
+
+.library-refine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding-right: 12px;
+}
+
+.library-refine .library-filter-bar {
+  flex: 1 1 260px;
+}
+
+.library-sort {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  padding-left: 12px;
+}
+
+.library-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 12px 6px;
+  flex-shrink: 0;
+}
+
+.library-chips button {
+  min-width: 0;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.library-chips button[aria-pressed='true'] {
+  box-shadow: var(--bevel-pressed);
+  font-weight: bold;
+}
+
+.library-status {
+  margin: 0;
+  padding: 4px 12px;
+  font-size: 11px;
+  background: var(--win-face);
+  border-bottom: 1px solid var(--win-shadow);
+  flex-shrink: 0;
+}
+
+.library-empty-note {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--win-shadow);
+}
+
+.library-section-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.library-see-all {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: normal;
+  color: #0000c0;
+  text-decoration: underline;
 }

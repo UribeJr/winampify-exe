@@ -114,11 +114,11 @@
 
 /* ---------- Our non-button buttons: keep xp.css button chrome off them ---------- */
 :root[data-skin="xp"] :is(.desktop-icon, .start-menu-row, .context-menu-item, .menu-bar-item, .menu-dropdown-item,
-  .track-table-row, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
+  .track-table-row, .track-sort, .track-heart-btn, .library-see-all, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
   .pane-close, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
   .tray-disky, .xp-start-item, .xp-start-foot button),
 :root[data-skin="xp"] :is(.desktop-icon, .start-menu-row, .context-menu-item, .menu-bar-item, .menu-dropdown-item,
-  .track-table-row, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
+  .track-table-row, .track-sort, .track-heart-btn, .library-see-all, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
   .pane-close, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
   .tray-disky, .xp-start-item, .xp-start-foot button):is(:hover, :focus, :active) {
   border: none;

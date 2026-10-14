@@ -3,12 +3,16 @@
 // `items[].item` (was `tracks[].track`), only owned/collaborative playlists list their songs,
 // and search returns at most 10 results per type per request.
 import { TOP_SOURCE, RECENT_SOURCE } from '../models.js';
+import { createCache, HOUR, MINUTE } from './cache.js';
+import { createLibraryStore, memoryPersist } from './libraryStore.js';
 
 const PAGE_SIZE = { playlist: 100, liked: 50, search: 10 };
 const MAX_PLAYLISTS = 200;
 const MAX_ARTISTS = 200;
+const CONTAINS_BATCH = 40; // Spotify's limit for /me/library/contains
 
-const bySize = (images = []) => [...images].sort((a, b) => (a.width || 0) - (b.width || 0));
+// Spotify sends `images: null` for playlists without a cover (and sometimes other objects)
+const bySize = (images) => [...(images || [])].sort((a, b) => (a.width || 0) - (b.width || 0));
 const largest = (images) => bySize(images).pop()?.url || null;
 const smallest = (images, min = 64) => {
   const sorted = bySize(images);
@@ -26,6 +30,7 @@ export const normalizeSpotifyTrack = (track, albumOverride) => {
     artists: (track.artists || []).map((a) => ({ id: a.id || null, name: a.name })),
     album: { id: album.id || null, name: album.name || track.show?.name || '' },
     durationMs: track.duration_ms || 0,
+    year: album.release_date ? Number(album.release_date.slice(0, 4)) : null,
     coverArt: largest(album.images || track.images),
     coverArtSmall: smallest(album.images || track.images),
     starred: false,
@@ -41,6 +46,7 @@ export const normalizePlaylist = (pl, meId = null) => ({
   // Spotify only lists the songs of playlists you own or collaborate on
   owned: Boolean(pl.collaborative || (meId && pl.owner?.id === meId)),
   owner: pl.owner?.display_name || '',
+  snapshotId: pl.snapshot_id || null,
   coverArt: largest(pl.images),
   coverArtSmall: smallest(pl.images)
 });
@@ -71,6 +77,13 @@ export const normalizeArtist = (ar) => ({
 const entryTrack = (entry) => entry?.item || entry?.track || null;
 const fromItems = (items = []) => items.map((entry) => normalizeSpotifyTrack(entryTrack(entry))).filter((t) => t && t.key);
 
+// Entries of /me/tracks and /me/albums, with the date you saved them
+export const normalizeSavedTrack = (entry) => {
+  const track = normalizeSpotifyTrack(entry?.track);
+  return track?.key ? { ...track, starred: true, addedAt: entry.added_at || null } : null;
+};
+export const normalizeSavedAlbum = (entry) => (entry?.album ? { ...normalizeAlbum(entry.album), addedAt: entry.added_at || null } : null);
+
 const uniqueBy = (list, keyOf) => {
   const seen = new Set();
   return list.filter((x) => {
@@ -83,22 +96,55 @@ const uniqueBy = (list, keyOf) => {
 
 const isForbidden = (err) => err?.status === 403;
 
+const trackUri = (id) => `spotify:track:${id}`;
+
 /**
- * Spotify library backed by the proxy client (src/spotify/api.js).
- * Favorites (starring) aren't wired for Spotify, so that UI stays hidden.
+ * Spotify library backed by the proxy client (src/spotify/api.js). Reads that rarely change are
+ * cached for the session; saved songs, albums and followed artists come from the local index
+ * (libraryStore.js) once it has synced, with live API reads until then. Favorites are Liked Songs.
+ * `persist`: where the index is kept (IndexedDB in the browser; memory by default).
  */
-export function createSpotifyLibrary(api) {
+export function createSpotifyLibrary(api, { persist = memoryPersist(), pause } = {}) {
   let mePromise = null;
   const meId = () => {
     if (!mePromise) mePromise = api.getMe().then((me) => me?.id || null).catch(() => null);
     return mePromise;
   };
   let playlistIndex = new Map(); // id → normalized playlist, to know which ones can list songs
+  const cache = createCache();
+  const store = createLibraryStore({
+    api,
+    persist,
+    ...(pause ? { pause } : {}),
+    normalize: { savedTrack: normalizeSavedTrack, savedAlbum: normalizeSavedAlbum, artist: normalizeArtist }
+  });
+
+  const recentlyPlayed = () => cache.get('recent', 2 * MINUTE, () => api.getRecentlyPlayed(50));
+  const topItems = (type, range, limit) => cache.get(`top:${type}:${range}:${limit}`, 6 * HOUR, () => api.getTop(type, range, limit));
+
+  // Mark which songs are in Liked Songs: from the index, or (index unavailable) by asking Spotify
+  const withStarred = async (tracks) => {
+    if (store.ready) return tracks.map((t) => ({ ...t, starred: store.has(t.uri) }));
+    if (store.getStatus().state === 'syncing' || !api.libraryContains) return tracks;
+    const result = [...tracks];
+    try {
+      for (let i = 0; i < tracks.length; i += CONTAINS_BATCH) {
+        const batch = tracks.slice(i, i + CONTAINS_BATCH).filter((t) => t.uri);
+        const flags = await api.libraryContains(batch.map((t) => t.uri));
+        batch.forEach((t, j) => {
+          if (Array.isArray(flags) && flags[j]) result[result.indexOf(t)] = { ...t, starred: true };
+        });
+      }
+    } catch (err) {
+      console.warn('Could not check Liked Songs', err);
+    }
+    return result;
+  };
 
   return {
     id: 'spotify',
     name: 'Spotify',
-    capabilities: { search: true, artists: true, star: false, scrobble: false, recentAlbums: true, devices: true },
+    capabilities: { search: true, artists: true, star: true, scrobble: false, recentAlbums: true, devices: true },
     labels: { newest: 'Recently Saved', recent: 'Recently Played', searchMeta: 'on Spotify' },
 
     async getPlaylists() {
@@ -122,90 +168,107 @@ export function createSpotifyLibrary(api) {
         const notListable = { tracks: [], total: known?.songCount ?? 0, hasMore: false, notice: 'not_listable' };
         if (known && !known.owned) return notListable;
         try {
-          const page = await api.getPlaylistItems(source.id, offset, PAGE_SIZE.playlist);
-          return { tracks: fromItems(page.items), total: page.total ?? 0, hasMore: Boolean(page.next) };
+          // A playlist's songs only change with its snapshot id, so a page is reused until then
+          const ttl = known?.snapshotId ? 24 * HOUR : 2 * MINUTE;
+          const page = await cache.get(`playlist:${source.id}:${known?.snapshotId || ''}:${offset}`, ttl,
+            () => api.getPlaylistItems(source.id, offset, PAGE_SIZE.playlist));
+          return { tracks: await withStarred(fromItems(page.items)), total: page.total ?? 0, hasMore: Boolean(page.next) };
         } catch (err) {
           if (isForbidden(err)) return notListable;
           throw err;
         }
       }
       if (source.type === 'liked') {
+        if (store.ready) {
+          const tracks = store.getAll('tracks');
+          return { tracks, total: tracks.length, hasMore: false };
+        }
         const page = await api.getLikedTracks(offset, PAGE_SIZE.liked);
-        return { tracks: fromItems(page.items), total: page.total ?? 0, hasMore: Boolean(page.next) };
+        const tracks = (page.items || []).map(normalizeSavedTrack).filter(Boolean);
+        return { tracks, total: page.total ?? 0, hasMore: Boolean(page.next) };
       }
       if (source.type === 'album') {
-        const album = await api.getAlbum(source.id);
+        const album = await cache.get(`album:${source.id}`, 24 * HOUR, () => api.getAlbum(source.id));
         const tracks = (album.tracks?.items || []).map((t) => normalizeSpotifyTrack(t, album));
-        return { tracks, total: album.tracks?.total ?? tracks.length, hasMore: false };
+        return { tracks: await withStarred(tracks), total: album.tracks?.total ?? tracks.length, hasMore: false };
       }
       if (source.type === 'search') {
         const data = await api.search(source.query, ['track'], offset);
         const page = data.tracks || {};
         return {
-          tracks: (page.items || []).map((t) => normalizeSpotifyTrack(t)).filter(Boolean),
+          tracks: await withStarred((page.items || []).map((t) => normalizeSpotifyTrack(t)).filter(Boolean)),
           total: page.total ?? 0,
           hasMore: Boolean(page.next)
         };
       }
       if (source.type === TOP_SOURCE.type) {
-        const data = await api.getTop('tracks', 'medium_term', 50);
-        const tracks = (data.items || []).map((t) => normalizeSpotifyTrack(t)).filter(Boolean);
+        const data = await topItems('tracks', 'medium_term', 50);
+        const tracks = await withStarred((data.items || []).map((t) => normalizeSpotifyTrack(t)).filter(Boolean));
         return { tracks, total: tracks.length, hasMore: false };
       }
       if (source.type === RECENT_SOURCE.type) {
-        const data = await api.getRecentlyPlayed(50);
-        const tracks = uniqueBy(fromItems(data.items), (t) => t.key);
+        const data = await recentlyPlayed();
+        const tracks = await withStarred(uniqueBy(fromItems(data.items), (t) => t.key));
         return { tracks, total: tracks.length, hasMore: false };
       }
       return { tracks: [], total: 0, hasMore: false };
     },
 
+    // Every saved album once indexed (newest saved first); the latest 50 until then
     async getAlbums() {
+      if (store.ready) return store.getAll('albums');
       const data = await api.getSavedAlbums(0, 50);
-      return (data.items || []).map((item) => item.album).filter(Boolean).map(normalizeAlbum);
+      return (data.items || []).map(normalizeSavedAlbum).filter(Boolean);
     },
 
     // 'newest' → albums you saved most recently; 'recent' → albums of what you played lately
     async getAlbumList(type, size = 12) {
       if (type === 'newest') {
+        if (store.ready) return store.getAll('albums').slice(0, size);
         const data = await api.getSavedAlbums(0, size);
-        return (data.items || []).map((item) => item.album).filter(Boolean).map(normalizeAlbum);
+        return (data.items || []).map(normalizeSavedAlbum).filter(Boolean);
       }
       if (type === 'recent') {
-        const data = await api.getRecentlyPlayed(50);
+        const data = await recentlyPlayed();
         const albums = (data.items || []).map((entry) => entryTrack(entry)?.album).filter(Boolean);
         return uniqueBy(albums, (al) => al.id).slice(0, size).map(normalizeAlbum);
       }
       return [];
     },
 
-    // Followed artists; if you don't follow anyone, your top artists instead
+    // Followed artists (from the index once synced); if you follow nobody, your top artists instead
     async getArtists() {
-      const artists = [];
-      let after;
-      try {
-        while (artists.length < MAX_ARTISTS) {
-          const data = await api.getFollowedArtists(after);
-          const page = data.artists || {};
-          artists.push(...(page.items || []));
-          after = page.cursors?.after;
-          if (!page.next || !after) break;
+      let artists = store.ready ? store.getAll('artists') : [];
+      if (!store.ready) {
+        const raw = [];
+        let after;
+        try {
+          while (raw.length < MAX_ARTISTS) {
+            const page = (await api.getFollowedArtists(after)).artists || {};
+            raw.push(...(page.items || []));
+            after = page.cursors?.after;
+            if (!page.next || !after) break;
+          }
+        } catch (err) {
+          if (!isForbidden(err)) throw err; // missing scope until the next sign-in
         }
-      } catch (err) {
-        if (!isForbidden(err)) throw err; // missing scope until the next sign-in
+        artists = raw.map(normalizeArtist);
       }
       if (!artists.length) {
         try {
-          artists.push(...((await api.getTop('artists', 'medium_term', 30)).items || []));
+          artists = ((await topItems('artists', 'medium_term', 30)).items || []).map(normalizeArtist);
         } catch (err) {
           if (!isForbidden(err)) throw err;
         }
       }
-      return uniqueBy(artists, (a) => a.id).map(normalizeArtist).sort((a, b) => a.name.localeCompare(b.name));
+      return uniqueBy(artists, (a) => a.id).sort((a, b) => a.name.localeCompare(b.name));
     },
 
     async getArtist(artistId) {
-      const [artist, albums] = await Promise.all([api.getArtist(artistId), api.getArtistAlbums(artistId)]);
+      const [artist, albums] = await Promise.all([
+        cache.get(`artist:${artistId}`, 24 * HOUR, () => api.getArtist(artistId)),
+        cache.get(`artist-albums:${artistId}`, 24 * HOUR, () => api.getArtistAlbums(artistId))
+      ]);
       const list = uniqueBy((albums.items || []).map(normalizeAlbum), (al) => al.id)
         .sort((a, b) => b.releaseDate.localeCompare(a.releaseDate));
       return { artist: { ...normalizeArtist(artist), albumCount: list.length }, albums: list };
@@ -226,7 +289,7 @@ export function createSpotifyLibrary(api) {
       const sections = [{ kind: 'sources', title: 'Made from your listening', items: [TOP_SOURCE, RECENT_SOURCE] }];
       let needsReauth = false;
       try {
-        const top = await api.getTop('artists', 'short_term', 12);
+        const top = await topItems('artists', 'short_term', 12);
         const items = (top.items || []).map(normalizeArtist);
         if (items.length) sections.unshift({ kind: 'artists', title: 'Your Top Artists', items });
       } catch (err) {
@@ -245,6 +308,42 @@ export function createSpotifyLibrary(api) {
       };
     },
 
-    getAudioAnalysis: (trackId) => api.getAudioAnalysis(trackId)
+    // Liked Songs. `track` (when given) also updates the index without another read.
+    async star(trackId, track) {
+      const uri = track?.uri || trackUri(trackId);
+      await api.saveToLibrary([uri]);
+      if (track) store.add('tracks', { ...track, starred: true, addedAt: new Date().toISOString() });
+    },
+    async unstar(trackId, track) {
+      const uri = track?.uri || trackUri(trackId);
+      await api.removeFromLibrary([uri]);
+      store.remove('tracks', uri);
+    },
+
+    // The local index: open the signed-in user's saved copy (true if it's usable right away),
+    // then bring it up to date (true if it changed)
+    async openIndex() {
+      const id = await meId();
+      if (!id) return false;
+      await store.open(id);
+      return store.ready;
+    },
+    async syncIndex(options) {
+      if (!(await meId())) return false;
+      await this.openIndex();
+      return store.sync(options);
+    },
+    index: { subscribe: store.subscribe, getStatus: store.getStatus },
+
+    // Sign-out: forget cached reads and this user's index
+    async reset() {
+      cache.invalidate();
+      mePromise = null;
+      playlistIndex = new Map();
+      await store.clear();
+    },
+
+    // Spotify no longer serves audio analysis to new apps; the visualizer uses its simulated signal
+    getAudioAnalysis: null
   };
 }

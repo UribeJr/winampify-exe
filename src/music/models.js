@@ -41,7 +41,7 @@
  *
  * A library "source" the player can browse and queue from.
  * @typedef {Object} Source
- * @property {'liked'|'playlist'|'album'|'artist'|'search'} type
+ * @property {'liked'|'playlist'|'album'|'albums'|'artist'|'search'|'top'|'recent'} type
  * @property {string} id
  * @property {string} name
  * @property {string|null} [coverArt]
@@ -50,6 +50,8 @@
  */
 
 export const LIKED_SOURCE = { type: 'liked', id: 'liked', name: 'Liked Songs' };
+// The album shelf (a page of tiles, not a track list)
+export const ALBUMS_SOURCE = { type: 'albums', id: 'albums', name: 'Albums' };
 // Built from your listening (Spotify): played as plain track lists, so no `uri`
 export const TOP_SOURCE = { type: 'top', id: 'top', name: 'Your Top Tracks' };
 export const RECENT_SOURCE = { type: 'recent', id: 'recent', name: 'Recently Played' };

@@ -84,3 +84,78 @@ test('home drops rows Spotify refuses and asks for a fresh sign-in', async () =>
   const ok = createSpotifyLibrary(fakeApi({ getTop: async () => ({ items: [{ id: '1', name: 'A' }] }) }));
   assert.deepEqual((await ok.getHome()).sections.map((s) => s.title), ['Your Top Artists', 'Made from your listening']);
 });
+
+const savedAlbum = (i) => ({ added_at: `2026-01-01T00:00:00Z`, album: { id: `al${i}`, uri: `spotify:album:al${i}`, name: `Album ${i}`, artists: [{ id: 'ar1', name: 'Artist' }], images: [], release_date: '1999-05-01', total_tracks: 10 } });
+const savedTrack = (id) => ({ added_at: '2026-02-01T00:00:00Z', track: track(id) });
+
+function libraryApi({ albums = 120, liked = ['a'] } = {}) {
+  const calls = { save: [], remove: [], contains: 0 };
+  const albumList = Array.from({ length: albums }, (_, i) => savedAlbum(i));
+  const likedList = liked.map(savedTrack);
+  return {
+    calls,
+    api: fakeApi({
+      getSavedAlbums: async (offset, limit = 50) => ({ items: albumList.slice(offset, offset + limit), total: albumList.length, next: offset + limit < albumList.length ? 'm' : null }),
+      getLikedTracks: async (offset) => ({ items: likedList.slice(offset, offset + 50), total: likedList.length, next: null }),
+      getFollowedArtists: async () => ({ artists: { items: [{ id: 'ar1', name: 'Artist' }], next: null } }),
+      getAlbum: async () => ({ id: 'al0', name: 'Album 0', images: [], release_date: '1999', tracks: { items: [track('a'), track('b')], total: 2 } }),
+      libraryContains: async (uris) => { calls.contains += 1; return uris.map((u) => u === 'spotify:track:a'); },
+      saveToLibrary: async (uris) => { calls.save.push(...uris); },
+      removeFromLibrary: async (uris) => { calls.remove.push(...uris); }
+    })
+  };
+}
+
+test('before indexing: the latest 50 albums and hearts checked with Spotify; after: everything from the index', async () => {
+  const { api, calls } = libraryApi();
+  const lib = createSpotifyLibrary(api, { pause: async () => {} });
+  assert.equal((await lib.getAlbums()).length, 50);
+  const before = await lib.getTracks({ type: 'album', id: 'al0' });
+  assert.deepEqual(before.tracks.map((t) => t.starred), [true, false]);
+  assert.equal(calls.contains, 1);
+
+  assert.equal(await lib.syncIndex(), true);
+  const albums = await lib.getAlbums();
+  assert.equal(albums.length, 120);
+  assert.equal(albums[0].addedAt, '2026-01-01T00:00:00Z');
+  assert.equal(albums[0].year, 1999);
+  const liked = await lib.getTracks({ type: 'liked', id: 'liked' });
+  assert.deepEqual([liked.tracks.length, liked.hasMore, liked.tracks[0].starred], [1, false, true]);
+  const after = await lib.getTracks({ type: 'album', id: 'al0' });
+  assert.deepEqual(after.tracks.map((t) => t.starred), [true, false]);
+  assert.equal(calls.contains, 1, 'the index answers now');
+  assert.deepEqual((await lib.getArtists()).map((a) => a.name), ['Artist']);
+});
+
+test('star / unstar save to and remove from Liked Songs and update the index', async () => {
+  const { api, calls } = libraryApi();
+  const lib = createSpotifyLibrary(api, { pause: async () => {} });
+  await lib.syncIndex();
+  const b = (await lib.getTracks({ type: 'album', id: 'al0' })).tracks[1];
+  await lib.star(b.id, b);
+  assert.deepEqual(calls.save, ['spotify:track:b']);
+  assert.deepEqual((await lib.getTracks({ type: 'liked', id: 'liked' })).tracks.map((t) => t.id), ['b', 'a']);
+  await lib.unstar('a');
+  assert.deepEqual(calls.remove, ['spotify:track:a']);
+  assert.deepEqual((await lib.getTracks({ type: 'liked', id: 'liked' })).tracks.map((t) => t.id), ['b']);
+  assert.equal(lib.capabilities.star, true);
+  await lib.reset();
+  assert.equal(lib.index.getStatus().state, 'idle');
+});
+
+test('album pages are cached for the session', async () => {
+  let asked = 0;
+  const { api } = libraryApi();
+  const lib = createSpotifyLibrary({ ...api, getAlbum: async (...args) => { asked += 1; return api.getAlbum(...args); } });
+  await lib.getTracks({ type: 'album', id: 'al0' });
+  await lib.getTracks({ type: 'album', id: 'al0' });
+  assert.equal(asked, 1);
+});
+
+test('playlists, albums and artists without images (images: null) still load', async () => {
+  const lib = createSpotifyLibrary(fakeApi({
+    getPlaylists: async () => ({ items: [{ id: 'nocover', name: 'No cover', uri: 'spotify:playlist:nocover', owner: { id: 'me' }, images: null, items: { total: 0 } }], next: null })
+  }));
+  const list = await lib.getPlaylists();
+  assert.deepEqual(list.map((p) => [p.id, p.coverArt]), [['nocover', null]]);
+});

@@ -1,11 +1,23 @@
-import { API_BASE_URL } from './config';
+import { API_BASE_URL } from './config.js';
+
+const MAX_RATE_RETRIES = 2;
+const MAX_WAIT_S = 10;
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Seconds to wait from a Retry-After header (missing or unreadable: 2 s), capped
+export const retryDelay = (header) => {
+  const seconds = Number.parseInt(header, 10);
+  return Math.min(MAX_WAIT_S, Math.max(1, Number.isNaN(seconds) ? 2 : seconds));
+};
 
 /**
  * Thin client for the Express proxy. `getToken` returns the current access token and
  * `refresh` returns a fresh one (or null); a 401 triggers one refresh + retry.
+ * Spotify's rate limit (429) is waited out via Retry-After, up to twice, with `onBusy(seconds)`
+ * telling the UI (and `onBusy(0)` when it clears). Identical GETs in flight share one request.
  */
-export function createApi({ getToken, refresh }) {
-  const request = async (path, { method = 'GET', query, body } = {}, retried = false) => {
+export function createApi({ getToken, refresh, onBusy = () => {}, fetchImpl = (...args) => fetch(...args), sleep = wait }) {
+  const send = async (path, { method = 'GET', query, body } = {}, attempt = { auth: false, rate: 0 }) => {
     const token = getToken();
     if (!token) {
       const err = new Error('Not signed in');
@@ -19,7 +31,7 @@ export function createApi({ getToken, refresh }) {
         ).toString()
       : '';
 
-    const response = await fetch(`${API_BASE_URL}${path}${search}`, {
+    const response = await fetchImpl(`${API_BASE_URL}${path}${search}`, {
       method,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -28,13 +40,23 @@ export function createApi({ getToken, refresh }) {
       body: body ? JSON.stringify(body) : undefined
     });
 
-    if (response.status === 401 && !retried) {
+    if (response.status === 401 && !attempt.auth) {
       const newToken = await refresh();
-      if (newToken) return request(path, { method, query, body }, true);
+      if (newToken) return send(path, { method, query, body }, { ...attempt, auth: true });
+    }
+
+    if (response.status === 429 && attempt.rate < MAX_RATE_RETRIES) {
+      const seconds = retryDelay(response.headers.get('retry-after'));
+      onBusy(seconds);
+      await sleep(seconds * 1000);
+      const result = await send(path, { method, query, body }, { ...attempt, rate: attempt.rate + 1 });
+      onBusy(0);
+      return result;
     }
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
+      if (response.status === 429) onBusy(0);
       const err = new Error(data?.error || response.statusText);
       err.status = response.status;
       err.details = data;
@@ -42,6 +64,18 @@ export function createApi({ getToken, refresh }) {
     }
     return data;
   };
+
+  const inflight = new Map();
+  const request = (path, options = {}) => {
+    if ((options.method || 'GET') !== 'GET' || options.body) return send(path, options);
+    const key = `${path}?${new URLSearchParams(Object.entries(options.query || {}).filter(([, v]) => v != null && v !== ''))}`;
+    if (!inflight.has(key)) {
+      inflight.set(key, send(path, options).finally(() => inflight.delete(key)));
+    }
+    return inflight.get(key);
+  };
+
+  const libraryQuery = (uris) => ({ query: { uris: uris.join(',') } });
 
   return {
     request,
@@ -54,7 +88,6 @@ export function createApi({ getToken, refresh }) {
     getLikedTracks: (offset = 0, limit = 50) => request('/api/library/tracks', { query: { offset, limit } }),
     getSavedAlbums: (offset = 0, limit = 50) => request('/api/library/albums', { query: { offset, limit } }),
     getAlbum: (id) => request(`/api/albums/${id}`),
-    getAudioAnalysis: (id) => request(`/api/audio-analysis/${id}`),
     getRecentlyPlayed: (limit = 50) => request('/api/player/recently-played', { query: { limit } }),
     getTop: (type, range = 'medium_term', limit = 20) => request(`/api/me/top/${type}`, { query: { time_range: range, limit } }),
     getFollowedArtists: (after) => request('/api/me/following', { query: { limit: 50, after } }),
@@ -62,6 +95,10 @@ export function createApi({ getToken, refresh }) {
     getArtistAlbums: (id, offset = 0) => request(`/api/artists/${id}/albums`, { query: { offset, limit: 50 } }),
     search: (q, types, offset = 0) => request('/api/search', { query: { q, type: types.join(','), offset, limit: 10 } }),
     getQueue: () => request('/api/player/queue'),
+    // Your Library: songs and albums by URI, at most 40 per call
+    libraryContains: (uris) => request('/api/me/library/contains', libraryQuery(uris)),
+    saveToLibrary: (uris) => request('/api/me/library', { method: 'PUT', ...libraryQuery(uris) }),
+    removeFromLibrary: (uris) => request('/api/me/library', { method: 'DELETE', ...libraryQuery(uris) }),
 
     // Playback
     getPlaybackState: () => request('/api/player'),

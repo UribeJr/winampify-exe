@@ -14,7 +14,8 @@ const FRONTEND_URL = process.env.FRONTEND_URL || CLIENT_ORIGIN;
 
 // Middleware
 app.use(cors({
-  origin: CLIENT_ORIGIN
+  origin: CLIENT_ORIGIN,
+  exposedHeaders: ['Retry-After'] // lets the client wait out Spotify's rate limit
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -232,7 +233,7 @@ const spotifyGet = (buildUrl) => async (req, res) => {
   try {
     res.json(await spotifyFetch(token, url));
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 };
 
@@ -258,12 +259,18 @@ const spotifyFetch = async (token, url, options = {}) => {
   if (!resp.ok) {
     const status = resp.status;
     const message = data?.error?.message || resp.statusText || 'Spotify API error';
-    const errorPayload = { status, message, details: data };
+    const errorPayload = { status, message, details: data, retryAfter: resp.headers.get('retry-after') };
     console.error(`Spotify API error (${status}):`, message, data);
     throw errorPayload;
   }
   return data;
 };
+
+// Spotify's status reaches the client; on 429 so does Retry-After, so it can wait and retry
+function sendSpotifyError(res, err) {
+  if (err.status === 429 && err.retryAfter) res.set('Retry-After', String(err.retryAfter));
+  res.status(err.status || 500).json({ error: err.message || 'server_error' });
+}
 
 /**
  * Playlist endpoints (proxy)
@@ -273,13 +280,15 @@ app.get('/api/playlists', async (req, res) => {
   if (!token) return res.status(401).json({ error: 'missing_token' });
 
   try {
-    const limit = Math.min(Number(req.query.limit) || 20, 50);
-    const offset = Number(req.query.offset) || 0;
+    const limit = clampInt(req.query.limit, 1, 50, 20);
+    const offset = clampInt(req.query.offset, 0, 100000, 0);
     const data = await spotifyFetch(token, `${SPOTIFY_API}/me/playlists?limit=${limit}&offset=${offset}`);
+    // Diagnostic for "No playlists": counts only, never names
+    if (offset === 0) console.log(`Playlists: total=${data.total ?? 'n/a'} page=${data.items?.length ?? 0}`);
     res.json(data);
   } catch (err) {
     console.error('Playlists error', err);
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 });
 
@@ -315,7 +324,7 @@ const playlistItems = async (req, res) => {
     res.json(data);
   } catch (err) {
     if (err.status === 403) return res.status(403).json({ error: 'playlist_not_listable' });
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 };
 app.get('/api/playlists/:id/items', playlistItems);
@@ -328,13 +337,13 @@ app.get('/api/library/tracks', async (req, res) => {
   const token = getBearer(req);
   if (!token) return res.status(401).json({ error: 'missing_token' });
   try {
-    const limit = Math.min(Number(req.query.limit) || 50, 50);
-    const offset = Number(req.query.offset) || 0;
+    const limit = clampInt(req.query.limit, 1, 50, 50);
+    const offset = clampInt(req.query.offset, 0, 100000, 0);
     const data = await spotifyFetch(token, `${SPOTIFY_API}/me/tracks?limit=${limit}&offset=${offset}`);
     res.json(data);
   } catch (err) {
     console.error('Saved tracks error', err);
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 });
 
@@ -342,13 +351,13 @@ app.get('/api/library/albums', async (req, res) => {
   const token = getBearer(req);
   if (!token) return res.status(401).json({ error: 'missing_token' });
   try {
-    const limit = Math.min(Number(req.query.limit) || 20, 50);
-    const offset = Number(req.query.offset) || 0;
+    const limit = clampInt(req.query.limit, 1, 50, 20);
+    const offset = clampInt(req.query.offset, 0, 100000, 0);
     const data = await spotifyFetch(token, `${SPOTIFY_API}/me/albums?limit=${limit}&offset=${offset}`);
     res.json(data);
   } catch (err) {
     console.error('Saved albums error', err);
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 });
 
@@ -356,13 +365,13 @@ app.get('/api/library/shows', async (req, res) => {
   const token = getBearer(req);
   if (!token) return res.status(401).json({ error: 'missing_token' });
   try {
-    const limit = Math.min(Number(req.query.limit) || 20, 50);
-    const offset = Number(req.query.offset) || 0;
+    const limit = clampInt(req.query.limit, 1, 50, 20);
+    const offset = clampInt(req.query.offset, 0, 100000, 0);
     const data = await spotifyFetch(token, `${SPOTIFY_API}/me/shows?limit=${limit}&offset=${offset}`);
     res.json(data);
   } catch (err) {
     console.error('Saved shows error', err);
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 });
 
@@ -378,7 +387,7 @@ app.get('/api/albums/:id', async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error('Album error', err);
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 });
 
@@ -394,7 +403,7 @@ app.get('/api/audio-analysis/:id', async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error('Audio Analysis error', err);
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 });
 
@@ -437,6 +446,36 @@ app.get('/api/search', spotifyGet((req) => {
 }));
 
 app.get('/api/player/queue', spotifyGet(() => `${SPOTIFY_API}/me/player/queue`));
+
+/**
+ * Your Library (Feb 2026 unified endpoints): save, remove and check songs and albums by URI,
+ * at most 40 per request. Other item types are refused here until the app needs them.
+ */
+const LIBRARY_URI = /^spotify:(track|album):[A-Za-z0-9]{1,40}$/;
+const libraryUris = (req) => {
+  const uris = String(req.query.uris || '').split(',').filter(Boolean);
+  return uris.length && uris.length <= 40 && uris.every((u) => LIBRARY_URI.test(u)) ? uris.join(',') : null;
+};
+
+app.get('/api/me/library/contains', spotifyGet((req) => {
+  const uris = libraryUris(req);
+  return uris ? `${SPOTIFY_API}/me/library/contains?uris=${encodeURIComponent(uris)}` : null;
+}));
+
+const libraryWrite = (method) => async (req, res) => {
+  const token = getBearer(req);
+  if (!token) return res.status(401).json({ error: 'missing_token' });
+  const uris = libraryUris(req);
+  if (!uris) return res.status(400).json({ error: 'bad_request' });
+  try {
+    await spotifyFetch(token, `${SPOTIFY_API}/me/library?uris=${encodeURIComponent(uris)}`, { method });
+    res.json({ ok: true });
+  } catch (err) {
+    sendSpotifyError(res, err);
+  }
+};
+app.put('/api/me/library', libraryWrite('PUT'));
+app.delete('/api/me/library', libraryWrite('DELETE'));
 
 /**
  * Recently played tracks
@@ -493,7 +532,7 @@ app.put('/api/playback/transfer', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('Transfer error', err);
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 });
 
@@ -516,7 +555,7 @@ app.put('/api/playback/play', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('Play error', err);
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 });
 
@@ -537,7 +576,7 @@ const playerCommand = (method, spotifyPath, buildQuery = () => '') => async (req
     res.json({ ok: true });
   } catch (err) {
     console.error(`Player ${spotifyPath || '/'} error`, err);
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 };
 
@@ -548,7 +587,7 @@ app.get('/api/me', async (req, res) => {
     const data = await spotifyFetch(token, `${SPOTIFY_API}/me`);
     res.json({ id: data.id, display_name: data.display_name });
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 });
 
@@ -560,7 +599,7 @@ app.get('/api/player', async (req, res) => {
     const data = await spotifyFetch(token, `${SPOTIFY_API}/me/player?additional_types=episode`);
     res.json(data);
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 });
 
@@ -571,7 +610,7 @@ app.get('/api/player/devices', async (req, res) => {
     const data = await spotifyFetch(token, `${SPOTIFY_API}/me/player/devices`);
     res.json(data);
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.message || 'server_error' });
+    sendSpotifyError(res, err);
   }
 });
 

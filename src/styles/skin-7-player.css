@@ -118,7 +118,7 @@
   background: transparent;
 }
 
-:root[data-skin="7"] .track-table-row:not(:disabled):hover {
+:root[data-skin="7"] .track-table-row:not(.unplayable):hover {
   border-color: #b8d6fb;
   background: var(--s7-hl);
   color: #000000;

@@ -161,7 +161,7 @@
   background: #f6f8fc;
 }
 
-:root[data-skin="xp"] .track-table-row:not(:disabled):hover {
+:root[data-skin="xp"] .track-table-row:not(.unplayable):hover {
   background: #dde8fa;
   color: #000000;
 }

@@ -9,7 +9,9 @@ import { API_BASE_URL } from '../spotify/config';
  *   authError, clearAuthError, login, logout, user: { name } | null,
  *   playlists, playlistsLoading, libraryVersion,
  *   mode: 'local'|'sdk'|'connect', playback, controls (incl. playQueue), playerError, clearPlayerError,
- *   devices, selectedDeviceId, isStarred(track), toggleStar(track)
+ *   devices, selectedDeviceId, isStarred(track), toggleStar(track),
+ *   libraryStatus?: { state: 'idle'|'syncing'|'ready'|'error', phase?, done?, total?, songs?, albums? },
+ *   rateLimited?: seconds the service asked us to wait (0 when not)
  * }
  */
 export const MusicContext = createContext(null);
@@ -38,7 +40,7 @@ export function useStarred(library) {
     const next = !current;
     setOverrides((m) => new Map(m).set(track.id, next));
     try {
-      await (next ? library.star(track.id) : library.unstar(track.id));
+      await (next ? library.star(track.id, track) : library.unstar(track.id, track));
       setLibraryVersion((v) => v + 1);
     } catch (err) {
       console.error('Favorite update failed', err);

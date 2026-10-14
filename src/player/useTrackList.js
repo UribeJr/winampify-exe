@@ -3,8 +3,8 @@ import { sourceKey } from './utils';
 
 const EMPTY = { tracks: [], total: 0, hasMore: false, loading: false, error: null };
 
-// Artist sources show albums, not a track list
-const hasTracks = (source) => source && source.type !== 'artist';
+// Artist pages and the album shelf show albums, not a track list
+const hasTracks = (source) => source && source.type !== 'artist' && source.type !== 'albums';
 
 /**
  * Tracks for the selected library source via the active provider's library.getTracks(source, offset),

@@ -116,7 +116,7 @@ const MediaPlayer = ({ request, onClose, active = true }) => {
   const [devicesOpen, setDevicesOpen] = useState(false);
 
   const trackList = useTrackList(library, source, music.libraryVersion);
-  const collections = useLibraryCollections(library, isAuthenticated);
+  const collections = useLibraryCollections(library, isAuthenticated, music.libraryVersion);
   const home = useLibraryHome(library, isAuthenticated);
   const artistDetail = useArtistDetail(library, source);
   const searchExtras = useSearchExtras(library, source);
@@ -151,14 +151,17 @@ const MediaPlayer = ({ request, onClose, active = true }) => {
     }
   }, [navigate, viewMode]);
 
-  // The whole list becomes the queue (Navidrome) or the Spotify context, starting at the clicked track
-  const playTrack = useCallback((track, index) => {
-    if (source) controls.playQueue(trackList.tracks, index, source);
+  // The whole list becomes the queue (Navidrome) or the Spotify context, starting at the clicked track.
+  // `list` is the list as shown (sorted or filtered) when it differs from the loaded one.
+  const playTrack = useCallback((track, index, list = trackList.tracks) => {
+    if (source) controls.playQueue(list, index, source);
   }, [controls, source, trackList.tracks]);
 
-  const playAll = useCallback(() => {
+  // `list`: the list as shown, when the view passes one (it may also be a click event)
+  const playAll = useCallback((list) => {
+    const tracks = Array.isArray(list) ? list : trackList.tracks;
     // Spotify playlists you only follow can't list their songs but still play as a whole (source.uri)
-    if (source && (trackList.tracks.length || source.uri)) controls.playQueue(trackList.tracks, 0, source);
+    if (source && (tracks.length || source.uri)) controls.playQueue(tracks, 0, source);
   }, [controls, source, trackList.tracks]);
 
   const search = useCallback((query) => {

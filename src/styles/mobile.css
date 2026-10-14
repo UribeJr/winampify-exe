@@ -376,6 +376,24 @@
     height: 40px;
   }
 
+  /* Filter boxes and sort menu on library pages: touch-sized, 16px so iOS doesn't zoom */
+  .library-filter {
+    flex: 1 1 auto;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .library-sort select {
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .library-chips button {
+    min-height: 32px;
+    padding: 4px 12px;
+    font-size: 13px;
+  }
+
   .library-scroll {
     padding: 8px 0 12px;
   }

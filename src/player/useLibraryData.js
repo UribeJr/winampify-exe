@@ -31,13 +31,15 @@ const EMPTY_HOME = { sections: [], needsReauth: false };
 /**
  * Library collections for the Media Library views: albums, artists, and the dashboard's
  * "Recently Added" / "Recently Played" rows (only when the provider supports them).
+ * `version` changing (a favorite, a library sync) reloads them.
  */
-export function useLibraryCollections(library, enabled) {
+export function useLibraryCollections(library, enabled, version = 0) {
   const { capabilities } = library;
-  const albums = useLoader(enabled ? () => library.getAlbums() : null, [library, enabled], EMPTY_LIST);
-  const artists = useLoader(enabled && capabilities.artists ? () => library.getArtists() : null, [library, enabled], EMPTY_LIST);
-  const newest = useLoader(enabled && capabilities.recentAlbums ? () => library.getAlbumList('newest', 12) : null, [library, enabled], EMPTY_LIST);
-  const recent = useLoader(enabled && capabilities.recentAlbums ? () => library.getAlbumList('recent', 12) : null, [library, enabled], EMPTY_LIST);
+  const deps = [library, enabled, version];
+  const albums = useLoader(enabled ? () => library.getAlbums() : null, deps, EMPTY_LIST);
+  const artists = useLoader(enabled && capabilities.artists ? () => library.getArtists() : null, deps, EMPTY_LIST);
+  const newest = useLoader(enabled && capabilities.recentAlbums ? () => library.getAlbumList('newest', 12) : null, deps, EMPTY_LIST);
+  const recent = useLoader(enabled && capabilities.recentAlbums ? () => library.getAlbumList('recent', 12) : null, deps, EMPTY_LIST);
 
   return {
     albums: albums.data,

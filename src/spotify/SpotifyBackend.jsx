@@ -11,6 +11,9 @@ import { idbPersist } from '../music/spotify/libraryStore';
 
 const QUEUE_LIMIT = 100; // Spotify caps `uris` playback requests
 const SYNC_DELAY_MS = 1500; // let the first screen's reads go before the library sync starts
+const SKIP_GAP_MS = 150; // between skips, so Spotify applies each one in order
+const MAX_SKIPS = 30; // Spotify's queue lists about 20 upcoming songs
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Spotify backend (MUSIC_PROVIDER=spotify): OAuth, Web Playback SDK on desktop and a Spotify
@@ -110,8 +113,18 @@ export default function SpotifyBackend({ children }) {
   const track = useMemo(() => normalizeSpotifyTrack(rawTrack), [rawTrack]);
   const playback = useMemo(() => ({ ...engine.playback, track, buffering: false }), [engine.playback, track]);
   const engineControls = engine.controls;
+  const activeDeviceId = engine.playback.deviceId || (mode === 'connect' ? connect.selectedDeviceId : '');
   const controls = useMemo(() => ({
     ...engineControls,
+    // Jump to an "Up next" song: Spotify has no "play queue item N", so skip forward N times,
+    // which keeps the rest of the queue and the playing context intact
+    skipAhead: async (count) => {
+      const skips = Math.min(Math.max(1, Math.floor(count)), MAX_SKIPS);
+      for (let i = 0; i < skips; i += 1) {
+        await api.next(activeDeviceId || undefined);
+        if (i < skips - 1) await wait(SKIP_GAP_MS);
+      }
+    },
     playQueue: (tracks, index = 0, source) => {
       const start = tracks[index];
       // A followed playlist (songs not listable) plays as a whole
@@ -122,7 +135,7 @@ export default function SpotifyBackend({ children }) {
       const uris = tracks.slice(index, index + QUEUE_LIMIT).filter((t) => t.playable).map((t) => t.key);
       return engineControls.play({ uris });
     }
-  }), [engineControls]);
+  }), [engineControls, api, activeDeviceId]);
 
   const starred = useStarred(library);
 

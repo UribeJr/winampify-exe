@@ -91,11 +91,11 @@
 /* ---------- Our non-button buttons: keep 7.css button chrome off them ---------- */
 :root[data-skin="7"] :is(.desktop-icon, .start-menu-row, .context-menu-item, .menu-bar-item, .menu-dropdown-item,
   .track-table-row, .track-sort, .track-heart-btn, .library-see-all, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
-  .pane-close, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
+  .pane-close, .pane-view, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
   .tray-disky, .xp-start-item, .xp-start-foot button, .s7-shutdown, .s7-shutdown-more),
 :root[data-skin="7"] :is(.desktop-icon, .start-menu-row, .context-menu-item, .menu-bar-item, .menu-dropdown-item,
   .track-table-row, .track-sort, .track-heart-btn, .library-see-all, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
-  .pane-close, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
+  .pane-close, .pane-view, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
   .tray-disky, .xp-start-item, .xp-start-foot button, .s7-shutdown, .s7-shutdown-more):is(:hover, :focus, :active) {
   border: none;
   border-radius: 0;
@@ -667,12 +667,12 @@
    Checkmarks (.checked::before) are ours and keep their pseudo-element. */
 :root[data-skin="7"] :is(.desktop-icon, .start-menu-row, .context-menu-item, .menu-bar-item, .menu-dropdown-item,
   .track-table-row, .track-sort, .track-heart-btn, .library-see-all, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
-  .pane-close, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
+  .pane-close, .pane-view, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
   .tray-disky, .xp-start-item, .taskbar-start, .taskbar-app, .s7-shutdown, .s7-shutdown-more,
   .control-btn, .toolbar-nav-btn, .xp-tile, .xp-go, .xp-welcome-off)::after,
 :root[data-skin="7"] :is(.desktop-icon, .start-menu-row, .context-menu-item, .menu-bar-item, .menu-dropdown-item,
   .track-table-row, .track-sort, .track-heart-btn, .library-see-all, .library-tile, .library-list-row, .tree-view button, .device-row, .mobile-view-tab, .tray-icon,
-  .pane-close, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
+  .pane-close, .pane-view, .wallpaper-option, .recycle-item, .viz-menu-heading, .viz-menu-item, .queue-item, .assistant-character,
   .tray-disky, .xp-start-item, .taskbar-start, .taskbar-app, .s7-shutdown, .s7-shutdown-more,
   .control-btn, .toolbar-nav-btn, .xp-tile, .xp-go, .xp-welcome-off):not(.checked)::before {
   content: none;

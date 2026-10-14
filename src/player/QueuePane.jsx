@@ -1,8 +1,10 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { artistNames, formatTime, coverUrl } from './utils';
 import { useMusic } from '../music/MusicContext';
 
 const VIEW_KEY = 'winampify-queue-view';
+const SETTLE_MS = 1500; // Spotify's queue endpoint lags a moment behind a song change
+const POLL_MS = 30000; // refresh while the pane is open and the tab is visible
 const readView = () => {
   try {
     return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'art';
@@ -77,14 +79,31 @@ const QueuePane = ({ onClose }) => {
       setSkipping(false);
     }
   };
+  const [refreshing, setRefreshing] = useState(false);
+  const loadQueue = useCallback(() => {
+    setRefreshing(true);
+    return library.getQueue()
+      .then((q) => setRemoteQueue(q))
+      .catch(() => setRemoteQueue((prev) => prev || { current: null, upcoming: [], failed: true }))
+      .finally(() => setRefreshing(false));
+  }, [library]);
+
+  // Load on open, again shortly after each song change, and every 30 s while visible
+  const firstLoad = useRef(true);
   useEffect(() => {
     if (!remote) return undefined;
-    let cancelled = false;
-    library.getQueue()
-      .then((q) => { if (!cancelled) setRemoteQueue(q); })
-      .catch(() => { if (!cancelled) setRemoteQueue({ current: null, upcoming: [], failed: true }); });
-    return () => { cancelled = true; };
-  }, [remote, library, track?.key]);
+    const delay = firstLoad.current ? 0 : SETTLE_MS;
+    firstLoad.current = false;
+    const timer = setTimeout(loadQueue, delay);
+    return () => clearTimeout(timer);
+  }, [remote, loadQueue, track?.key]);
+  useEffect(() => {
+    if (!remote) return undefined;
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') loadQueue();
+    }, POLL_MS);
+    return () => clearInterval(timer);
+  }, [remote, loadQueue]);
 
   // Keep the current track in view as the queue advances
   useEffect(() => {
@@ -93,11 +112,19 @@ const QueuePane = ({ onClose }) => {
 
   let body;
   let current = track;
+  let upNext = [];
   if (remote) {
-    current = remoteQueue?.current || track;
+    // The player knows the playing song before Spotify's queue does: trust it, and drop
+    // "up next" rows up to that song while the queue snapshot catches up
+    current = track || remoteQueue?.current;
+    upNext = remoteQueue?.upcoming || [];
+    if (track && remoteQueue?.current?.key !== track.key) {
+      const at = upNext.findIndex((t) => t.key === track.key);
+      if (at >= 0) upNext = upNext.slice(at + 1);
+    }
     body = !remoteQueue ? (
       <p className="queue-empty">Loading…</p>
-    ) : !current && !remoteQueue.upcoming.length ? (
+    ) : !current && !upNext.length ? (
       <p className="queue-empty">{remoteQueue.failed ? `Couldn't load the ${providerName} queue.` : 'Nothing playing yet.'}</p>
     ) : (
       <ol className="queue-list" ref={listRef}>
@@ -108,8 +135,8 @@ const QueuePane = ({ onClose }) => {
             </div>
           </li>
         )}
-        {remoteQueue.upcoming.length > 0 && <li className="queue-heading">Up Next</li>}
-        {remoteQueue.upcoming.map((t, i) => (
+        {upNext.length > 0 && <li className="queue-heading">Up Next</li>}
+        {upNext.map((t, i) => (
           <li key={`${t.key}-${i}`}>
             {canSkip ? (
               <button type="button" className="queue-item" onClick={() => skipTo(i + 1)} disabled={skipping} title={`Play ${t.title}`}>
@@ -156,6 +183,11 @@ const QueuePane = ({ onClose }) => {
       <div className="wmp-now-playing-pane-header">
         <span>Playlist</span>
         <span className="pane-tools">
+          {remote && (
+            <button type="button" className="pane-view" onClick={loadQueue} disabled={refreshing} title="Refresh" aria-label="Refresh the queue">
+              <span aria-hidden="true">⟳</span>
+            </button>
+          )}
           <span className="pane-view-switch" role="group" aria-label="Playlist view">
             <button type="button" className="pane-view" aria-pressed={!art} onClick={() => chooseView('list')} title="List only" aria-label="List only">
               <span aria-hidden="true">☰</span>
@@ -171,7 +203,7 @@ const QueuePane = ({ onClose }) => {
       {remote && (
         <div className="queue-summary">
           <b>Playing on {providerName}</b>
-          <span>{remoteQueue?.upcoming.length ? `${remoteQueue.upcoming.length} up next` : 'Up next'}</span>
+          <span>{upNext.length ? `${upNext.length} up next` : 'Up next'}</span>
         </div>
       )}
       {hasQueue && (
